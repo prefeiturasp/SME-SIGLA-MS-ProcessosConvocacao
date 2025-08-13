@@ -1,44 +1,60 @@
 """
-Django management command to clear all processos.
+Django management command to clear all processos and cargos.
 """
 from django.core.management.base import BaseCommand
 from django.db import connection
-from processos.models import ProcessoConvocacao
+from processos.models import ProcessoConvocacao, CargoProcesso
 
 
 class Command(BaseCommand):
-    help = 'Remove todos os registros da tabela de processos'
+    help = 'Remove todos os registros das tabelas de processos e cargos'
 
     def handle(self, *args, **options):
-
         # Contar registros existentes
-        total_registros = ProcessoConvocacao.objects.count()
-        # Executar a exclusão
+        total_processos = ProcessoConvocacao.objects.count()
+        total_cargos = CargoProcesso.objects.count()
+        total_registros = total_processos + total_cargos
+        
         self.stdout.write(
             self.style.SUCCESS(f'Removendo {total_registros} registros...')
         )
+        self.stdout.write(f'  - Processos: {total_processos}')
+        self.stdout.write(f'  - Cargos: {total_cargos}')
         
         try:
-            # Método 1: Usando delete() em queryset (mais seguro)
-            ProcessoConvocacao.objects.all().delete()
+            # Remover cargos primeiro (devido à dependência FK)
+            if total_cargos > 0:
+                self.stdout.write('🗑️  Removendo cargos...')
+                CargoProcesso.objects.all().delete()
+                self.stdout.write(
+                    self.style.SUCCESS(f'✅ {total_cargos} cargos removidos!')
+                )
             
-            # Método 2: Usando SQL direto (mais rápido, mas menos seguro)
-            # with connection.cursor() as cursor:
-            #     cursor.execute("DELETE FROM processos_processoconvocacao")
+            # Remover processos
+            if total_processos > 0:
+                self.stdout.write('🗑️  Removendo processos...')
+                ProcessoConvocacao.objects.all().delete()
+                self.stdout.write(
+                    self.style.SUCCESS(f'✅ {total_processos} processos removidos!')
+                )
             
             self.stdout.write(
                 self.style.SUCCESS(f'✅ {total_registros} registros removidos com sucesso!')
             )
             
             # Verificar se realmente foi limpo
-            registros_restantes = ProcessoConvocacao.objects.count()
-            if registros_restantes == 0:
+            processos_restantes = ProcessoConvocacao.objects.count()
+            cargos_restantes = CargoProcesso.objects.count()
+            
+            if processos_restantes == 0 and cargos_restantes == 0:
                 self.stdout.write(
-                    self.style.SUCCESS('✅ Tabela completamente limpa!')
+                    self.style.SUCCESS('✅ Todas as tabelas completamente limpas!')
                 )
             else:
                 self.stdout.write(
-                    self.style.WARNING(f'⚠️  Ainda restam {registros_restantes} registros.')
+                    self.style.WARNING(
+                        f'⚠️  Ainda restam {processos_restantes} processos e {cargos_restantes} cargos.'
+                    )
                 )
                 
         except Exception as e:
