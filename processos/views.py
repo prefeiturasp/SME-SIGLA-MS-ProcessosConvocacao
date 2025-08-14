@@ -1,68 +1,116 @@
 """
 DRF views for the processes module.
 """
-from rest_framework import viewsets, permissions, status
+from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
+from django.db.models import Q
+from datetime import datetime
+import uuid
 
-from .models import ProcessoConvocacao
+from .models import ProcessoConvocacao, CargoProcesso
 from .serializers import (
-    ProcessoConvocacaoSerializer,
+    ProcessoConvocacaoSerializer, ProcessoConvocacaoCreateSerializer, ProcessoConvocacaoListSerializer,
+    ProcessoConvocacaoUpdateSerializer, CargoProcessoSerializer, CargoProcessoCreateSerializer
 )
-from .services import ExternalServices
+from .utils import CustomPagination
 
 
 class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
-    
-    queryset = ProcessoConvocacao.objects.all()
-    # permission_classes = [permissions.IsAuthenticated]
+    """
+    ViewSet para gerenciar processos de convocação.
+    """
+    queryset = ProcessoConvocacao.objects.prefetch_related('cargos_processo')
+    serializer_class = ProcessoConvocacaoSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['status', 'tipo_processo']
+    filterset_fields = ['concurso_uuid']
     search_fields = ['concurso_nome', 'descricao']
-    ordering_fields = ['concurso_nome', 'data_publicacao', 'criado_em']
-    ordering = ['-criado_em']
+    ordering_fields = ['data_convocacao', 'data_publicacao', 'numero_convocados', 'criado_em']
+    ordering = ['-data_publicacao']
+    pagination_class = CustomPagination
     
+    def get_queryset(self):
+        """Sobrescreve o queryset para aplicar filtros customizados."""
+        queryset = super().get_queryset()
+
+        data_inicio = self.request.query_params.get('data_convocacao_inicio')
+        data_fim = self.request.query_params.get('data_convocacao_fim')
+
+        if data_inicio:
+            try:
+                data_inicio = datetime.strptime(data_inicio, '%Y-%m-%d').date()
+                queryset = queryset.filter(data_convocacao__date__gte=data_inicio)
+            except ValueError:
+                pass
+
+        if data_fim:
+            try:
+                data_fim = datetime.strptime(data_fim, '%Y-%m-%d').date()
+                queryset = queryset.filter(data_convocacao__date__lte=data_fim)
+            except ValueError:
+                pass
+
+        cargo_uuid = self.request.query_params.get('cargo_uuid')
+        if cargo_uuid:
+            try:
+                uuid.UUID(cargo_uuid)
+                queryset = queryset.filter(cargos_processo__cargo_uuid=cargo_uuid).distinct()
+            except ValueError:
+                pass
+
+        return queryset
+
     def get_serializer_class(self):
-        """Return appropriate serializer class."""
-        if self.action == 'list':
-            return ProcessoConvocacaoSerializer
-        elif self.action in ['create', 'update', 'partial_update']:
-            return ProcessoConvocacaoSerializer
+        if self.action == 'create':
+            return ProcessoConvocacaoCreateSerializer
+        elif self.action == 'list':
+            return ProcessoConvocacaoListSerializer
+        elif self.action in ['update', 'partial_update']:
+            return ProcessoConvocacaoUpdateSerializer
         return ProcessoConvocacaoSerializer
     
-    def perform_create(self, serializer):
-        """Override to add custom logic on create."""
-        processo = serializer.save()
-        print(processo)
-        ###
-    
-    def perform_update(self, serializer):
-        """Override to add custom logic on update."""
-        processo = serializer.save()
-        print(processo)
-        ###
+    @action(detail=False, methods=['get'], url_path='filtros')
+    def filtros(self, request):
+        """
+        Retorna concursos únicos e cargos únicos em chaves separadas.
+        """
+        # Buscar todos os concursos únicos usando set para garantir unicidade
+        todos_processos = ProcessoConvocacao.objects.values('concurso_uuid', 'concurso_nome')
         
-    
-    def perform_destroy(self, instance):
-        """Override to add custom logic on delete."""
-        instance.delete()
-    
-    @action(detail=True, methods=['post'])
-    def finalizar(self, request, pk=None):
-        """Finalizar um processo."""
-        processo = self.get_object()
+        # Usar set para garantir concursos únicos
+        concursos_unicos = {}
+        for processo in todos_processos:
+            concurso_uuid = processo['concurso_uuid']
+            if concurso_uuid not in concursos_unicos:
+                concursos_unicos[concurso_uuid] = {
+                    'value': concurso_uuid,
+                    'label': processo['concurso_nome']
+                }
         
-        if not processo.status == 'EM_ANDAMENTO':
-            return Response(
-                {'error': 'Processo não pode ser finalizado'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        # Buscar todos os cargos e fazer deduplicação por nome em Python
+        todos_cargos = CargoProcesso.objects.values('cargo_uuid', 'nome').order_by('nome', 'cargo_uuid')
         
-        processo.status = 'FINALIZADO'
-        processo.save()
+        # Deduplicar cargos por nome
+        cargos_unicos = {}
+        for cargo in todos_cargos:
+            if cargo['nome'] not in cargos_unicos:
+                cargos_unicos[cargo['nome']] = cargo
         
-        serializer = self.get_serializer(processo)
-        return Response(serializer.data)
+        # Preparar resposta
+        resultado = {
+            'concursos': list(concursos_unicos.values()),
+            'cargos': [
+                {
+                    'value': cargo['cargo_uuid'],
+                    'label': cargo['nome']
+                }
+                for cargo in cargos_unicos.values()
+            ]
+        }
+        
+        return Response(resultado)
 

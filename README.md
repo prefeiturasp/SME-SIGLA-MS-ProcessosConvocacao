@@ -1,313 +1,204 @@
-# SME-SIGLA-MS-ProcessosConvocacao
+# Convocação SIGLA Backend
 
-Sistema de gerenciamento de processos de convocação desenvolvido com Django REST Framework.
+Backend Django para gerenciamento de processos de convocação da SIGLA.
 
-## 📁 Estrutura do Projeto
+## 🚀 Funcionalidades
 
-```
-SME-SIGLA-MS-ProcessosConvocacao/
-├── config/                          # Configurações do Django
-│   ├── settings.py                  # Configurações principais
-│   ├── urls.py                      # URLs principais
-│   └── wsgi.py                      # Configuração WSGI
-├── processos/                       # App principal
-│   ├── models.py                    # Modelos de dados
-│   ├── views.py                     # ViewSets da API
-│   ├── serializers.py               # Serializers
-│   ├── services.py                  # Serviços externos
-│   └── management/                  # Comandos customizados
-│       └── commands/
-│           ├── create_sample_processos.py
-│           ├── cleanup_processos.py
-│           ├── export_processos.py
-│           └── check_processos.py
-├── requirements/                    # Dependências organizadas
-│   ├── base.txt                     # Dependências principais
-│   ├── local.txt                    # Desenvolvimento local
-│   ├── production.txt               # Produção
-│   └── README.md                    # Documentação dos requirements
-├── docker-compose.yml              # Configuração Docker
-├── env.example                     # Variáveis de ambiente (exemplo)
-├── generate_secret_key.py          # Script para gerar secret key
-└── README_DOCKER.md               # Documentação Docker
-```
+### Processos de Convocação
+- **CRUD completo** de processos de convocação
+- **Gestão de status**: Em Andamento, Finalizado, Cancelado
+- **Tipos de processo**: Convocação, Seleção, Avaliação
+- **Vinculação com concursos** via UUID
+- **Controle de datas** (publicação, convocação, limite)
 
-## 🚀 Início Rápido
+### 🎯 Gestão de Cargos por Processo
+- **Seleção flexível** de cargos para cada processo
+- **Controle de vagas** específicas por processo
+- **Priorização** de cargos
+- **Acompanhamento** de vagas disponíveis vs. preenchidas
+- **Salários personalizados** por processo
 
-### 1. Configurar ambiente
+## 🏗️ Arquitetura
 
-```bash
-# Clonar o repositório
-git clone <repository-url>
-cd SME-SIGLA-MS-ProcessosConvocacao
+### Modelos Principais
 
-# Copiar arquivo de ambiente (escolha uma opção)
-cp env.example .env          # Para PostgreSQL
-# ou
-cp env.sqlite.example .env   # Para SQLite
+#### `ProcessoConvocacao`
+- Representa um processo de convocação
+- Vinculado a um concurso específico
+- Pode ter múltiplos cargos associados
+- Controle de status e datas
 
-# Editar variáveis de ambiente
-nano .env
-```
+#### `CargoProcesso`
+- Representa um cargo selecionado para um processo
+- Controle granular de vagas por processo
+- Priorização e observações específicas
+- Estatísticas de preenchimento
 
-### 2. Configurar banco de dados
-
-#### Opção A: PostgreSQL (recomendado)
-
-```bash
-# Iniciar PostgreSQL com Docker
-docker-compose up -d
-
-# Verificar se está rodando
-docker-compose ps
-```
-
-#### Opção B: SQLite (desenvolvimento rápido)
-
-```bash
-# Não precisa de Docker, apenas configure o .env
-# DB_ENGINE=django.db.backends.sqlite3
-# DB_NAME=db.sqlite3
-```
-
-### 3. Instalar dependências
-
-```bash
-# Para desenvolvimento local
-pip install -r requirements/local.txt
-
-# Para produção
-pip install -r requirements/production.txt
-
-# Ou usar o arquivo padrão (desenvolvimento)
-pip install -r requirements.txt
-
-# Nota: Para SQLite, não precisa instalar psycopg2-binary
-```
-
-### 4. Configurar banco
-
-```bash
-# Executar migrações
-python manage.py makemigrations
-python manage.py migrate
-
-# Criar superusuário (opcional)
-python manage.py createsuperuser
-```
-
-### 5. Executar servidor
-
-```bash
-python manage.py runserver
-```
-
-## 🐳 Docker
-
-### Iniciar serviços
-
-```bash
-# Iniciar PostgreSQL e pgAdmin
-docker-compose up -d
-
-# Verificar status
-docker-compose ps
-```
-
-### Acessos
-
-- **PostgreSQL**: localhost:5432
-  - Database: `processos_convocacao`
-  - Usuário: `postgres`
-  - Senha: `postgres`
-
-- **pgAdmin**: http://localhost:8080
-  - Email: `admin@convocacao.com`
-  - Senha: `admin123`
+### Relacionamentos
+- **ProcessoConvocacao** ↔ **CargoProcesso** (1:N)
+- Cada processo pode ter múltiplos cargos
+- Cada cargo pode ter configurações específicas por processo
+- **Sem duplicação** de dados principais
 
 ## 📊 API Endpoints
 
 ### Processos de Convocação
+- `GET /api/processos/processos-convocacao/` - Listar processos
+- `POST /api/processos/processos-convocacao/` - Criar processo
+- `GET /api/processos/processos-convocacao/{uuid}/` - Detalhes do processo
+- `PUT /api/processos/processos-convocacao/{uuid}/` - Atualizar processo
+- `DELETE /api/processos/processos-convocacao/{uuid}/` - Excluir processo
 
-```
-GET    /api/processos/                    # Listar processos
-POST   /api/processos/                    # Criar processo
-GET    /api/processos/{id}/               # Detalhes do processo
-PUT    /api/processos/{id}/               # Atualizar processo
-DELETE /api/processos/{id}/               # Remover processo
-POST   /api/processos/{id}/publish/       # Publicar processo
-POST   /api/processos/{id}/cancel/        # Cancelar processo
-GET    /api/processos/{id}/steps/         # Etapas do processo
-GET    /api/processos/{id}/documents/     # Documentos do processo
-GET    /api/processos/active/             # Processos ativos
-GET    /api/processos/by_status/          # Filtrar por status
-```
+### Ações Especiais
+- `POST /api/processos/processos-convocacao/{uuid}/finalizar/` - Finalizar processo
+- `POST /api/processos/processos-convocacao/{uuid}/cancelar/` - Cancelar processo
+- `GET /api/processos/processos-convocacao/{uuid}/cargos/` - Listar cargos do processo
+- `POST /api/processos/processos-convocacao/{uuid}/adicionar_cargo/` - Adicionar cargo
+- `DELETE /api/processos/processos-convocacao/{uuid}/remover_cargo/` - Remover cargo
 
-## 🛠️ Comandos Customizados
+### Filtros e Consultas
+- `GET /api/processos/processos-convocacao/em_andamento/` - Processos em andamento
+- `GET /api/processos/processos-convocacao/finalizados/` - Processos finalizados
+- `GET /api/processos/processos-convocacao/por_concurso/?concurso_uuid={uuid}` - Por concurso
+- `GET /api/processos/processos-convocacao/por_tipo/?tipo_processo={tipo}` - Por tipo
 
-### Criar dados de exemplo
+### Cargos do Processo
+- `GET /api/processos/cargos-processo/` - Listar cargos
+- `POST /api/processos/cargos-processo/` - Criar cargo
+- `PUT /api/processos/cargos-processo/{uuid}/` - Atualizar cargo
+- `DELETE /api/processos/cargos-processo/{uuid}/` - Excluir cargo
 
+### Ações de Cargos
+- `POST /api/processos/cargos-processo/{uuid}/atualizar_vagas_disponiveis/` - Atualizar vagas
+- `POST /api/processos/cargos-processo/{uuid}/alterar_prioridade/` - Alterar prioridade
+- `GET /api/processos/cargos-processo/por_processo/?processo_uuid={uuid}` - Por processo
+
+## 🛠️ Tecnologias
+
+- **Django 5.2.5** - Framework web
+- **Django REST Framework 3.15.2** - API REST
+- **PostgreSQL** - Banco de dados principal
+- **django-cors-headers** - CORS para frontend
+- **django-filter** - Filtros avançados
+
+## 🚀 Como Executar
+
+### 1. Configuração do Ambiente
 ```bash
-# Criar 5 processos padrão
-python manage.py create_sample_processos
+# Clonar o repositório
+git clone <repository-url>
+cd convocacao-sigla-backend
 
-# Criar 10 processos finalizados
-python manage.py create_sample_processos --count 10 --status FINALIZADO
+# Criar ambiente virtual
+python -m venv .venv
+source .venv/bin/activate  # Linux/Mac
+# ou
+.venv\Scripts\activate  # Windows
+
+# Instalar dependências
+pip install -r requirements/base.txt
 ```
 
-### Verificar integridade
-
+### 2. Configuração do Banco
 ```bash
-# Verificação básica
-python manage.py check_processos
+# Copiar arquivo de exemplo
+cp env.example .env
 
-# Verificação detalhada
-python manage.py check_processos --detailed
+# Editar variáveis de ambiente
+# DB_NAME, DB_USER, DB_PASSWORD, etc.
 ```
 
-### Limpeza de dados
-
+### 3. Migrações e Setup
 ```bash
-# Ver o que seria removido
-python manage.py cleanup_processos --dry-run
+# Aplicar migrações
+python manage.py migrate
 
-# Remover processos antigos
-python manage.py cleanup_processos --days 30 --status CANCELADO
+# Criar superusuário
+python manage.py createsuperuser
+
+# Iniciar servidor
+python manage.py runserver
 ```
 
-### Exportar dados
+## 📝 Exemplos de Uso
 
-```bash
-# Exportar todos os processos
-python manage.py export_processos
-
-# Exportar apenas processos ativos
-python manage.py export_processos --status EM_ANDAMENTO --output ativos.json
+### Criar Processo com Cargos
+```json
+POST /api/processos/processos-convocacao/
+{
+    "concurso_uuid": "123e4567-e89b-12d3-a456-426614174000",
+    "concurso_nome": "Concurso Público 2024",
+    "descricao": "DESCRICAO_CONVOCACAO",
+    "tipo_processo": "CONVOCACAO",
+    "data_convocacao": "2024-12-01T10:00:00Z",
+    "data_limite": "2024-12-31T23:59:59Z",
+    "numero_convocados": 1,
+    "observacoes": "Processo para preenchimento de vagas",
+    "cargos": [
+        {
+            "cargo_uuid": "456e7890-e89b-12d3-a456-426614174001",
+            "cargo_nome": "Analista de Sistemas",
+            "vagas_processo": 5,
+            "salario_processo": 5000.00,
+            "prioridade": 1
+        },
+        {
+            "cargo_uuid": "789e0123-e89b-12d3-a456-426614174002",
+            "cargo_nome": "Desenvolvedor",
+            "vagas_processo": 3,
+            "salario_processo": 4000.00,
+            "prioridade": 2
+        }
+    ]
+}
 ```
 
-## 📋 Modelos de Dados
+### Adicionar Cargo a um Processo
+```json
+POST /api/processos/processos-convocacao/{uuid}/adicionar_cargo/
+{
+    "cargo_uuid": "999e8888-e89b-12d3-a456-426614174999",
+    "cargo_nome": "Técnico de TI",
+    "vagas_processo": 2,
+    "salario_processo": 3000.00,
+    "prioridade": 3
+}
+```
 
-### ProcessoConvocacao
-
-- **UUID**: Identificador único
-- **concurso_uuid**: UUID do concurso
-- **concurso_nome**: Nome do concurso
-- **descricao**: Tipo de descrição
-- **tipo_processo**: Tipo do processo
-- **status**: Status atual
-- **data_publicacao**: Data de publicação
-- **data_convocacao**: Data de convocação
-- **numero_convocacao**: Número da convocação
-- **criado_em**: Data de criação
-- **atualizado_em**: Data de atualização
-
-### Status Disponíveis
-
-- `EM_ANDAMENTO`: Em andamento
-- `FINALIZADO`: Concluído
-- `CANCELADO`: Cancelado
-
-### Tipos de Processo
-
-- `CONVOCACAO`: Convocação
-- `SELECAO`: Seleção
-- `AVALIACAO`: Avaliação
-
-## 🔧 Configuração
+## 🔧 Configurações
 
 ### Variáveis de Ambiente
+- `SECRET_KEY` - Chave secreta do Django
+- `DEBUG` - Modo debug (True/False)
+- `DB_ENGINE` - Engine do banco (postgresql/sqlite3)
+- `DB_NAME` - Nome do banco
+- `DB_USER` - Usuário do banco
+- `DB_PASSWORD` - Senha do banco
+- `DB_HOST` - Host do banco
+- `DB_PORT` - Porta do banco
 
-Copie `env.example` para `.env` e configure:
+### Configurações Django
+- **Idioma**: Português (pt-br)
+- **Fuso horário**: America/Sao_Paulo
+- **Paginação**: 20 itens por página
+- **Permissões**: Leitura para todos, escrita para autenticados
+- **CORS**: Habilitado para desenvolvimento
 
-```env
-# Django Settings
-SECRET_KEY=sua-chave-secreta-aqui
-DEBUG=True
-ALLOWED_HOSTS=localhost,127.0.0.1
+## 📚 Documentação da API
 
-# Database Settings - PostgreSQL
-DB_ENGINE=django.db.backends.postgresql
-DB_NAME=processos_convocacao
-DB_USER=postgres
-DB_PASSWORD=postgres
-DB_HOST=localhost
-DB_PORT=5432
-
-# Database Settings - SQLite (alternativa)
-# DB_ENGINE=django.db.backends.sqlite3
-# DB_NAME=db.sqlite3
-
-# External Services
-AUTH_SERVICE_URL=http://localhost:8001
-NOTIFICATION_SERVICE_URL=http://localhost:8002
-DOCUMENT_SERVICE_URL=http://localhost:8003
-```
-
-### Gerar Secret Key
-
-```bash
-# Usar o script incluído
-python generate_secret_key.py
-
-# Ou usar Django
-python manage.py shell -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
-```
-
-## 📦 Dependências
-
-### Desenvolvimento
-
-```bash
-pip install -r requirements/local.txt
-```
-
-Inclui:
-- Django e DRF
-- PostgreSQL driver
-- Ferramentas de teste (pytest)
-- Qualidade de código (black, flake8)
-- Documentação (Sphinx)
-
-### Produção
-
-```bash
-pip install -r requirements/production.txt
-```
-
-Inclui:
-- Django e DRF
-- Servidor WSGI (gunicorn)
-- Arquivos estáticos (whitenoise)
-- Segurança e monitoramento
-
-## 🧪 Testes
-
-```bash
-# Executar testes
-python manage.py test
-
-# Com cobertura
-pytest --cov=processos
-```
-
-## 📚 Documentação
-
-- [README Docker](README_DOCKER.md) - Configuração Docker
-- [Requirements](requirements/README.md) - Estrutura de dependências
-- [Comandos Customizados](processos/management/README.md) - Comandos Django
+A API inclui documentação automática via Django REST Framework:
+- **Browsable API**: `/api/processos/processos-convocacao/`
+- **Endpoints exploráveis** com interface web
+- **Testes de endpoints** diretamente no navegador
 
 ## 🤝 Contribuição
 
 1. Fork o projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. Push para a branch (`git push origin feature/AmazingFeature`)
+2. Crie uma branch para sua feature
+3. Commit suas mudanças
+4. Push para a branch
 5. Abra um Pull Request
 
 ## 📄 Licença
 
-Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalhes.
-
-## 📞 Suporte
-
-Para dúvidas ou problemas, abra uma issue no repositório. 
+Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalhes. 

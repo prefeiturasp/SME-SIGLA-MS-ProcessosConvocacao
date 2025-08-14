@@ -5,3 +5,6 @@ django-cors-headers==4.7.0
 django-filter==25.1
 psycopg2-binary==2.9.9
 requests==2.32.4
+
+# Audit Log
+django-auditlog==2.4.0
