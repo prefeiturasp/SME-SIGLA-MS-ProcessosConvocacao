@@ -17,6 +17,7 @@ from .serializers import (
     ProcessoConvocacaoUpdateSerializer, CargoProcessoSerializer, CargoProcessoCreateSerializer
 )
 from .utils import CustomPagination
+from .models.constants import PROCESSO_TIPOS_CHOICES
 
 
 class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
@@ -76,7 +77,7 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], url_path='filtros')
     def filtros(self, request):
         """
-        Retorna concursos únicos e cargos únicos em chaves separadas.
+        Retorna concursos únicos, cargos únicos e tipos de processo em chaves separadas.
         """
         # Buscar todos os concursos únicos usando set para garantir unicidade
         todos_processos = ProcessoConvocacao.objects.values('concurso_uuid', 'concurso_nome')
@@ -93,13 +94,22 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
         
         # Buscar todos os cargos e fazer deduplicação por nome em Python
         todos_cargos = CargoProcesso.objects.values('cargo_uuid', 'nome').order_by('nome', 'cargo_uuid')
-        
+
         # Deduplicar cargos por nome
         cargos_unicos = {}
         for cargo in todos_cargos:
             if cargo['nome'] not in cargos_unicos:
                 cargos_unicos[cargo['nome']] = cargo
         
+        # Preparar tipos de processo a partir dos choices
+        tipos_processos = [
+            {
+                'value': choice[0],
+                'label': choice[1]
+            }
+            for choice in PROCESSO_TIPOS_CHOICES
+        ]
+
         # Preparar resposta
         resultado = {
             'concursos': list(concursos_unicos.values()),
@@ -109,7 +119,8 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
                     'label': cargo['nome']
                 }
                 for cargo in cargos_unicos.values()
-            ]
+            ],
+            'tipos_processos': tipos_processos
         }
         
         return Response(resultado)
