@@ -7,4 +7,4 @@ psycopg2-binary==2.9.9
 requests==2.32.4
 
 # Audit Log
-django-auditlog==2.4.0
+django-auditlog==3.2.1
