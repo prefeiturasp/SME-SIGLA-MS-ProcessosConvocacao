@@ -8,6 +8,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+DJANGO_ENVIRONMENT = os.environ.get('DJANGO_ENVIRONMENT', 'local')
+MS_PATH = os.environ.get('MS_PATH', '/ms-processos-convocacao')
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-your-secret-key-here')
@@ -158,8 +160,8 @@ LOGGING = {
 }
 
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'Convocacao Sigla API',
-    'DESCRIPTION': 'API para o sistema de convocação de sigla',
+    'TITLE': 'Processos Convocação Sigla API',
+    'DESCRIPTION': 'API para o sistema de processos de convocação de sigla',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
 }

@@ -11,13 +11,13 @@ from django.db.models import Q
 from datetime import datetime
 import uuid
 
-from .models import ProcessoConvocacao, CargoProcesso
-from .serializers import (
+from processos.models import ProcessoConvocacao, CargoProcesso
+from processos.serializers import (
     ProcessoConvocacaoSerializer, ProcessoConvocacaoCreateSerializer, ProcessoConvocacaoListSerializer,
     ProcessoConvocacaoUpdateSerializer, CargoProcessoSerializer, CargoProcessoCreateSerializer
 )
-from .utils import CustomPagination
-from .models.constants import PROCESSO_TIPOS_CHOICES
+from processos.utils import CustomPagination
+from processos.models.constants import PROCESSO_TIPOS_CHOICES
 
 
 class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
