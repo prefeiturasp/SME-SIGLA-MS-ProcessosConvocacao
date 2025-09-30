@@ -10,7 +10,7 @@ __all__ = [
     'CargoProcesso',
     # Constants
     'PROCESSO_STATUS_CHOICES',
-    'PROCESSO_TIPOS_CHOICES',
+    'TIPO_ESCOLHA_CHOICES',
     'MIN_PRIORIDADE',
     'MAX_PRIORIDADE',
     'MIN_VAGAS',

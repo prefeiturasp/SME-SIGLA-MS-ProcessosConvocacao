@@ -19,13 +19,13 @@ class ProcessoConvocacaoAdmin(admin.ModelAdmin):
     """Admin for ProcessoConvocacao model."""
     
     list_display = (
-        'concurso_nome', 'descricao', 'tipo_processo', 'status', 
-        'data_convocacao', 'data_publicacao', 'numero_convocados', 
+        'concurso_nome', 'descricao', 'tipo_escolha', 'status', 
+        'data_convocacao', 'data_corte_vagas', 
     )
-    list_filter = ('status', 'tipo_processo', 'data_convocacao', 'data_publicacao')
+    list_filter = ('status', 'tipo_escolha', 'data_convocacao', 'data_corte_vagas')
     search_fields = ('concurso_nome', 'descricao')
-    readonly_fields = ('uuid', 'data_publicacao', 'criado_em', 'atualizado_em')
-    ordering = ('-data_publicacao',)
+    readonly_fields = ('uuid', 'criado_em', 'atualizado_em')
+    ordering = ('-criado_em',)
     inlines = (CargoProcessoInline,)
     
     fieldsets = (
@@ -33,10 +33,10 @@ class ProcessoConvocacaoAdmin(admin.ModelAdmin):
             'fields': ('concurso_uuid', 'concurso_nome')
         }),
         ('Dados do Processo', {
-            'fields': ('descricao', 'tipo_processo', 'status', 'numero_convocados')
+            'fields': ('descricao', 'tipo_escolha', 'status')
         }),
         ('Datas', {
-            'fields': ('data_convocacao',)
+            'fields': ('data_convocacao', 'data_corte_vagas')
         }),
         ('Metadados', {
             'fields': ('uuid', 'criado_em', 'atualizado_em'),

@@ -31,25 +31,25 @@ class ProcessoConvocacaoSerializer(serializers.ModelSerializer):
         model = ProcessoConvocacao
         fields = [
             'uuid', 'concurso_uuid', 'concurso_nome', 'descricao', 
-            'tipo_processo', 'status', 'data_publicacao', 'data_convocacao',
-            'numero_convocados', 'cargos_processo', 'criado_em', 'atualizado_em'
+            'tipo_escolha', 'status', 'data_convocacao',
+            'data_corte_vagas', 'cargos_processo', 'criado_em', 'atualizado_em'
         ]
         read_only_fields = ['uuid', 'criado_em', 'atualizado_em']
 
 
 class ProcessoConvocacaoCreateSerializer(serializers.ModelSerializer):
     """Serializer para criação de processo de convocação com cargos."""
-    cargos = serializers.ListField(
-        child=serializers.DictField(),
-        write_only=True,
-        required=False
-    )
+    # cargos = serializers.ListField(
+    #     child=serializers.DictField(),
+    #     write_only=True,
+    #     required=False
+    # )
     
     class Meta:
         model = ProcessoConvocacao
         fields = [
-            'concurso_uuid', 'concurso_nome', 'descricao', 'tipo_processo',
-            'status', 'data_convocacao', 'numero_convocados', 'cargos'
+            'concurso_uuid', 'concurso_nome', 'descricao', 'tipo_escolha',
+            'status', 'data_convocacao', 'data_corte_vagas'
         ]
     
     def validate_concurso_uuid(self, value):
@@ -60,21 +60,6 @@ class ProcessoConvocacaoCreateSerializer(serializers.ModelSerializer):
             return value
         except ValueError:
             raise serializers.ValidationError("UUID do concurso inválido.")
-    
-    def create(self, validated_data):
-        cargos_data = validated_data.pop('cargos', [])
-        processo = super().create(validated_data)
-        
-        for cargo_data in cargos_data:
-            cargo_nome = cargo_data.get('nome', '')
-            
-            CargoProcesso.objects.create(
-                processo=processo,
-                nome=cargo_nome,
-                cargo_uuid=cargo_data.get('cargo_uuid', '')
-            )
-        
-        return processo
 
 
 class ProcessoConvocacaoListSerializer(serializers.ModelSerializer):
@@ -84,8 +69,8 @@ class ProcessoConvocacaoListSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProcessoConvocacao
         fields = [
-            'uuid', 'concurso_nome', 'concurso_uuid', 'descricao', 'tipo_processo', 
-            'status', 'data_convocacao', 'numero_convocados',
+            'uuid', 'concurso_nome', 'concurso_uuid', 'descricao', 'tipo_escolha',
+            'status', 'data_convocacao', 'data_corte_vagas',
             'quantidade_cargos', 'criado_em'
         ]
     
@@ -99,6 +84,6 @@ class ProcessoConvocacaoUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProcessoConvocacao
         fields = [
-            'concurso_nome', 'descricao', 'tipo_processo', 'status', 'data_convocacao',
-            'numero_convocados'
+            'concurso_nome', 'descricao', 'tipo_escolha', 'status', 'data_convocacao',
+            'data_corte_vagas'
         ]
