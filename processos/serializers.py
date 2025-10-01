@@ -87,3 +87,15 @@ class ProcessoConvocacaoUpdateSerializer(serializers.ModelSerializer):
             'concurso_nome', 'descricao', 'tipo_escolha', 'status', 'data_convocacao',
             'data_corte_vagas'
         ]
+
+
+class ProcessoConvocacaoSelectSerializer(serializers.ModelSerializer):
+    """
+    Serializer para selects/dropdowns no frontend.
+    """
+    value = serializers.UUIDField(source='uuid')
+    label = serializers.CharField(source='descricao')
+    
+    class Meta:
+        model = ProcessoConvocacao
+        fields = ['value', 'label']
