@@ -51,9 +51,8 @@ def processo_convocacao(user, concurso_uuid, concurso_nome):
         descricao="Descrição do processo teste",
         tipo_escolha='Nova Autorização',
         status='EM_ANDAMENTO',
-        data_corte_vagas=timezone.now()
+        data_corte_vagas=timezone.now(),
         data_convocacao=timezone.now() + timedelta(days=15),
-        data_corte_vagas=timezone.now()
     )
 
 

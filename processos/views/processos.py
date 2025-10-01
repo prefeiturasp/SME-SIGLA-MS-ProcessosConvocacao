@@ -121,15 +121,8 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
         for cargo in todos_cargos:
             if cargo['nome'] not in cargos_unicos:
                 cargos_unicos[cargo['nome']] = cargo
-<<<<<<< Updated upstream
-        
-        # Preparar tipos de escolha a partir dos choices
-        tipos_escolha = [
-=======
 
-        # Preparar tipos de processo a partir dos choices
-        tipos_processos = [
->>>>>>> Stashed changes
+        tipos_escolha = [
             {
                 'value': choice[0],
                 'label': choice[1]
