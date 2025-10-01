@@ -15,7 +15,8 @@ import pdb
 from processos.models import ProcessoConvocacao, CargoProcesso
 from processos.serializers import (
     ProcessoConvocacaoSerializer, ProcessoConvocacaoCreateSerializer, ProcessoConvocacaoListSerializer,
-    ProcessoConvocacaoUpdateSerializer, CargoProcessoSerializer, CargoProcessoCreateSerializer
+    ProcessoConvocacaoUpdateSerializer, CargoProcessoSerializer, CargoProcessoCreateSerializer,
+    ProcessoConvocacaoSelectSerializer
 )
 from processos.utils import CustomPagination
 from processos.models.constants import TIPO_ESCOLHA_CHOICES
@@ -69,11 +70,31 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
         if self.action == 'create':
             return ProcessoConvocacaoCreateSerializer
         elif self.action == 'list':
+            if self.request.query_params.get('formato') == 'select':
+                return ProcessoConvocacaoSelectSerializer
             return ProcessoConvocacaoListSerializer
         elif self.action in ['update', 'partial_update']:
             return ProcessoConvocacaoUpdateSerializer
         return ProcessoConvocacaoSerializer
-    
+
+    def list(self, request, *args, **kwargs):
+        """
+        Lista todos os processos de convocação.
+        Se formato=select, retorna sem paginação.
+        """
+        queryset = self.filter_queryset(self.get_queryset())
+        if request.query_params.get('formato') == 'select':
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data)
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
     @action(detail=False, methods=['get'], url_path='filtros')
     def filtros(self, request):
         """
@@ -81,7 +102,7 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
         """
         # Buscar todos os concursos únicos usando set para garantir unicidade
         todos_processos = ProcessoConvocacao.objects.values('concurso_uuid', 'concurso_nome')
-        
+
         # Usar set para garantir concursos únicos
         concursos_unicos = {}
         for processo in todos_processos:
@@ -91,8 +112,8 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
                     'value': concurso_uuid,
                     'label': processo['concurso_nome']
                 }
-        
-        # Buscar todos os cargos e fazer deduplicação por nome em Python
+
+        # Buscar todos os cargos e fazer duplicação por nome em Python
         todos_cargos = CargoProcesso.objects.values('cargo_uuid', 'nome').order_by('nome', 'cargo_uuid')
 
         # Deduplicar cargos por nome
@@ -100,9 +121,15 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
         for cargo in todos_cargos:
             if cargo['nome'] not in cargos_unicos:
                 cargos_unicos[cargo['nome']] = cargo
+<<<<<<< Updated upstream
         
         # Preparar tipos de escolha a partir dos choices
         tipos_escolha = [
+=======
+
+        # Preparar tipos de processo a partir dos choices
+        tipos_processos = [
+>>>>>>> Stashed changes
             {
                 'value': choice[0],
                 'label': choice[1]
