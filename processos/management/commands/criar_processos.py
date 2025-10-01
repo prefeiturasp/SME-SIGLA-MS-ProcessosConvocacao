@@ -4,7 +4,7 @@ Django management command to create sample processos and cargos.
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from processos.models import ProcessoConvocacao, CargoProcesso
-from processos.models.constants import PROCESSO_STATUS_CHOICES, PROCESSO_TIPOS_CHOICES
+from processos.models.constants import PROCESSO_STATUS_CHOICES, TIPO_ESCOLHA_CHOICES
 import uuid
 import random
 
@@ -97,15 +97,15 @@ class Command(BaseCommand):
             status_choices = [choice[0] for choice in PROCESSO_STATUS_CHOICES]
             random_status = random.choice(status_choices)
             
-            # Tipo de processo aleatório
-            tipo_choices = [choice[0] for choice in PROCESSO_TIPOS_CHOICES]
+            # Tipo de escolha aleatório
+            tipo_choices = [choice[0] for choice in TIPO_ESCOLHA_CHOICES]
             random_tipo = random.choice(tipo_choices)
             
             # Descrição aleatória baseada no tipo
             descricoes = {
-                'CONVOCACAO': f'Convocatório para {random_tipo.lower()} de profissionais',
-                'SELECAO': f'Processo seletivo para {random_tipo.lower()} de candidatos',
-                'AVALIACAO': f'Avaliação técnica para {random_tipo.lower()} de especialistas'
+                'Nova Autorização': f'Convocatório para nova autorização de profissionais',
+                'Reposição': f'Processo seletivo para reposição de candidatos',
+                'Reconvocação': f'Avaliação técnica para reconvocação de especialistas'
             }
             descricao = descricoes.get(random_tipo, f'Processo de {random_tipo.lower()}')
             
@@ -117,20 +117,19 @@ class Command(BaseCommand):
                 concurso_uuid=concurso_escolhido['uuid'],
                 concurso_nome=concurso_escolhido['nome'],
                 descricao=descricao,
-                tipo_processo=random_tipo,
+                tipo_escolha=random_tipo,
                 status=random_status,
-                data_publicacao=timezone.now(),
-                data_convocacao=data_convocacao,  # Data aleatória entre 2-30 dias
-                numero_convocados=i+1
+                data_convocacao=data_convocacao,
+                data_corte_vagas=data_convocacao + timezone.timedelta(days=7)
             )
             processos_criados.append(processo)
             
             # Mostrar informações do processo criado
             status_display = dict(PROCESSO_STATUS_CHOICES)[random_status]
-            tipo_display = dict(PROCESSO_TIPOS_CHOICES)[random_tipo]
+            tipo_display = dict(TIPO_ESCOLHA_CHOICES)[random_tipo]
             
             self.stdout.write(
-                f'  ✓ Criado processo: {processo.numero_convocados} '
+                f'  ✓ Criado processo: {processo.uuid} '
                 f'(Concurso: {processo.concurso_nome[:50]}...) '
                 f'(Status: {status_display}, Tipo: {tipo_display}) '
                 f'(Convocação: +{dias_aleatorios} dias)'

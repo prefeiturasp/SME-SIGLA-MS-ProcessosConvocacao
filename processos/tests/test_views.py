@@ -61,11 +61,10 @@ def processo_convocacao(user, concurso_uuid, concurso_nome):
         concurso_uuid=concurso_uuid,
         concurso_nome=concurso_nome,
         descricao="Descrição do processo teste",
-        tipo_processo='CONVOCACAO',
+        tipo_escolha='Nova Autorização',
         status='EM_ANDAMENTO',
-        data_publicacao=timezone.now(),
+        data_corte_vagas=timezone.now(),
         data_convocacao=timezone.now() + timedelta(days=15),  # Data futura
-        numero_convocados=5
     )
 
 
@@ -93,7 +92,7 @@ def processo_cargo(user):
         concurso_uuid=uuid.uuid4(),
         concurso_nome="Concurso Teste",
         descricao="Descrição do processo teste",
-        tipo_processo='CONVOCACAO',
+        tipo_escolha='Nova Autorização',
         status='EM_ANDAMENTO',
         data_convocacao=timezone.now() + timedelta(days=10)
     )
@@ -116,7 +115,7 @@ def processo_permissao(user):
         concurso_uuid=uuid.uuid4(),
         concurso_nome="Concurso Permissões",
         descricao="Descrição para teste de permissões",
-        tipo_processo='CONVOCACAO',
+        tipo_escolha='Nova Autorização',
         status='EM_ANDAMENTO',
         data_convocacao=timezone.now() + timedelta(days=20)
     )
@@ -129,7 +128,7 @@ def processo_lista(user):
         concurso_uuid=uuid.uuid4(),
         concurso_nome="Concurso Lista",
         descricao="Descrição 2",
-        tipo_processo='CONVOCACAO',
+        tipo_escolha='Nova Autorização',
         status='EM_ANDAMENTO',
         data_convocacao=timezone.now() + timedelta(days=25)
     )
@@ -154,10 +153,9 @@ def test_processo_convocacao_create(authenticated_client):
         'concurso_uuid': str(uuid.uuid4()),
         'concurso_nome': 'Novo Concurso',
         'descricao': 'Descrição do novo processo',
-        'tipo_processo': 'CONVOCACAO',
+        'tipo_escolha': 'Nova Autorização',
         'status': 'EM_ANDAMENTO',
         'data_convocacao': (timezone.now() + timedelta(days=30)).isoformat(),
-        'numero_convocados': 10,
         'cargos': [
             {'nome': 'Analista', 'cargo_uuid': str(uuid.uuid4())},
             {'nome': 'Desenvolvedor', 'cargo_uuid': str(uuid.uuid4())}
@@ -321,7 +319,7 @@ def test_endpoint_filtros_basic(authenticated_client, processo_convocacao, cargo
     for tipo in tipos_processos:
         assert 'value' in tipo
         assert 'label' in tipo
-        assert tipo['value'] in ['CONVOCACAO', 'SELECAO', 'AVALIACAO']
+        assert tipo['value'] in ['Nova Autorização', 'SELECAO', 'AVALIACAO']
         assert tipo['label'] in ['Convocação', 'Seleção', 'Avaliação']
 
 
@@ -332,7 +330,7 @@ def test_endpoint_filtros_multiplos_processos(authenticated_client, user):
         concurso_uuid=uuid.uuid4(),
         concurso_nome="Concurso A",
         descricao="Descrição A",
-        tipo_processo='CONVOCACAO',
+        tipo_escolha='Nova Autorização',
         status='EM_ANDAMENTO',
         data_convocacao=timezone.now() + timedelta(days=10)
     )
@@ -341,7 +339,7 @@ def test_endpoint_filtros_multiplos_processos(authenticated_client, user):
         concurso_uuid=uuid.uuid4(),
         concurso_nome="Concurso B",
         descricao="Descrição B",
-        tipo_processo='CONVOCACAO',
+        tipo_escolha='Nova Autorização',
         status='EM_ANDAMENTO',
         data_convocacao=timezone.now() + timedelta(days=15)
     )
@@ -388,7 +386,7 @@ def test_endpoint_filtros_concurso_duplicado(authenticated_client, user):
         concurso_uuid=concurso_uuid,
         concurso_nome=concurso_nome,
         descricao="Descrição 1",
-        tipo_processo='CONVOCACAO',
+        tipo_escolha='Nova Autorização',
         status='EM_ANDAMENTO',
         data_convocacao=timezone.now() + timedelta(days=10)
     )
@@ -397,7 +395,7 @@ def test_endpoint_filtros_concurso_duplicado(authenticated_client, user):
         concurso_uuid=concurso_uuid,  # Mesmo UUID
         concurso_nome=concurso_nome,  # Mesmo nome
         descricao="Descrição 2",
-        tipo_processo='CONVOCACAO',
+        tipo_escolha='Nova Autorização',
         status='EM_ANDAMENTO',
         data_convocacao=timezone.now() + timedelta(days=15)
     )
@@ -421,7 +419,7 @@ def test_endpoint_filtros_cargo_duplicado(authenticated_client, user):
         concurso_uuid=uuid.uuid4(),
         concurso_nome="Concurso 1",
         descricao="Descrição 1",
-        tipo_processo='CONVOCACAO',
+        tipo_escolha='Nova Autorização',
         status='EM_ANDAMENTO',
         data_convocacao=timezone.now() + timedelta(days=10)
     )
@@ -430,7 +428,7 @@ def test_endpoint_filtros_cargo_duplicado(authenticated_client, user):
         concurso_uuid=uuid.uuid4(),
         concurso_nome="Concurso 2",
         descricao="Descrição 2",
-        tipo_processo='CONVOCACAO',
+        tipo_escolha='Nova Autorização',
         status='EM_ANDAMENTO',
         data_convocacao=timezone.now() + timedelta(days=15)
     )
@@ -492,7 +490,7 @@ def test_endpoint_filtros_tipos_processo(authenticated_client):
 
     # Verificar que todos os tipos esperados estão presentes
     tipos_esperados = {
-        'CONVOCACAO': 'Convocação',
+        'Nova Autorização': 'Convocação',
         'SELECAO': 'Seleção',
         'AVALIACAO': 'Avaliação'
     }
@@ -514,8 +512,8 @@ def test_processo_convocacao_filters(authenticated_client, processo_convocacao):
     assert response.status_code == status.HTTP_200_OK
     assert len(response.data['results']) == 1
 
-    # Filtro por tipo_processo
-    response = authenticated_client.get(url, {'tipo_processo': 'CONVOCACAO'})
+    # Filtro por tipo_escolha
+    response = authenticated_client.get(url, {'tipo_escolha': 'Nova Autorização'})
     assert response.status_code == status.HTTP_200_OK
     assert len(response.data['results']) == 1
 

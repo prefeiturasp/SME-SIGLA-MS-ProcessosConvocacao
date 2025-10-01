@@ -4,12 +4,13 @@ DRF views for the processes module.
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django.db.models import Q
 from datetime import datetime
 import uuid
+import pdb
 
 from processos.models import ProcessoConvocacao, CargoProcesso
 from processos.serializers import (
@@ -17,8 +18,7 @@ from processos.serializers import (
     ProcessoConvocacaoUpdateSerializer, CargoProcessoSerializer, CargoProcessoCreateSerializer
 )
 from processos.utils import CustomPagination
-from processos.models.constants import PROCESSO_TIPOS_CHOICES
-
+from processos.models.constants import TIPO_ESCOLHA_CHOICES
 
 class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
     """
@@ -26,12 +26,12 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
     """
     queryset = ProcessoConvocacao.objects.prefetch_related('cargos_processo')
     serializer_class = ProcessoConvocacaoSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['concurso_uuid']
     search_fields = ['concurso_nome', 'descricao']
-    ordering_fields = ['data_convocacao', 'data_publicacao', 'numero_convocados', 'criado_em']
-    ordering = ['-data_publicacao']
+    ordering_fields = ['data_convocacao', 'data_corte_vagas', 'criado_em']
+    ordering = ['-criado_em']
     pagination_class = CustomPagination
     
     def get_queryset(self):
@@ -101,13 +101,13 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
             if cargo['nome'] not in cargos_unicos:
                 cargos_unicos[cargo['nome']] = cargo
         
-        # Preparar tipos de processo a partir dos choices
-        tipos_processos = [
+        # Preparar tipos de escolha a partir dos choices
+        tipos_escolha = [
             {
                 'value': choice[0],
                 'label': choice[1]
             }
-            for choice in PROCESSO_TIPOS_CHOICES
+            for choice in TIPO_ESCOLHA_CHOICES
         ]
 
         # Preparar resposta
@@ -120,7 +120,7 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
                 }
                 for cargo in cargos_unicos.values()
             ],
-            'tipos_processos': tipos_processos
+            'tipos_escolha': tipos_escolha
         }
         
         return Response(resultado)

@@ -8,7 +8,7 @@ from django.core.exceptions import ValidationError
 import uuid
 
 from ..models import ProcessoConvocacao, CargoProcesso
-from ..models.constants import PROCESSO_STATUS_CHOICES, PROCESSO_TIPOS_CHOICES
+from ..models.constants import PROCESSO_STATUS_CHOICES, TIPO_ESCOLHA_CHOICES
 
 
 pytestmark = pytest.mark.django_db
@@ -42,11 +42,10 @@ def processo_convocacao(user, concurso_uuid, concurso_nome):
         concurso_uuid=concurso_uuid,
         concurso_nome=concurso_nome,
         descricao="Descrição do processo teste",
-        tipo_processo='CONVOCACAO',
+        tipo_escolha='Nova Autorização',
         status='EM_ANDAMENTO',
-        data_publicacao=timezone.now(),
+        data_corte_vagas=timezone.now(),
         data_convocacao=timezone.now() + timezone.timedelta(days=15),
-        numero_convocados=5
     )
 
 
@@ -57,7 +56,7 @@ def processo_cargo(user):
         concurso_uuid=uuid.uuid4(),
         concurso_nome="Concurso Teste",
         descricao="Descrição do processo teste",
-        tipo_processo='CONVOCACAO',
+        tipo_escolha='Nova Autorização',
         status='EM_ANDAMENTO',
         data_convocacao=timezone.now() + timezone.timedelta(days=10)
     )
@@ -80,7 +79,7 @@ def processo_integracao(user):
         concurso_uuid=uuid.uuid4(),
         concurso_nome="Concurso Integração",
         descricao="Descrição integração",
-        tipo_processo='CONVOCACAO',
+        tipo_escolha='Nova Autorização',
         status='EM_ANDAMENTO',
         data_convocacao=timezone.now() + timezone.timedelta(days=20)
     )
@@ -92,9 +91,9 @@ def test_processo_convocacao_creation(processo_convocacao, concurso_uuid, concur
     assert processo_convocacao.concurso_uuid == concurso_uuid
     assert processo_convocacao.concurso_nome == concurso_nome
     assert processo_convocacao.descricao == "Descrição do processo teste"
-    assert processo_convocacao.tipo_processo == 'CONVOCACAO'
+    assert processo_convocacao.tipo_escolha == 'Nova Autorização'
     assert processo_convocacao.status == 'EM_ANDAMENTO'
-    assert processo_convocacao.numero_convocados == 5
+    assert processo_convocacao.tipo_escolha == 'Nova Autorização'
     assert processo_convocacao.uuid is not None
     assert processo_convocacao.criado_em is not None
     assert processo_convocacao.atualizado_em is not None
@@ -114,23 +113,22 @@ def test_processo_convocacao_default_values():
         descricao="Descrição padrão"
     )
     
-    assert processo_default.tipo_processo == 'CONVOCACAO'
+    assert processo_default.tipo_escolha == 'Nova Autorização'
     assert processo_default.status == 'EM_ANDAMENTO'
-    assert processo_default.numero_convocados == 1
-    assert processo_default.data_publicacao is not None
     assert processo_default.data_convocacao is not None
+    assert processo_default.data_corte_vagas is not None
 
 
 def test_processo_convocacao_choices_validation():
     """Testa a validação das choices."""
-    # Teste com tipo_processo válido
+    # Teste com tipo_escolha válido
     processo_valido = ProcessoConvocacao.objects.create(
         concurso_uuid=uuid.uuid4(),
         concurso_nome="Concurso Válido",
         descricao="Descrição válida",
-        tipo_processo='SELECAO'
+        tipo_escolha='Reposição'
     )
-    assert processo_valido.tipo_processo in dict(PROCESSO_TIPOS_CHOICES)
+    assert processo_valido.tipo_escolha in dict(TIPO_ESCOLHA_CHOICES)
     
     # Teste com status válido
     processo_status_valido = ProcessoConvocacao.objects.create(

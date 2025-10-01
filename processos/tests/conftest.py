@@ -35,11 +35,10 @@ def processo_convocacao(user):
         concurso_uuid=uuid.uuid4(),
         concurso_nome="Concurso Teste",
         descricao="Descrição do processo teste",
-        tipo_processo='CONVOCACAO',
+        tipo_escolha='Nova Autorização',
         status='EM_ANDAMENTO',
-        data_publicacao=timezone.now(),
         data_convocacao=timezone.now(),
-        numero_convocados=5
+        data_corte_vagas=timezone.now()
     )
 
 
@@ -80,11 +79,10 @@ def processos_multiplos(user):
             concurso_uuid=uuid.uuid4(),
             concurso_nome=f"Concurso Teste {i+1}",
             descricao=f"Descrição do processo teste {i+1}",
-            tipo_processo='CONVOCACAO',
+            tipo_escolha='Nova Autorização',
             status='EM_ANDAMENTO',
-            data_publicacao=timezone.now(),
             data_convocacao=timezone.now(),
-            numero_convocados=i+1
+            data_corte_vagas=timezone.now()
         )
         
         # Adicionar cargos para cada processo
@@ -106,11 +104,10 @@ def processo_finalizado(user):
         concurso_uuid=uuid.uuid4(),
         concurso_nome="Concurso Finalizado",
         descricao="Processo já finalizado",
-        tipo_processo='CONVOCACAO',
+        tipo_escolha='Reposição',
         status='FINALIZADO',
-        data_publicacao=timezone.now(),
         data_convocacao=timezone.now(),
-        numero_convocados=10
+        data_corte_vagas=timezone.now()
     )
 
 
@@ -121,11 +118,10 @@ def processo_cancelado(user):
         concurso_uuid=uuid.uuid4(),
         concurso_nome="Concurso Cancelado",
         descricao="Processo cancelado",
-        tipo_processo='CONVOCACAO',
+        tipo_escolha='Reconvocação',
         status='CANCELADO',
-        data_publicacao=timezone.now(),
         data_convocacao=timezone.now(),
-        numero_convocados=5
+        data_corte_vagas=timezone.now()
     )
 
 
@@ -136,11 +132,10 @@ def processo_selecao(user):
         concurso_uuid=uuid.uuid4(),
         concurso_nome="Processo de Seleção",
         descricao="Processo seletivo",
-        tipo_processo='SELECAO',
+        tipo_escolha='Reposição',
         status='EM_ANDAMENTO',
-        data_publicacao=timezone.now(),
         data_convocacao=timezone.now(),
-        numero_convocados=15
+        data_corte_vagas=timezone.now()
     )
 
 
@@ -151,9 +146,8 @@ def processo_avaliacao(user):
         concurso_uuid=uuid.uuid4(),
         concurso_nome="Processo de Avaliação",
         descricao="Processo de avaliação técnica",
-        tipo_processo='AVALIACAO',
+        tipo_escolha='Reconvocação',
         status='EM_ANDAMENTO',
-        data_publicacao=timezone.now(),
         data_convocacao=timezone.now(),
-        numero_convocados=8
+        data_corte_vagas=timezone.now()
     )

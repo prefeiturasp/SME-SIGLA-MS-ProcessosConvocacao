@@ -49,11 +49,11 @@ def processo_convocacao(user, concurso_uuid, concurso_nome):
         concurso_uuid=concurso_uuid,
         concurso_nome=concurso_nome,
         descricao="Descrição do processo teste",
-        tipo_processo='CONVOCACAO',
+        tipo_escolha='Nova Autorização',
         status='EM_ANDAMENTO',
-        data_publicacao=timezone.now(),
+        data_corte_vagas=timezone.now()
         data_convocacao=timezone.now() + timedelta(days=15),
-        numero_convocados=5
+        data_corte_vagas=timezone.now()
     )
 
 
@@ -81,7 +81,7 @@ def processo_cargo(user):
         concurso_uuid=uuid.uuid4(),
         concurso_nome="Concurso Teste",
         descricao="Descrição do processo teste",
-        tipo_processo='CONVOCACAO',
+        tipo_escolha='Nova Autorização',
         status='EM_ANDAMENTO',
         data_convocacao=timezone.now() + timedelta(days=10)
     )
@@ -144,11 +144,11 @@ def test_processo_convocacao_serializer_fields(processo_convocacao, cargos_proce
     assert 'concurso_uuid' in data
     assert 'concurso_nome' in data
     assert 'descricao' in data
-    assert 'tipo_processo' in data
+    assert 'tipo_escolha' in data
     assert 'status' in data
-    assert 'data_publicacao' in data
+    assert 'data_corte_vagas' in data
     assert 'data_convocacao' in data
-    assert 'numero_convocados' in data
+    assert 'data_corte_vagas' in data
     assert 'cargos_processo' in data
     assert 'criado_em' in data
     assert 'atualizado_em' in data
@@ -186,10 +186,10 @@ def test_processo_convocacao_create_serializer_fields():
     assert 'concurso_uuid' in serializer.fields
     assert 'concurso_nome' in serializer.fields
     assert 'descricao' in serializer.fields
-    assert 'tipo_processo' in serializer.fields
+    assert 'tipo_escolha' in serializer.fields
     assert 'status' in serializer.fields
     assert 'data_convocacao' in serializer.fields
-    assert 'numero_convocados' in serializer.fields
+    assert 'data_corte_vagas' in serializer.fields
     assert 'cargos' in serializer.fields
 
 
@@ -199,10 +199,10 @@ def test_processo_convocacao_create_serializer_validation():
         'concurso_uuid': str(uuid.uuid4()),
         'concurso_nome': 'Concurso Teste',
         'descricao': 'Descrição teste',
-        'tipo_processo': 'CONVOCACAO',
+        'tipo_escolha': 'Nova Autorização',
         'status': 'EM_ANDAMENTO',
         'data_convocacao': timezone.now() + timedelta(days=30),
-        'numero_convocados': 5,
+        'data_corte_vagas': 5,
         'cargos': [
             {'nome': 'Analista', 'cargo_uuid': str(uuid.uuid4())},
             {'nome': 'Desenvolvedor', 'cargo_uuid': str(uuid.uuid4())}
@@ -232,10 +232,10 @@ def test_processo_convocacao_create_serializer_create_with_cargos(user):
         'concurso_uuid': str(uuid.uuid4()),
         'concurso_nome': 'Concurso Teste',
         'descricao': 'Descrição teste',
-        'tipo_processo': 'CONVOCACAO',
+        'tipo_escolha': 'Nova Autorização',
         'status': 'EM_ANDAMENTO',
         'data_convocacao': timezone.now() + timedelta(days=30),
-        'numero_convocados': 5,
+        'data_corte_vagas': 5,
         'cargos': [
             {'nome': 'Analista', 'cargo_uuid': str(uuid.uuid4())},
             {'nome': 'Desenvolvedor', 'cargo_uuid': str(uuid.uuid4())}
@@ -276,10 +276,10 @@ def test_processo_convocacao_list_serializer_fields(processo_convocacao):
     assert 'concurso_nome' in data
     assert 'concurso_uuid' in data
     assert 'descricao' in data
-    assert 'tipo_processo' in data
+    assert 'tipo_escolha' in data
     assert 'status' in data
     assert 'data_convocacao' in data
-    assert 'numero_convocados' in data
+    assert 'data_corte_vagas' in data
     assert 'quantidade_cargos' in data
     assert 'criado_em' in data
     
@@ -326,10 +326,10 @@ def test_processo_convocacao_update_serializer_fields():
     serializer = ProcessoConvocacaoUpdateSerializer()
     assert 'concurso_nome' in serializer.fields
     assert 'descricao' in serializer.fields
-    assert 'tipo_processo' in serializer.fields
+    assert 'tipo_escolha' in serializer.fields
     assert 'status' in serializer.fields
     assert 'data_convocacao' in serializer.fields
-    assert 'numero_convocados' in serializer.fields
+    assert 'data_corte_vagas' in serializer.fields
 
 
 def test_processo_convocacao_update_serializer_validation(processo_convocacao):

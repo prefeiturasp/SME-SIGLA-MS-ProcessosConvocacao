@@ -9,11 +9,11 @@ PROCESSO_STATUS_CHOICES = [
     ('CANCELADO', 'Cancelado'),
 ]
 
-# Tipos de processo
-PROCESSO_TIPOS_CHOICES = [
-    ('CONVOCACAO', 'Convocação'),
-    ('SELECAO', 'Seleção'),
-    ('AVALIACAO', 'Avaliação'),
+# Tipos de escolha
+TIPO_ESCOLHA_CHOICES = [
+    ('NOVA_AUTORIZACAO', 'Nova Autorização'),
+    ('REPOSICAO', 'Reposição'),
+    ('RECONVOCAO', 'Reconvocação'),
 ]
 
 # Constantes para validação

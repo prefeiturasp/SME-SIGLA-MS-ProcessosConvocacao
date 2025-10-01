@@ -3,7 +3,7 @@ from django.utils import timezone
 from .base import BaseModel
 from .constants import (
     PROCESSO_STATUS_CHOICES,
-    PROCESSO_TIPOS_CHOICES
+    TIPO_ESCOLHA_CHOICES
 )
 from auditlog.registry import auditlog
 
@@ -16,11 +16,11 @@ class ProcessoConvocacao(BaseModel):
     concurso_uuid = models.UUIDField(verbose_name="UUID do Concurso")
     concurso_nome = models.CharField(max_length=200, verbose_name="Nome do Concurso")
     descricao = models.CharField(verbose_name="Descrição", max_length=255)
-    tipo_processo = models.CharField(
+    tipo_escolha = models.CharField(
         max_length=20,
-        choices=PROCESSO_TIPOS_CHOICES,
-        default='CONVOCACAO',
-        verbose_name="Tipo de Processo"
+        choices=TIPO_ESCOLHA_CHOICES,
+        default='NOVA_AUTORIZACAO',
+        verbose_name="Tipo de Escolha"
     )
     status = models.CharField(
         max_length=20,
@@ -28,9 +28,10 @@ class ProcessoConvocacao(BaseModel):
         default='EM_ANDAMENTO',
         verbose_name="Status"
     )
-    data_publicacao = models.DateTimeField(verbose_name="Data de Publicação", default=timezone.now)
+
     data_convocacao = models.DateTimeField(verbose_name="Data de Convocação", default=timezone.now)
-    numero_convocados = models.IntegerField(verbose_name="Número de Convocação", default=1)
+    data_corte_vagas = models.DateTimeField(verbose_name="Data de Corte de Vagas", default=timezone.now)
+
 
     class Meta:
         verbose_name = "Processo de Convocação"
@@ -39,7 +40,7 @@ class ProcessoConvocacao(BaseModel):
         db_table = 'processos_convocacao'
 
     def __str__(self):
-        return f"{self.concurso_nome} - {self.numero_convocados}"
+        return f"{self.concurso_nome} - {self.tipo_escolha}"
 
 
 auditlog.register(ProcessoConvocacao)
