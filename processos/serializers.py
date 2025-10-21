@@ -48,9 +48,10 @@ class ProcessoConvocacaoCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProcessoConvocacao
         fields = [
-            'concurso_uuid', 'concurso_nome', 'descricao', 'tipo_escolha',
+            'uuid', 'concurso_uuid', 'concurso_nome', 'descricao', 'tipo_escolha',
             'status', 'data_convocacao', 'data_corte_vagas'
         ]
+        read_only_fields = ['uuid']
     
     def validate_concurso_uuid(self, value):
         """Valida se o concurso_uuid é um UUID válido."""
@@ -84,9 +85,10 @@ class ProcessoConvocacaoUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProcessoConvocacao
         fields = [
-            'concurso_nome', 'descricao', 'tipo_escolha', 'status', 'data_convocacao',
+            'uuid', 'concurso_nome', 'descricao', 'tipo_escolha', 'status', 'data_convocacao',
             'data_corte_vagas'
         ]
+        read_only_fields = ['uuid']
 
 
 class ProcessoConvocacaoSelectSerializer(serializers.ModelSerializer):
