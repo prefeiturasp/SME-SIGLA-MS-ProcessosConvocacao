@@ -29,7 +29,7 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
     serializer_class = ProcessoConvocacaoSerializer
     permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['concurso_uuid']
+    filterset_fields = ['concurso_uuid', 'status']
     search_fields = ['concurso_nome', 'descricao']
     ordering_fields = ['data_convocacao', 'data_corte_vagas', 'criado_em']
     ordering = ['-criado_em']
@@ -144,4 +144,75 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
         }
         
         return Response(resultado)
+
+    @action(detail=True, methods=['get', 'post'], url_path='cargos')
+    def cargos(self, request, pk=None):
+        """
+        Endpoint para gerenciar cargos de um processo.
+        
+        GET: Lista todos os cargos do processo
+        POST: Salva/atualiza cargos do processo (substitui todos os existentes)
+        """
+        try:
+            processo = self.get_object()
+        except ProcessoConvocacao.DoesNotExist:
+            return Response(
+                {'error': 'Processo de convocação não encontrado'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        if request.method == 'GET':
+            # Listar cargos do processo
+            cargos = processo.cargos_processo.all()
+            serializer = CargoProcessoSerializer(cargos, many=True)
+            return Response(serializer.data)
+
+        elif request.method == 'POST':
+            # Salvar/atualizar cargos do processo
+            cargos_data = request.data
+            
+            # Validar se é uma lista
+            if not isinstance(cargos_data, list):
+                return Response(
+                    {'error': 'Dados devem ser uma lista de cargos'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Deletar cargos existentes
+            processo.cargos_processo.all().delete()
+
+            # Criar novos cargos
+            cargos_criados = []
+            erros = []
+            
+            for cargo_data in cargos_data:
+                serializer = CargoProcessoCreateSerializer(data=cargo_data)
+                if serializer.is_valid():
+                    cargo = serializer.save(processo=processo)
+                    cargos_criados.append(CargoProcessoSerializer(cargo).data)
+                else:
+                    erros.append({
+                        'cargo': cargo_data.get('nome', 'N/A'),
+                        'erros': serializer.errors
+                    })
+
+            if erros:
+                return Response(
+                    {
+                        'success': True,
+                        'cargos_criados': len(cargos_criados),
+                        'erros': erros,
+                        'cargos': cargos_criados
+                    },
+                    status=status.HTTP_207_MULTI_STATUS
+                )
+
+            return Response(
+                {
+                    'success': True,
+                    'cargos_criados': len(cargos_criados),
+                    'cargos': cargos_criados
+                },
+                status=status.HTTP_201_CREATED
+            )
 

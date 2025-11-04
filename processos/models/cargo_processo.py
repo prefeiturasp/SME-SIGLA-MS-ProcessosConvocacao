@@ -15,6 +15,33 @@ class CargoProcesso(BaseModel):
     )
     nome = models.CharField(max_length=200, verbose_name="Nome do Cargo")
     cargo_uuid = models.UUIDField(verbose_name="UUID do Cargo")
+    
+    # Campos adicionais para controle de vagas e candidatos
+    vagas = models.IntegerField(
+        verbose_name="Quantidade de Vagas",
+        default=0,
+        help_text="Total de vagas disponíveis para este cargo no processo"
+    )
+    geral = models.IntegerField(
+        verbose_name="Vagas Gerais",
+        default=0,
+        help_text="Quantidade de vagas para candidatos gerais"
+    )
+    pcd = models.IntegerField(
+        verbose_name="Vagas PCD",
+        default=0,
+        help_text="Quantidade de vagas para pessoas com deficiência"
+    )
+    nna = models.IntegerField(
+        verbose_name="Vagas NNA",
+        default=0,
+        help_text="Quantidade de vagas para negros, não-afrodescendentes"
+    )
+    total_candidatos = models.IntegerField(
+        verbose_name="Total de Candidatos",
+        default=0,
+        help_text="Total de candidatos classificados para este cargo"
+    )
 
     class Meta:
         verbose_name = "Cargo do Processo"
