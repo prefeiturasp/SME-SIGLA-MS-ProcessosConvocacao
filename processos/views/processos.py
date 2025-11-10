@@ -100,10 +100,7 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
         """
         Retorna concursos únicos, cargos únicos e tipos de processo em chaves separadas.
         """
-        # Buscar todos os concursos únicos usando set para garantir unicidade
         todos_processos = ProcessoConvocacao.objects.values('concurso_uuid', 'concurso_nome')
-
-        # Usar set para garantir concursos únicos
         concursos_unicos = {}
         for processo in todos_processos:
             concurso_uuid = processo['concurso_uuid']
@@ -113,14 +110,11 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
                     'label': processo['concurso_nome']
                 }
 
-        # Buscar todos os cargos e fazer duplicação por nome em Python
         todos_cargos = CargoProcesso.objects.values('cargo_uuid', 'nome').order_by('nome', 'cargo_uuid')
-
-        # Deduplicar cargos por nome
         cargos_unicos = {}
         for cargo in todos_cargos:
-            if cargo['nome'] not in cargos_unicos:
-                cargos_unicos[cargo['nome']] = cargo
+            if cargo['cargo_nome'] not in cargos_unicos:
+                cargos_unicos[cargo['cargo_nome']] = cargo
 
         tipos_escolha = [
             {
@@ -130,89 +124,16 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
             for choice in TIPO_ESCOLHA_CHOICES
         ]
 
-        # Preparar resposta
         resultado = {
             'concursos': list(concursos_unicos.values()),
             'cargos': [
                 {
                     'value': cargo['cargo_uuid'],
-                    'label': cargo['nome']
+                    'label': cargo['cargo_nome']
                 }
                 for cargo in cargos_unicos.values()
             ],
             'tipos_escolha': tipos_escolha
         }
-        
+
         return Response(resultado)
-
-    @action(detail=True, methods=['get', 'post'], url_path='cargos')
-    def cargos(self, request, pk=None):
-        """
-        Endpoint para gerenciar cargos de um processo.
-        
-        GET: Lista todos os cargos do processo
-        POST: Salva/atualiza cargos do processo (substitui todos os existentes)
-        """
-        try:
-            processo = self.get_object()
-        except ProcessoConvocacao.DoesNotExist:
-            return Response(
-                {'error': 'Processo de convocação não encontrado'},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-        if request.method == 'GET':
-            # Listar cargos do processo
-            cargos = processo.cargos_processo.all()
-            serializer = CargoProcessoSerializer(cargos, many=True)
-            return Response(serializer.data)
-
-        elif request.method == 'POST':
-            # Salvar/atualizar cargos do processo
-            cargos_data = request.data
-            
-            # Validar se é uma lista
-            if not isinstance(cargos_data, list):
-                return Response(
-                    {'error': 'Dados devem ser uma lista de cargos'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
-            # Deletar cargos existentes
-            processo.cargos_processo.all().delete()
-
-            # Criar novos cargos
-            cargos_criados = []
-            erros = []
-            
-            for cargo_data in cargos_data:
-                serializer = CargoProcessoCreateSerializer(data=cargo_data)
-                if serializer.is_valid():
-                    cargo = serializer.save(processo=processo)
-                    cargos_criados.append(CargoProcessoSerializer(cargo).data)
-                else:
-                    erros.append({
-                        'cargo': cargo_data.get('nome', 'N/A'),
-                        'erros': serializer.errors
-                    })
-
-            if erros:
-                return Response(
-                    {
-                        'success': True,
-                        'cargos_criados': len(cargos_criados),
-                        'erros': erros,
-                        'cargos': cargos_criados
-                    },
-                    status=status.HTTP_207_MULTI_STATUS
-                )
-
-            return Response(
-                {
-                    'success': True,
-                    'cargos_criados': len(cargos_criados),
-                    'cargos': cargos_criados
-                },
-                status=status.HTTP_201_CREATED
-            )
-
