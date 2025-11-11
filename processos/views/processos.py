@@ -110,7 +110,7 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
                     'label': processo['concurso_nome']
                 }
 
-        todos_cargos = CargoProcesso.objects.values('cargo_uuid', 'nome').order_by('nome', 'cargo_uuid')
+        todos_cargos = CargoProcesso.objects.values('cargo_uuid', 'cargo_nome').order_by('cargo_nome', 'cargo_uuid')
         cargos_unicos = {}
         for cargo in todos_cargos:
             if cargo['cargo_nome'] not in cargos_unicos:
