@@ -8,7 +8,9 @@ class CargoProcessoSerializer(serializers.ModelSerializer):
     class Meta:
         model = CargoProcesso
         fields = [
-            'uuid', 'nome', 'processo', 'criado_em', 'atualizado_em'
+            'uuid', 'cargo_nome', 'cargo_uuid', 'processo', 
+            'vagas', 'candidatos_geral', 'candidatos_pcd', 'candidatos_nna', 'total_candidatos',
+            'criado_em', 'atualizado_em'
         ]
         read_only_fields = ['uuid', 'criado_em', 'atualizado_em']
 
@@ -19,8 +21,9 @@ class CargoProcessoCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = CargoProcesso
         fields = [
-            'nome'
+            'cargo_nome', 'cargo_uuid', 'candidatos_geral', 'candidatos_pcd', 'candidatos_nna', 'total_candidatos', 'vagas'
         ]
+        read_only_fields = ['uuid', 'criado_em', 'atualizado_em']
 
 
 class ProcessoConvocacaoSerializer(serializers.ModelSerializer):

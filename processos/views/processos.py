@@ -29,7 +29,7 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
     serializer_class = ProcessoConvocacaoSerializer
     permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['concurso_uuid']
+    filterset_fields = ['concurso_uuid', 'status']
     search_fields = ['concurso_nome', 'descricao']
     ordering_fields = ['data_convocacao', 'data_corte_vagas', 'criado_em']
     ordering = ['-criado_em']
@@ -100,10 +100,7 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
         """
         Retorna concursos únicos, cargos únicos e tipos de processo em chaves separadas.
         """
-        # Buscar todos os concursos únicos usando set para garantir unicidade
         todos_processos = ProcessoConvocacao.objects.values('concurso_uuid', 'concurso_nome')
-
-        # Usar set para garantir concursos únicos
         concursos_unicos = {}
         for processo in todos_processos:
             concurso_uuid = processo['concurso_uuid']
@@ -113,14 +110,11 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
                     'label': processo['concurso_nome']
                 }
 
-        # Buscar todos os cargos e fazer duplicação por nome em Python
         todos_cargos = CargoProcesso.objects.values('cargo_uuid', 'nome').order_by('nome', 'cargo_uuid')
-
-        # Deduplicar cargos por nome
         cargos_unicos = {}
         for cargo in todos_cargos:
-            if cargo['nome'] not in cargos_unicos:
-                cargos_unicos[cargo['nome']] = cargo
+            if cargo['cargo_nome'] not in cargos_unicos:
+                cargos_unicos[cargo['cargo_nome']] = cargo
 
         tipos_escolha = [
             {
@@ -130,18 +124,16 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
             for choice in TIPO_ESCOLHA_CHOICES
         ]
 
-        # Preparar resposta
         resultado = {
             'concursos': list(concursos_unicos.values()),
             'cargos': [
                 {
                     'value': cargo['cargo_uuid'],
-                    'label': cargo['nome']
+                    'label': cargo['cargo_nome']
                 }
                 for cargo in cargos_unicos.values()
             ],
             'tipos_escolha': tipos_escolha
         }
-        
-        return Response(resultado)
 
+        return Response(resultado)
