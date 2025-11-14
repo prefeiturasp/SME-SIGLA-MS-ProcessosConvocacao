@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.postgres.fields import ArrayField
 from .base import BaseModel
 from auditlog.registry import auditlog
 
@@ -15,6 +16,7 @@ class CargoProcesso(BaseModel):
     )
     cargo_nome = models.CharField(max_length=200, verbose_name="Nome do Cargo")
     cargo_uuid = models.UUIDField(verbose_name="UUID do Cargo")
+    cargo_codigo = models.CharField(max_length=20, verbose_name="Código do Cargo", default="")
 
     vagas = models.IntegerField(
         verbose_name="Quantidade de Vagas",
@@ -40,6 +42,12 @@ class CargoProcesso(BaseModel):
         verbose_name="Total de Candidatos",
         default=0,
         help_text="Total de candidatos classificados para este cargo"
+    )
+    candidatos_uuids = ArrayField(
+        base_field=models.UUIDField(),
+        default=list,
+        blank=True,
+        verbose_name="UUIDs de Candidatos"
     )
 
     class Meta:

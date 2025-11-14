@@ -54,7 +54,7 @@ class CargoProcessoAdmin(admin.ModelAdmin):
     """Admin for CargoProcesso model."""
     
     list_display = (
-        'processo', 'cargo_nome', 'cargo_uuid', 'criado_em'
+        'processo', 'cargo_nome', 'cargo_uuid', 'cargo_codigo', 'criado_em'
     )
     list_filter = ('processo', 'criado_em')
     search_fields = ('processo__concurso_nome', 'cargo_nome')
@@ -63,7 +63,7 @@ class CargoProcessoAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('Relacionamento', {
-            'fields': ('processo', 'cargo_nome', 'cargo_uuid')
+            'fields': ('processo', 'cargo_nome', 'cargo_uuid', 'cargo_codigo')
         }),
         ('Metadados', {
             'fields': ('uuid', 'criado_em', 'atualizado_em'),
