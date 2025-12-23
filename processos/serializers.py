@@ -100,4 +100,4 @@ class ProcessoConvocacaoSelectSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProcessoConvocacao
-        fields = ['value', 'label']
+        fields = ['value', 'label', 'concurso_uuid']
