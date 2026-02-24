@@ -11,7 +11,9 @@ from django.db.models import Q
 from datetime import datetime, timedelta
 import uuid
 
-from ..models import ProcessoConvocacao, CargoProcesso
+from unittest.mock import patch
+
+from ..models import ProcessoConvocacao, CargoProcesso, CartaConvocacaoHistorico, CartaConvocacaoCandidato
 from ..serializers import (
     ProcessoConvocacaoSerializer,
     ProcessoConvocacaoCreateSerializer,
@@ -61,7 +63,7 @@ def processo_convocacao(user, concurso_uuid, concurso_nome):
         concurso_uuid=concurso_uuid,
         concurso_nome=concurso_nome,
         descricao="Descrição do processo teste",
-        tipo_escolha='Nova Autorização',
+        tipo_escolha='NOVA_AUTORIZACAO',
         status='EM_ANDAMENTO',
         data_corte_vagas=timezone.now(),
         data_convocacao=timezone.now() + timedelta(days=15),  # Data futura
@@ -77,8 +79,8 @@ def cargos_processo(processo_convocacao):
     for nome in nomes:
         cargo = CargoProcesso.objects.create(
             processo=processo_convocacao,
-            nome=nome,
-            cargo_uuid=uuid.uuid4()  # Adicionar cargo_uuid
+            cargo_nome=nome,
+            cargo_uuid=uuid.uuid4()
         )
         cargos.append(cargo)
 
@@ -92,7 +94,7 @@ def processo_cargo(user):
         concurso_uuid=uuid.uuid4(),
         concurso_nome="Concurso Teste",
         descricao="Descrição do processo teste",
-        tipo_escolha='Nova Autorização',
+        tipo_escolha='NOVA_AUTORIZACAO',
         status='EM_ANDAMENTO',
         data_convocacao=timezone.now() + timedelta(days=10)
     )
@@ -103,8 +105,8 @@ def cargo_processo(processo_cargo):
     """Fixture para criar um CargoProcesso."""
     return CargoProcesso.objects.create(
         processo=processo_cargo,
-        nome="Analista de Sistemas",
-        cargo_uuid=uuid.uuid4()  # Adicionar cargo_uuid
+        cargo_nome="Analista de Sistemas",
+        cargo_uuid=uuid.uuid4()
     )
 
 
@@ -115,7 +117,7 @@ def processo_permissao(user):
         concurso_uuid=uuid.uuid4(),
         concurso_nome="Concurso Permissões",
         descricao="Descrição para teste de permissões",
-        tipo_escolha='Nova Autorização',
+        tipo_escolha='NOVA_AUTORIZACAO',
         status='EM_ANDAMENTO',
         data_convocacao=timezone.now() + timedelta(days=20)
     )
@@ -128,7 +130,7 @@ def processo_lista(user):
         concurso_uuid=uuid.uuid4(),
         concurso_nome="Concurso Lista",
         descricao="Descrição 2",
-        tipo_escolha='Nova Autorização',
+        tipo_escolha='NOVA_AUTORIZACAO',
         status='EM_ANDAMENTO',
         data_convocacao=timezone.now() + timedelta(days=25)
     )
@@ -153,13 +155,10 @@ def test_processo_convocacao_create(authenticated_client):
         'concurso_uuid': str(uuid.uuid4()),
         'concurso_nome': 'Novo Concurso',
         'descricao': 'Descrição do novo processo',
-        'tipo_escolha': 'Nova Autorização',
+        'tipo_escolha': 'NOVA_AUTORIZACAO',
         'status': 'EM_ANDAMENTO',
         'data_convocacao': (timezone.now() + timedelta(days=30)).isoformat(),
-        'cargos': [
-            {'nome': 'Analista', 'cargo_uuid': str(uuid.uuid4())},
-            {'nome': 'Desenvolvedor', 'cargo_uuid': str(uuid.uuid4())}
-        ]
+        'data_corte_vagas': (timezone.now() + timedelta(days=5)).isoformat(),
     }
 
     response = authenticated_client.post(url, data, format='json')
@@ -169,7 +168,6 @@ def test_processo_convocacao_create(authenticated_client):
 
     processo = ProcessoConvocacao.objects.first()
     assert processo.concurso_nome == 'Novo Concurso'
-    assert processo.cargos_processo.count() == 2
 
 
 def test_processo_convocacao_retrieve(authenticated_client, processo_convocacao):
@@ -294,7 +292,7 @@ def test_endpoint_filtros_basic(authenticated_client, processo_convocacao, cargo
     assert response.status_code == status.HTTP_200_OK
     assert 'concursos' in response.data
     assert 'cargos' in response.data
-    assert 'tipos_processos' in response.data
+    assert 'tipos_escolha' in response.data
 
     # Verificar estrutura dos concursos
     concursos = response.data['concursos']
@@ -313,14 +311,14 @@ def test_endpoint_filtros_basic(authenticated_client, processo_convocacao, cargo
         assert cargo['value'] is not None
         assert cargo['label'] is not None
 
-    # Verificar estrutura dos tipos de processo
-    tipos_processos = response.data['tipos_processos']
-    assert len(tipos_processos) == 3  # CONVOCACAO, SELECAO, AVALIACAO
-    for tipo in tipos_processos:
+    # Verificar estrutura dos tipos de escolha
+    tipos_escolha = response.data['tipos_escolha']
+    assert len(tipos_escolha) == 3
+    for tipo in tipos_escolha:
         assert 'value' in tipo
         assert 'label' in tipo
-        assert tipo['value'] in ['Nova Autorização', 'SELECAO', 'AVALIACAO']
-        assert tipo['label'] in ['Convocação', 'Seleção', 'Avaliação']
+        assert tipo['value'] in ['NOVA_AUTORIZACAO', 'REPOSICAO', 'RECONVOCAO']
+        assert tipo['label'] in ['Nova Autorização', 'Reposição', 'Reconvocação']
 
 
 def test_endpoint_filtros_multiplos_processos(authenticated_client, user):
@@ -330,7 +328,7 @@ def test_endpoint_filtros_multiplos_processos(authenticated_client, user):
         concurso_uuid=uuid.uuid4(),
         concurso_nome="Concurso A",
         descricao="Descrição A",
-        tipo_escolha='Nova Autorização',
+        tipo_escolha='NOVA_AUTORIZACAO',
         status='EM_ANDAMENTO',
         data_convocacao=timezone.now() + timedelta(days=10)
     )
@@ -339,7 +337,7 @@ def test_endpoint_filtros_multiplos_processos(authenticated_client, user):
         concurso_uuid=uuid.uuid4(),
         concurso_nome="Concurso B",
         descricao="Descrição B",
-        tipo_escolha='Nova Autorização',
+        tipo_escolha='NOVA_AUTORIZACAO',
         status='EM_ANDAMENTO',
         data_convocacao=timezone.now() + timedelta(days=15)
     )
@@ -347,13 +345,13 @@ def test_endpoint_filtros_multiplos_processos(authenticated_client, user):
     # Criar cargos para cada processo
     CargoProcesso.objects.create(
         processo=processo1,
-        nome="Analista A",
+        cargo_nome="Analista A",
         cargo_uuid=uuid.uuid4()
     )
 
     CargoProcesso.objects.create(
         processo=processo2,
-        nome="Analista B",
+        cargo_nome="Analista B",
         cargo_uuid=uuid.uuid4()
     )
 
@@ -361,7 +359,7 @@ def test_endpoint_filtros_multiplos_processos(authenticated_client, user):
     response = authenticated_client.get(url)
 
     assert response.status_code == status.HTTP_200_OK
-    assert 'tipos_processos' in response.data
+    assert 'tipos_escolha' in response.data
 
     # Verificar que há 2 concursos únicos
     concursos = response.data['concursos']
@@ -371,9 +369,9 @@ def test_endpoint_filtros_multiplos_processos(authenticated_client, user):
     cargos = response.data['cargos']
     assert len(cargos) == 2
 
-    # Verificar tipos de processo
-    tipos_processos = response.data['tipos_processos']
-    assert len(tipos_processos) == 3
+    # Verificar tipos de escolha
+    tipos_escolha = response.data['tipos_escolha']
+    assert len(tipos_escolha) == 3
 
 
 def test_endpoint_filtros_concurso_duplicado(authenticated_client, user):
@@ -386,7 +384,7 @@ def test_endpoint_filtros_concurso_duplicado(authenticated_client, user):
         concurso_uuid=concurso_uuid,
         concurso_nome=concurso_nome,
         descricao="Descrição 1",
-        tipo_escolha='Nova Autorização',
+        tipo_escolha='NOVA_AUTORIZACAO',
         status='EM_ANDAMENTO',
         data_convocacao=timezone.now() + timedelta(days=10)
     )
@@ -395,7 +393,7 @@ def test_endpoint_filtros_concurso_duplicado(authenticated_client, user):
         concurso_uuid=concurso_uuid,  # Mesmo UUID
         concurso_nome=concurso_nome,  # Mesmo nome
         descricao="Descrição 2",
-        tipo_escolha='Nova Autorização',
+        tipo_escolha='NOVA_AUTORIZACAO',
         status='EM_ANDAMENTO',
         data_convocacao=timezone.now() + timedelta(days=15)
     )
@@ -419,7 +417,7 @@ def test_endpoint_filtros_cargo_duplicado(authenticated_client, user):
         concurso_uuid=uuid.uuid4(),
         concurso_nome="Concurso 1",
         descricao="Descrição 1",
-        tipo_escolha='Nova Autorização',
+        tipo_escolha='NOVA_AUTORIZACAO',
         status='EM_ANDAMENTO',
         data_convocacao=timezone.now() + timedelta(days=10)
     )
@@ -428,7 +426,7 @@ def test_endpoint_filtros_cargo_duplicado(authenticated_client, user):
         concurso_uuid=uuid.uuid4(),
         concurso_nome="Concurso 2",
         descricao="Descrição 2",
-        tipo_escolha='Nova Autorização',
+        tipo_escolha='NOVA_AUTORIZACAO',
         status='EM_ANDAMENTO',
         data_convocacao=timezone.now() + timedelta(days=15)
     )
@@ -438,13 +436,13 @@ def test_endpoint_filtros_cargo_duplicado(authenticated_client, user):
 
     CargoProcesso.objects.create(
         processo=processo1,
-        nome=cargo_nome,
+        cargo_nome=cargo_nome,
         cargo_uuid=uuid.uuid4()
     )
 
     CargoProcesso.objects.create(
         processo=processo2,
-        nome=cargo_nome,  # Mesmo nome
+        cargo_nome=cargo_nome,  # Mesmo nome
         cargo_uuid=uuid.uuid4()
     )
 
@@ -467,35 +465,35 @@ def test_endpoint_filtros_sem_dados(authenticated_client):
     assert response.status_code == status.HTTP_200_OK
     assert 'concursos' in response.data
     assert 'cargos' in response.data
-    assert 'tipos_processos' in response.data
+    assert 'tipos_escolha' in response.data
 
     # Deve retornar listas vazias para concursos e cargos
     assert len(response.data['concursos']) == 0
     assert len(response.data['cargos']) == 0
 
-    # Tipos de processo devem sempre estar presentes (vêm dos choices)
-    assert len(response.data['tipos_processos']) == 3
+    # Tipos de escolha devem sempre estar presentes (vêm dos choices)
+    assert len(response.data['tipos_escolha']) == 3
 
 
-def test_endpoint_filtros_tipos_processo(authenticated_client):
-    """Testa que os tipos de processo são retornados corretamente."""
+def test_endpoint_filtros_tipos_escolha(authenticated_client):
+    """Testa que os tipos de escolha são retornados corretamente."""
     url = reverse('processoconvocacao-filtros')
     response = authenticated_client.get(url)
 
     assert response.status_code == status.HTTP_200_OK
-    assert 'tipos_processos' in response.data
+    assert 'tipos_escolha' in response.data
 
-    tipos_processos = response.data['tipos_processos']
-    assert len(tipos_processos) == 3
+    tipos_escolha = response.data['tipos_escolha']
+    assert len(tipos_escolha) == 3
 
     # Verificar que todos os tipos esperados estão presentes
     tipos_esperados = {
-        'Nova Autorização': 'Convocação',
-        'SELECAO': 'Seleção',
-        'AVALIACAO': 'Avaliação'
+        'NOVA_AUTORIZACAO': 'Nova Autorização',
+        'REPOSICAO': 'Reposição',
+        'RECONVOCAO': 'Reconvocação',
     }
 
-    for tipo in tipos_processos:
+    for tipo in tipos_escolha:
         assert tipo['value'] in tipos_esperados
         assert tipo['label'] == tipos_esperados[tipo['value']]
         assert 'value' in tipo
@@ -513,7 +511,7 @@ def test_processo_convocacao_filters(authenticated_client, processo_convocacao):
     assert len(response.data['results']) == 1
 
     # Filtro por tipo_escolha
-    response = authenticated_client.get(url, {'tipo_escolha': 'Nova Autorização'})
+    response = authenticated_client.get(url, {'tipo_escolha': 'NOVA_AUTORIZACAO'})
     assert response.status_code == status.HTTP_200_OK
     assert len(response.data['results']) == 1
 
@@ -537,3 +535,124 @@ def test_processo_convocacao_search(authenticated_client, processo_convocacao):
     response = authenticated_client.get(url, {'search': 'Descrição'})
     assert response.status_code == status.HTTP_200_OK
     assert len(response.data['results']) == 1
+
+
+# --- Testes Carta Convocação (Histórico: list, retrieve, create) ---
+
+
+@pytest.fixture
+def carta_convocacao_historico(processo_convocacao):
+    """Fixture para CartaConvocacaoHistorico."""
+    return CartaConvocacaoHistorico.objects.create(
+        processo_uuid=processo_convocacao.uuid,
+        processo_nome=processo_convocacao.concurso_nome,
+        data=timezone.now().date(),
+        quantidade_candidatos=2,
+    )
+
+
+@pytest.fixture
+def carta_convocacao_candidatos(carta_convocacao_historico):
+    """Fixture para CartaConvocacaoCandidato vinculados ao histórico."""
+    from processos.models.carta_convocacao_candidato import ENVIO_STATUS_SUCESSO, ENVIO_STATUS_ERRO
+    CartaConvocacaoCandidato.objects.create(
+        carta_convocacao_historico=carta_convocacao_historico,
+        nome="Fulano",
+        rf="1234567",
+        email="fulano@test.com",
+        status=ENVIO_STATUS_SUCESSO,
+        conteudo="<p>Conteúdo 1</p>",
+    )
+    CartaConvocacaoCandidato.objects.create(
+        carta_convocacao_historico=carta_convocacao_historico,
+        nome="Ciclano",
+        rf="7654321",
+        email="ciclano@test.com",
+        status=ENVIO_STATUS_ERRO,
+        conteudo="<p>Conteúdo 2</p>",
+    )
+    return list(carta_convocacao_historico.candidatos.all())
+
+
+def test_carta_convocacao_list(client, carta_convocacao_historico):
+    """Testa GET /api/v1/carta-convocacao/ (listagem do histórico)."""
+    url = reverse('carta-convocacao-list')
+    response = client.get(url)
+    assert response.status_code == status.HTTP_200_OK
+    assert 'results' in response.data
+    assert response.data['count'] >= 1
+    item = next((r for r in response.data['results'] if r['uuid'] == str(carta_convocacao_historico.uuid)), None)
+    assert item is not None
+    assert item['processo_nome'] == carta_convocacao_historico.processo_nome
+    assert item['quantidade_convocados'] == carta_convocacao_historico.quantidade_candidatos
+
+
+def test_carta_convocacao_list_pagination(client, carta_convocacao_historico):
+    """Testa paginação na listagem do histórico."""
+    url = reverse('carta-convocacao-list')
+    response = client.get(url, {'page': 1, 'page_size': 10})
+    assert response.status_code == status.HTTP_200_OK
+    assert 'results' in response.data
+    assert 'count' in response.data
+
+
+def test_carta_convocacao_retrieve(client, carta_convocacao_historico, carta_convocacao_candidatos):
+    """Testa GET /api/v1/carta-convocacao/<uuid>/ (detalhe com candidatos)."""
+    url = reverse('carta-convocacao-detail', args=[carta_convocacao_historico.uuid])
+    response = client.get(url)
+    assert response.status_code == status.HTTP_200_OK
+    assert response.data['uuid'] == str(carta_convocacao_historico.uuid)
+    assert response.data['processo_nome'] == carta_convocacao_historico.processo_nome
+    assert 'candidatos' in response.data
+    assert len(response.data['candidatos']) == 2
+    nomes = [c['nome'] for c in response.data['candidatos']]
+    assert 'Fulano' in nomes
+    assert 'Ciclano' in nomes
+
+
+def test_carta_convocacao_retrieve_not_found(client):
+    """Testa GET detalhe com UUID inexistente."""
+    url = reverse('carta-convocacao-detail', args=[uuid.uuid4()])
+    response = client.get(url)
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+@patch('processos.views.carta_convocacao.iniciar_processamento_envio')
+def test_carta_convocacao_create(mock_iniciar, client, processo_convocacao):
+    """Testa POST /api/v1/carta-convocacao/ (inicia processamento de envio)."""
+    mock_historico = CartaConvocacaoHistorico.objects.create(
+        processo_uuid=processo_convocacao.uuid,
+        processo_nome=processo_convocacao.concurso_nome,
+        data=timezone.now().date(),
+        quantidade_candidatos=0,
+    )
+    mock_iniciar.return_value = mock_historico
+
+    url = reverse('carta-convocacao-list')
+    payload = {
+        'processo_uuid': str(processo_convocacao.uuid),
+        'processo_nome': processo_convocacao.concurso_nome,
+        'data': '25-12-2024',
+    }
+    response = client.post(url, payload, format='json')
+    assert response.status_code == status.HTTP_200_OK
+    assert 'detail' in response.data
+    assert 'historico_uuid' in response.data
+    assert response.data['historico_uuid'] == str(mock_historico.uuid)
+    mock_iniciar.assert_called_once()
+    call_kwargs = mock_iniciar.call_args[1]
+    assert call_kwargs['processo_nome'] == processo_convocacao.concurso_nome
+
+
+@patch('processos.views.carta_convocacao.iniciar_processamento_envio')
+def test_carta_convocacao_create_invalid_payload(mock_iniciar, client):
+    """Testa POST com payload inválido (processo não encontrado)."""
+    url = reverse('carta-convocacao-list')
+    payload = {
+        'processo_uuid': str(uuid.uuid4()),
+        'processo_nome': 'Inexistente',
+        'data': '25-12-2024',
+    }
+    response = client.post(url, payload, format='json')
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    mock_iniciar.assert_not_called()

@@ -32,7 +32,7 @@ def test_list_filter(processo_convocacao_admin):
 
 
 def test_readonly_fields(processo_convocacao_admin):
-    assert processo_convocacao_admin.readonly_fields == ('uuid', 'data_corte_vagas', 'criado_em', 'atualizado_em')
+    assert processo_convocacao_admin.readonly_fields == ('uuid', 'criado_em', 'atualizado_em')
 
 
 def test_inlines(processo_convocacao_admin):
