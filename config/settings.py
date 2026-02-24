@@ -166,13 +166,17 @@ SPECTACULAR_SETTINGS = {
     'SERVE_INCLUDE_SCHEMA': False,
 }
 
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.gmail.com"
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = "disparotesteemailspassu@gmail.com"
-EMAIL_HOST_PASSWORD = "melokulyikrdeqjn"
-DEFAULT_FROM_EMAIL = "disparotesteemailspassu@gmail.com"
+# E-mail
+EMAIL_BACKEND = os.environ.get(
+    'EMAIL_BACKEND',
+    os.environ.get('DJANGO_EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend'),
+)
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'true').lower() == 'true'
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER or 'noreply@localhost')
 
 # Celery (broker e result backend) - única variável: CELERY_REDIS_URL (somente ambiente)
 _celery_redis_url = os.environ.get('CELERY_REDIS_URL', '').strip()
@@ -182,8 +186,8 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'America/Sao_Paulo'
-CELERY_TASK_TIME_LIMIT = 5 * 60  # 5 minutos (hard limit)
-CELERY_TASK_SOFT_TIME_LIMIT = 60  # 1 minuto (SoftTimeLimitExceeded)
+CELERY_TASK_TIME_LIMIT = 5 * 60
+CELERY_TASK_SOFT_TIME_LIMIT = 60
 
 # MS-Candidatos (API de habilitados)
 CANDIDATOS_API_URL = os.environ.get('CANDIDATOS_API_URL', '').rstrip('/')
