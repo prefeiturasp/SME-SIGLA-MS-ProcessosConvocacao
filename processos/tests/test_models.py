@@ -42,7 +42,7 @@ def processo_convocacao(user, concurso_uuid, concurso_nome):
         concurso_uuid=concurso_uuid,
         concurso_nome=concurso_nome,
         descricao="Descrição do processo teste",
-        tipo_escolha='Nova Autorização',
+        tipo_escolha='NOVA_AUTORIZACAO',
         status='EM_ANDAMENTO',
         data_corte_vagas=timezone.now(),
         data_convocacao=timezone.now() + timezone.timedelta(days=15),
@@ -56,7 +56,7 @@ def processo_cargo(user):
         concurso_uuid=uuid.uuid4(),
         concurso_nome="Concurso Teste",
         descricao="Descrição do processo teste",
-        tipo_escolha='Nova Autorização',
+        tipo_escolha='NOVA_AUTORIZACAO',
         status='EM_ANDAMENTO',
         data_convocacao=timezone.now() + timezone.timedelta(days=10)
     )
@@ -67,7 +67,7 @@ def cargo_processo(processo_cargo):
     """Fixture para criar um CargoProcesso."""
     return CargoProcesso.objects.create(
         processo=processo_cargo,
-        nome="Analista de Sistemas",
+        cargo_nome="Analista de Sistemas",
         cargo_uuid=uuid.uuid4()
     )
 
@@ -79,7 +79,7 @@ def processo_integracao(user):
         concurso_uuid=uuid.uuid4(),
         concurso_nome="Concurso Integração",
         descricao="Descrição integração",
-        tipo_escolha='Nova Autorização',
+        tipo_escolha='NOVA_AUTORIZACAO',
         status='EM_ANDAMENTO',
         data_convocacao=timezone.now() + timezone.timedelta(days=20)
     )
@@ -91,9 +91,8 @@ def test_processo_convocacao_creation(processo_convocacao, concurso_uuid, concur
     assert processo_convocacao.concurso_uuid == concurso_uuid
     assert processo_convocacao.concurso_nome == concurso_nome
     assert processo_convocacao.descricao == "Descrição do processo teste"
-    assert processo_convocacao.tipo_escolha == 'Nova Autorização'
+    assert processo_convocacao.tipo_escolha == 'NOVA_AUTORIZACAO'
     assert processo_convocacao.status == 'EM_ANDAMENTO'
-    assert processo_convocacao.tipo_escolha == 'Nova Autorização'
     assert processo_convocacao.uuid is not None
     assert processo_convocacao.criado_em is not None
     assert processo_convocacao.atualizado_em is not None
@@ -101,7 +100,7 @@ def test_processo_convocacao_creation(processo_convocacao, concurso_uuid, concur
 
 def test_processo_convocacao_str_representation(processo_convocacao, concurso_nome):
     """Testa a representação string do ProcessoConvocacao."""
-    expected_str = f"{concurso_nome} - 5"
+    expected_str = f"{concurso_nome} - NOVA_AUTORIZACAO"
     assert str(processo_convocacao) == expected_str
 
 
@@ -113,7 +112,7 @@ def test_processo_convocacao_default_values():
         descricao="Descrição padrão"
     )
     
-    assert processo_default.tipo_escolha == 'Nova Autorização'
+    assert processo_default.tipo_escolha == 'NOVA_AUTORIZACAO'
     assert processo_default.status == 'EM_ANDAMENTO'
     assert processo_default.data_convocacao is not None
     assert processo_default.data_corte_vagas is not None
@@ -126,7 +125,7 @@ def test_processo_convocacao_choices_validation():
         concurso_uuid=uuid.uuid4(),
         concurso_nome="Concurso Válido",
         descricao="Descrição válida",
-        tipo_escolha='Reposição'
+        tipo_escolha='REPOSICAO'
     )
     assert processo_valido.tipo_escolha in dict(TIPO_ESCOLHA_CHOICES)
     
@@ -184,7 +183,7 @@ def test_processo_convocacao_timestamps():
 def test_cargo_processo_creation(cargo_processo, processo_cargo):
     """Testa a criação de um CargoProcesso."""
     assert cargo_processo.processo == processo_cargo
-    assert cargo_processo.nome == "Analista de Sistemas"
+    assert cargo_processo.cargo_nome == "Analista de Sistemas"
     assert cargo_processo.cargo_uuid is not None
     assert cargo_processo.uuid is not None
     assert cargo_processo.criado_em is not None
@@ -202,7 +201,7 @@ def test_cargo_processo_meta_options(cargo_processo):
     assert cargo_processo._meta.verbose_name == "Cargo do Processo"
     assert cargo_processo._meta.verbose_name_plural == "Cargos do Processo"
     assert cargo_processo._meta.db_table == 'processos_cargos'
-    assert cargo_processo._meta.ordering == ['nome']
+    assert cargo_processo._meta.ordering == ['cargo_nome']
 
 
 def test_cargo_processo_unique_together(processo_cargo):
@@ -210,7 +209,7 @@ def test_cargo_processo_unique_together(processo_cargo):
     # Deve permitir criar cargo com nome diferente
     cargo2 = CargoProcesso.objects.create(
         processo=processo_cargo,
-        nome="Desenvolvedor Backend",
+        cargo_nome="Desenvolvedor Backend",
         cargo_uuid=uuid.uuid4()
     )
     assert cargo2 is not None
@@ -223,7 +222,7 @@ def test_cargo_processo_unique_together(processo_cargo):
     )
     cargo3 = CargoProcesso.objects.create(
         processo=processo2,
-        nome="Analista de Sistemas",
+        cargo_nome="Analista de Sistemas",
         cargo_uuid=uuid.uuid4()
     )
     assert cargo3 is not None
@@ -246,7 +245,7 @@ def test_cargo_processo_uuid_uniqueness(cargo_processo, processo_cargo):
     """Testa a unicidade do UUID."""
     cargo2 = CargoProcesso.objects.create(
         processo=processo_cargo,
-        nome="Cargo 2",
+        cargo_nome="Cargo 2",
         cargo_uuid=uuid.uuid4()
     )
     
@@ -257,13 +256,13 @@ def test_cargo_processo_cargo_uuid_uniqueness(processo_cargo):
     """Testa a unicidade do cargo_uuid."""
     cargo1 = CargoProcesso.objects.create(
         processo=processo_cargo,
-        nome="Cargo 1",
+        cargo_nome="Cargo 1",
         cargo_uuid=uuid.uuid4()
     )
     
     cargo2 = CargoProcesso.objects.create(
         processo=processo_cargo,
-        nome="Cargo 2",
+        cargo_nome="Cargo 2",
         cargo_uuid=uuid.uuid4()
     )
     
@@ -274,7 +273,7 @@ def test_cargo_processo_timestamps(processo_cargo):
     """Testa os timestamps automáticos."""
     cargo_novo = CargoProcesso.objects.create(
         processo=processo_cargo,
-        nome="Cargo Timestamp",
+        cargo_nome="Cargo Timestamp",
         cargo_uuid=uuid.uuid4()
     )
     
@@ -282,7 +281,7 @@ def test_cargo_processo_timestamps(processo_cargo):
     assert cargo_novo.atualizado_em is not None
     
     # Atualizar o cargo
-    cargo_novo.nome = "Cargo Atualizado"
+    cargo_novo.cargo_nome = "Cargo Atualizado"
     cargo_novo.save()
     
     # criado_em não deve mudar, atualizado_em deve mudar
@@ -299,14 +298,14 @@ def test_processo_cargos_relationship(processo_integracao):
     for nome in cargos_nomes:
         CargoProcesso.objects.create(
             processo=processo_integracao,
-            nome=nome,
+            cargo_nome=nome,
             cargo_uuid=uuid.uuid4()
         )
     
     # Verificar relacionamento
     assert processo_integracao.cargos_processo.count() == 3
     
-    cargos_list = list(processo_integracao.cargos_processo.values_list('nome', flat=True))
+    cargos_list = list(processo_integracao.cargos_processo.values_list('cargo_nome', flat=True))
     assert set(cargos_list) == set(cargos_nomes)
 
 
@@ -315,7 +314,7 @@ def test_processo_cascade_delete(processo_integracao):
     # Criar cargos
     CargoProcesso.objects.create(
         processo=processo_integracao,
-        nome="Cargo Teste",
+        cargo_nome="Cargo Teste",
         cargo_uuid=uuid.uuid4()
     )
     
@@ -331,12 +330,12 @@ def test_processo_cascade_delete(processo_integracao):
 
 def test_processo_cargos_ordering(processo_integracao):
     """Testa a ordenação dos cargos."""
-    # Criar cargos em ordem aleatória
-    CargoProcesso.objects.create(processo=processo_integracao, nome="Zebra", cargo_uuid=uuid.uuid4())
-    CargoProcesso.objects.create(processo=processo_integracao, nome="Analista", cargo_uuid=uuid.uuid4())
-    CargoProcesso.objects.create(processo=processo_integracao, nome="Desenvolvedor", cargo_uuid=uuid.uuid4())
+    # Criar cargos em ordem aleatória (CargoProcesso.ordering = ['cargo_nome'])
+    CargoProcesso.objects.create(processo=processo_integracao, cargo_nome="Zebra", cargo_uuid=uuid.uuid4())
+    CargoProcesso.objects.create(processo=processo_integracao, cargo_nome="Analista", cargo_uuid=uuid.uuid4())
+    CargoProcesso.objects.create(processo=processo_integracao, cargo_nome="Desenvolvedor", cargo_uuid=uuid.uuid4())
     
-    # Verificar ordenação alfabética
-    cargos_ordenados = list(processo_integracao.cargos_processo.values_list('nome', flat=True))
+    # Verificar ordenação alfabética por cargo_nome
+    cargos_ordenados = list(processo_integracao.cargos_processo.values_list('cargo_nome', flat=True))
     expected_order = ["Analista", "Desenvolvedor", "Zebra"]
     assert cargos_ordenados == expected_order 
