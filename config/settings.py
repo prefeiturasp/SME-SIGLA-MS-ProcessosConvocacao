@@ -182,6 +182,8 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'America/Sao_Paulo'
+CELERY_TASK_TIME_LIMIT = 5 * 60  # 5 minutos (hard limit)
+CELERY_TASK_SOFT_TIME_LIMIT = 60  # 1 minuto (SoftTimeLimitExceeded)
 
 # MS-Candidatos (API de habilitados)
 CANDIDATOS_API_URL = os.environ.get('CANDIDATOS_API_URL', '').rstrip('/')

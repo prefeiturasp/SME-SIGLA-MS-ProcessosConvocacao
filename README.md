@@ -78,6 +78,8 @@ Backend Django para gerenciamento de processos de convocação da SIGLA.
 - **Django 5.2.5** - Framework web
 - **Django REST Framework 3.15.2** - API REST
 - **PostgreSQL** - Banco de dados principal
+- **Celery** - Filas para envio assíncrono de e-mails (Carta de Convocação)
+- **Redis** - Broker e result backend do Celery
 - **django-cors-headers** - CORS para frontend
 - **django-filter** - Filtros avançados
 
@@ -119,6 +121,26 @@ python manage.py createsuperuser
 # Iniciar servidor
 python manage.py runserver
 ```
+
+### 4. Rodar com fila (Docker Compose)
+
+Para testar localmente com API + worker Celery + Redis (igual ao fluxo de ambiente):
+
+```bash
+# Subir todos os serviços (db, redis, api, celery_worker)
+docker-compose up -d
+```
+
+A API ficará em `http://localhost:8001`. O worker consome a fila e processa o envio dos e-mails da Carta de Convocação.
+
+### 5. Execução em ambiente (QA / Homologação)
+
+Em QA e Homologação é necessário **dois** deployments no Rancher/Kubernetes:
+
+1. **API** (Django) – já existente.
+2. **Worker Celery** – consome a fila (comando: `celery -A config worker --loglevel=info --concurrency=2 -n worker1@%h`).
+
+A variável **CELERY_REDIS_URL** já é configurada pela Infra. Detalhes para a Infra (comando exato, nome do workload, pipeline): ver **[DEPLOY.md](DEPLOY.md)**.
 
 ## 📝 Exemplos de Uso
 
@@ -176,6 +198,9 @@ POST /api/processos/processos-convocacao/{uuid}/adicionar_cargo/
 - `DB_PASSWORD` - Senha do banco
 - `DB_HOST` - Host do banco
 - `DB_PORT` - Porta do banco
+- `CELERY_REDIS_URL` - URL do Redis para Celery (broker e result backend); em ambiente é configurada pela Infra
+- `CANDIDATOS_API_URL` - URL do MS de Candidatos (habilitados)
+- `MS_URL` - URL base do microserviço (logos, etc.)
 
 ### Configurações Django
 - **Idioma**: Português (pt-br)
