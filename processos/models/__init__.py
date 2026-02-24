@@ -2,12 +2,16 @@
 from .base import BaseModel
 from .processo_convocacao import ProcessoConvocacao
 from .cargo_processo import CargoProcesso
+from .carta_convocacao_historico import CartaConvocacaoHistorico
+from .carta_convocacao_candidato import CartaConvocacaoCandidato
 from .constants import *
 
 __all__ = [
     'BaseModel',
-    'ProcessoConvocacao', 
+    'ProcessoConvocacao',
     'CargoProcesso',
+    'CartaConvocacaoHistorico',
+    'CartaConvocacaoCandidato',
     # Constants
     'PROCESSO_STATUS_CHOICES',
     'TIPO_ESCOLHA_CHOICES',

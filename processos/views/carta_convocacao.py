@@ -1,0 +1,63 @@
+"""
+View para envio da carta de convocação por email e listagem/detalhe do histórico.
+"""
+import logging
+from rest_framework import status, viewsets, mixins
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+
+from processos.models import CartaConvocacaoHistorico
+from processos.serializers import (
+    CartaConvocacaoEnvioSerializer,
+    CartaConvocacaoHistoricoSerializer,
+    CartaConvocacaoHistoricoDetalheSerializer,
+)
+from processos.services.carta_convocacao_service import iniciar_processamento_envio
+from processos.utils import CustomPagination
+
+logger = logging.getLogger(__name__)
+
+
+class CartaConvocacaoViewSet(
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    viewsets.GenericViewSet,
+):
+    """
+    GET  /api/v1/carta-convocacao/         -> listagem do histórico (processo_nome, processo_uuid, criado_em, quantidade_convocados).
+    GET  /api/v1/carta-convocacao/<uuid>/  -> detalhe do histórico + candidatos (nome, rf, email, status, conteudo).
+    POST /api/v1/carta-convocacao/         -> inicia o processamento (envio).
+    """
+    permission_classes = [AllowAny]
+    queryset = CartaConvocacaoHistorico.objects.prefetch_related('candidatos').order_by('-criado_em')
+    pagination_class = CustomPagination
+    lookup_field = 'uuid'
+    lookup_url_kwarg = 'uuid'
+
+    def get_serializer_class(self):
+        if self.action == 'retrieve':
+            return CartaConvocacaoHistoricoDetalheSerializer
+        return CartaConvocacaoHistoricoSerializer
+
+    def create(self, request):
+        serializer = CartaConvocacaoEnvioSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        data = serializer.validated_data
+        historico = iniciar_processamento_envio(
+            processo_uuid=data['processo_uuid'],
+            processo_nome=data['processo_nome'],
+            data=data['data'],
+        )
+        return Response(
+            {
+                'detail': 'Processamento de envio iniciado com sucesso.',
+                'historico_uuid': str(historico.uuid),
+                'processo_uuid': str(data['processo_uuid']),
+                'processo_nome': data['processo_nome'],
+                'data': data['data'].strftime('%d-%m-%Y'),
+                'quantidade_candidatos': historico.quantidade_candidatos,
+            },
+            status=status.HTTP_200_OK,
+        )

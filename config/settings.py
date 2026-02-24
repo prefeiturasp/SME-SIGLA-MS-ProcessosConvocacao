@@ -48,7 +48,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -165,3 +165,25 @@ SPECTACULAR_SETTINGS = {
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
 }
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = "disparotesteemailspassu@gmail.com"
+EMAIL_HOST_PASSWORD = "melokulyikrdeqjn"
+DEFAULT_FROM_EMAIL = "disparotesteemailspassu@gmail.com"
+
+# Celery (broker e result backend) - única variável: CELERY_REDIS_URL (somente ambiente)
+_celery_redis_url = os.environ.get('CELERY_REDIS_URL', '').strip()
+CELERY_BROKER_URL = _celery_redis_url
+CELERY_RESULT_BACKEND = _celery_redis_url
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'America/Sao_Paulo'
+
+# MS-Candidatos (API de habilitados)
+CANDIDATOS_API_URL = os.environ.get('CANDIDATOS_API_URL', '').rstrip('/')
+
+MS_URL = os.environ.get('MS_URL', '').rstrip('/')
