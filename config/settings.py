@@ -179,7 +179,7 @@ EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER or 'noreply@localhost')
 
-# Celery (broker e result backend) - única variável: CELERY_REDIS_URL (somente ambiente)
+# Celery (broker e result backend)
 _celery_redis_url = os.environ.get('CELERY_REDIS_URL', '').strip()
 CELERY_BROKER_URL = _celery_redis_url
 CELERY_RESULT_BACKEND = _celery_redis_url
@@ -189,6 +189,8 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'America/Sao_Paulo'
 CELERY_TASK_TIME_LIMIT = 5 * 60
 CELERY_TASK_SOFT_TIME_LIMIT = 60
+# Fila dedicada para isolar mensagens no Redis compartilhado (outros projetos usam a fila "celery")
+CELERY_TASK_DEFAULT_QUEUE = 'processos_convocacao'
 
 # MS-Candidatos (API de habilitados)
 CANDIDATOS_API_URL = os.environ.get('CANDIDATOS_API_URL', '').rstrip('/')

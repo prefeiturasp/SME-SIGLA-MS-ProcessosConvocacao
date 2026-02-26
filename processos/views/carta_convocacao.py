@@ -45,19 +45,29 @@ class CartaConvocacaoViewSet(
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         data = serializer.validated_data
-        historico = iniciar_processamento_envio(
-            processo_uuid=data['processo_uuid'],
-            processo_nome=data['processo_nome'],
-            data=data['data'],
-        )
-        return Response(
-            {
-                'detail': 'Processamento de envio iniciado com sucesso.',
-                'historico_uuid': str(historico.uuid),
-                'processo_uuid': str(data['processo_uuid']),
-                'processo_nome': data['processo_nome'],
-                'data': data['data'].strftime('%d-%m-%Y'),
-                'quantidade_candidatos': historico.quantidade_candidatos,
-            },
-            status=status.HTTP_200_OK,
-        )
+        try:
+            historico = iniciar_processamento_envio(
+                processo_uuid=data['processo_uuid'],
+                processo_nome=data['processo_nome'],
+                data=data['data'],
+            )
+            return Response(
+                {
+                    'detail': 'Processamento de envio iniciado com sucesso.',
+                    'historico_uuid': str(historico.uuid),
+                    'processo_uuid': str(data['processo_uuid']),
+                    'processo_nome': data['processo_nome'],
+                    'data': data['data'].strftime('%d-%m-%Y'),
+                    'quantidade_candidatos': historico.quantidade_candidatos,
+                },
+                status=status.HTTP_200_OK,
+            )
+        except Exception as exc:
+            logger.exception(
+                'Erro ao iniciar processamento de envio da carta de convocação: %s',
+                exc,
+            )
+            return Response(
+                {'detail': str(exc)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
