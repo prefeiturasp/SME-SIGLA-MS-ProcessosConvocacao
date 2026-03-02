@@ -104,7 +104,12 @@ def iniciar_processamento_envio(
         data=data,
         quantidade_candidatos=quantidade,
     )
-
+    logger.info(
+        'Processamento iniciado: historico=%s, processo_uuid=%s, candidatos=%s',
+        historico.uuid,
+        processo_uuid_str,
+        quantidade,
+    )
     # 1.3 Iterar em cada candidato
     # API MS-Candidatos: candidato (objeto aninhado); descricao_cargo = cargo importado; classificacao/classificacao_pcd/classificacao_nna
     ignorados_sem_email = 0
@@ -163,10 +168,5 @@ def iniciar_processamento_envio(
             ignorados_sem_email,
             quantidade,
         )
-    logger.info(
-        'Processamento iniciado: historico=%s, processo_uuid=%s, candidatos=%s',
-        historico.uuid,
-        processo_uuid_str,
-        quantidade,
-    )
+
     return historico

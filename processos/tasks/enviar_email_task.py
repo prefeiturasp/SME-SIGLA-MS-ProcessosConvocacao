@@ -77,36 +77,41 @@ def enviar_email_carta_candidato_task(
     from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@localhost')
     text_plain = strip_tags(conteudo) if conteudo else ''
 
-    try:
-        msg = EmailMultiAlternatives(
-            subject=ASSUNTO_CARTA,
-            body=text_plain,
-            from_email=from_email,
-            to=[email],
-        )
-        msg.attach_alternative(conteudo or '', 'text/html')
-        if LOGO_EMAIL_PATH.is_file():
-            mime_img = MIMEImage(LOGO_EMAIL_PATH.read_bytes(), _subtype='png')
-            mime_img.add_header('Content-Disposition', 'inline', filename='logo_sigla.png')
-            mime_img.add_header('Content-ID', f'<{CID_LOGO_SIGLA}>')
-            msg.attach(mime_img)
-        else:
-            logger.warning('Logo do e-mail não encontrada: %s', LOGO_EMAIL_PATH)
-        msg.send()
-        logger.info('Email carta convocação enviado para %s (candidato_id=%s)', email, candidato_uuid)
+    logger.info('Enviando email carta convocação para %s (candidato_id=%s)', email, candidato_uuid)
+    if "example.com" not in email:
+        try:
+            msg = EmailMultiAlternatives(
+                subject=ASSUNTO_CARTA,
+                body=text_plain,
+                from_email=from_email,
+                to=[email],
+            )
+            msg.attach_alternative(conteudo or '', 'text/html')
+            if LOGO_EMAIL_PATH.is_file():
+                mime_img = MIMEImage(LOGO_EMAIL_PATH.read_bytes(), _subtype='png')
+                mime_img.add_header('Content-Disposition', 'inline', filename='logo_sigla.png')
+                mime_img.add_header('Content-ID', f'<{CID_LOGO_SIGLA}>')
+                msg.attach(mime_img)
+            else:
+                logger.warning('Logo do e-mail não encontrada: %s', LOGO_EMAIL_PATH)
+            msg.send()
+            logger.info('Email carta convocação enviado para %s (candidato_id=%s)', email, candidato_uuid)
+            status = ENVIO_STATUS_SUCESSO
+            status_detalhe = ''
+        except Exception as exc:
+            logger.exception(
+                'Erro ao enviar email carta convocação para %s (candidato_id=%s): %s',
+                email,
+                candidato_uuid,
+                exc,
+            )
+            status = ENVIO_STATUS_ERRO
+            status_detalhe = str(exc)[:2000]  # limita tamanho
+    else:
+        status_detalhe = "Email example.com não enviado"
         status = ENVIO_STATUS_SUCESSO
-        status_detalhe = ''
-    except Exception as exc:
-        logger.exception(
-            'Erro ao enviar email carta convocação para %s (candidato_id=%s): %s',
-            email,
-            candidato_uuid,
-            exc,
-        )
-        status = ENVIO_STATUS_ERRO
-        status_detalhe = str(exc)[:2000]  # limita tamanho
-
     try:
+        logger.info('Atualizando registro carta convocação candidato_id=%s', candidato_uuid)
         registro = CartaConvocacaoCandidato.objects.get(uuid=candidato_uuid)
         registro.status = status
         registro.status_detalhe = status_detalhe
