@@ -47,7 +47,8 @@ def cargo_processo(processo_convocacao):
     """Fixture para criar um cargo de teste."""
     return CargoProcesso.objects.create(
         processo=processo_convocacao,
-        nome="Analista de Sistemas"
+        cargo_nome="Analista de Sistemas",
+        cargo_uuid=uuid.uuid4()
     )
 
 
@@ -63,7 +64,8 @@ def processo_com_cargos(processo_convocacao):
     for nome in cargos:
         CargoProcesso.objects.create(
             processo=processo_convocacao,
-            nome=nome
+            cargo_nome=nome,
+            cargo_uuid=uuid.uuid4()
         )
     
     return processo_convocacao
@@ -89,7 +91,8 @@ def processos_multiplos(user):
         for j in range(2):
             CargoProcesso.objects.create(
                 processo=processo,
-                nome=f"Cargo {j+1} do Processo {i+1}"
+                cargo_nome=f"Cargo {j+1} do Processo {i+1}",
+                cargo_uuid=uuid.uuid4()
             )
         
         processos.append(processo)

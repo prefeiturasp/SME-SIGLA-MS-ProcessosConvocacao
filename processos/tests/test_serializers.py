@@ -7,14 +7,18 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 import uuid
 
-from ..models import ProcessoConvocacao, CargoProcesso
+from ..models import ProcessoConvocacao, CargoProcesso, CartaConvocacaoHistorico, CartaConvocacaoCandidato
 from ..serializers import (
     ProcessoConvocacaoSerializer,
     ProcessoConvocacaoCreateSerializer,
     ProcessoConvocacaoListSerializer,
     ProcessoConvocacaoUpdateSerializer,
     CargoProcessoSerializer,
-    CargoProcessoCreateSerializer
+    CargoProcessoCreateSerializer,
+    CartaConvocacaoHistoricoSerializer,
+    CartaConvocacaoCandidatoSerializer,
+    CartaConvocacaoHistoricoDetalheSerializer,
+    CartaConvocacaoEnvioSerializer,
 )
 
 
@@ -65,7 +69,7 @@ def cargos_processo(processo_convocacao):
     for nome in nomes_cargos:
         cargo = CargoProcesso.objects.create(
             processo=processo_convocacao,
-            nome=nome,
+            cargo_nome=nome,
             cargo_uuid=uuid.uuid4()
         )
         cargos.append(cargo)
@@ -91,7 +95,7 @@ def cargo_processo(processo_cargo):
     """Fixture para criar um CargoProcesso."""
     return CargoProcesso.objects.create(
         processo=processo_cargo,
-        nome="Analista de Sistemas",
+        cargo_nome="Analista de Sistemas",
         cargo_uuid=uuid.uuid4()
     )
 
@@ -103,32 +107,32 @@ def test_cargo_processo_serializer_fields(cargo_processo):
     data = serializer.data
     
     assert 'uuid' in data
-    assert 'nome' in data
+    assert 'cargo_nome' in data
     assert 'processo' in data
     assert 'criado_em' in data
     assert 'atualizado_em' in data
     assert data['uuid'] == str(cargo_processo.uuid)
-    assert data['nome'] == cargo_processo.nome
-    assert data['processo'] == cargo_processo.processo.uuid
+    assert data['cargo_nome'] == cargo_processo.cargo_nome
+    assert str(data['processo']) == str(cargo_processo.processo.uuid)
 
 
 # Testes para CargoProcessoCreateSerializer
 def test_cargo_processo_create_serializer_fields():
     """Testa os campos do CargoProcessoCreateSerializer."""
     serializer = CargoProcessoCreateSerializer()
-    assert 'nome' in serializer.fields
+    assert 'cargo_nome' in serializer.fields
 
 
 def test_cargo_processo_create_serializer_validation():
     """Testa a validação do CargoProcessoCreateSerializer."""
-    data = {'nome': 'Analista de Sistemas'}
+    data = {'cargo_nome': 'Analista de Sistemas', 'cargo_uuid': str(uuid.uuid4())}
     serializer = CargoProcessoCreateSerializer(data=data)
     assert serializer.is_valid()
 
 
 def test_cargo_processo_create_serializer_validation_empty():
-    """Testa validação com nome vazio."""
-    data = {'nome': ''}
+    """Testa validação com cargo_nome vazio."""
+    data = {'cargo_nome': '', 'cargo_uuid': str(uuid.uuid4())}
     serializer = CargoProcessoCreateSerializer(data=data)
     assert not serializer.is_valid()
 
@@ -189,7 +193,6 @@ def test_processo_convocacao_create_serializer_fields():
     assert 'status' in serializer.fields
     assert 'data_convocacao' in serializer.fields
     assert 'data_corte_vagas' in serializer.fields
-    assert 'cargos' in serializer.fields
 
 
 def test_processo_convocacao_create_serializer_validation():
@@ -198,16 +201,11 @@ def test_processo_convocacao_create_serializer_validation():
         'concurso_uuid': str(uuid.uuid4()),
         'concurso_nome': 'Concurso Teste',
         'descricao': 'Descrição teste',
-        'tipo_escolha': 'Nova Autorização',
+        'tipo_escolha': 'NOVA_AUTORIZACAO',
         'status': 'EM_ANDAMENTO',
-        'data_convocacao': timezone.now() + timedelta(days=30),
-        'data_corte_vagas': 5,
-        'cargos': [
-            {'nome': 'Analista', 'cargo_uuid': str(uuid.uuid4())},
-            {'nome': 'Desenvolvedor', 'cargo_uuid': str(uuid.uuid4())}
-        ]
+        'data_convocacao': (timezone.now() + timedelta(days=30)).isoformat(),
+        'data_corte_vagas': (timezone.now() + timedelta(days=5)).isoformat(),
     }
-    
     serializer = ProcessoConvocacaoCreateSerializer(data=data)
     assert serializer.is_valid()
 
@@ -225,32 +223,22 @@ def test_processo_convocacao_create_serializer_uuid_validation():
     assert 'concurso_uuid' in serializer.errors
 
 
-def test_processo_convocacao_create_serializer_create_with_cargos(user):
-    """Testa a criação de processo com cargos."""
+def test_processo_convocacao_create_serializer_create(user):
+    """Testa a criação de processo de convocação."""
     data = {
         'concurso_uuid': str(uuid.uuid4()),
         'concurso_nome': 'Concurso Teste',
         'descricao': 'Descrição teste',
-        'tipo_escolha': 'Nova Autorização',
+        'tipo_escolha': 'NOVA_AUTORIZACAO',
         'status': 'EM_ANDAMENTO',
-        'data_convocacao': timezone.now() + timedelta(days=30),
-        'data_corte_vagas': 5,
-        'cargos': [
-            {'nome': 'Analista', 'cargo_uuid': str(uuid.uuid4())},
-            {'nome': 'Desenvolvedor', 'cargo_uuid': str(uuid.uuid4())}
-        ]
+        'data_convocacao': (timezone.now() + timedelta(days=30)).isoformat(),
+        'data_corte_vagas': (timezone.now() + timedelta(days=5)).isoformat(),
     }
-    
     serializer = ProcessoConvocacaoCreateSerializer(data=data)
     assert serializer.is_valid()
-    
     processo = serializer.save()
     assert processo.concurso_nome == 'Concurso Teste'
-    assert processo.cargos_processo.count() == 2
-    
-    cargos_nomes = list(processo.cargos_processo.values_list('nome', flat=True))
-    assert 'Analista' in cargos_nomes
-    assert 'Desenvolvedor' in cargos_nomes
+    assert processo.tipo_escolha == 'NOVA_AUTORIZACAO'
 
 
 # Testes para ProcessoConvocacaoListSerializer
@@ -259,12 +247,12 @@ def test_processo_convocacao_list_serializer_fields(processo_convocacao):
     # Criar cargos para o processo
     CargoProcesso.objects.create(
         processo=processo_convocacao,
-        nome="Analista de Sistemas",
+        cargo_nome="Analista de Sistemas",
         cargo_uuid=uuid.uuid4()
     )
     CargoProcesso.objects.create(
         processo=processo_convocacao,
-        nome="Desenvolvedor Backend",
+        cargo_nome="Desenvolvedor Backend",
         cargo_uuid=uuid.uuid4()
     )
     
@@ -291,12 +279,12 @@ def test_processo_convocacao_list_serializer_quantidade_cargos(processo_convocac
     # Criar cargos para o processo
     CargoProcesso.objects.create(
         processo=processo_convocacao,
-        nome="Analista de Sistemas",
+        cargo_nome="Analista de Sistemas",
         cargo_uuid=uuid.uuid4()
     )
     CargoProcesso.objects.create(
         processo=processo_convocacao,
-        nome="Desenvolvedor Backend",
+        cargo_nome="Desenvolvedor Backend",
         cargo_uuid=uuid.uuid4()
     )
     
@@ -308,7 +296,7 @@ def test_processo_convocacao_list_serializer_quantidade_cargos(processo_convocac
     # Adicionar mais um cargo
     CargoProcesso.objects.create(
         processo=processo_convocacao,
-        nome="Testador",
+        cargo_nome="Testador",
         cargo_uuid=uuid.uuid4()
     )
     
@@ -380,12 +368,12 @@ def test_serializer_integration_processo_cargos(processo_convocacao):
     # Criar cargos
     CargoProcesso.objects.create(
         processo=processo_convocacao,
-        nome="Analista",
+        cargo_nome="Analista",
         cargo_uuid=uuid.uuid4()
     )
     CargoProcesso.objects.create(
         processo=processo_convocacao,
-        nome="Desenvolvedor",
+        cargo_nome="Desenvolvedor",
         cargo_uuid=uuid.uuid4()
     )
     
@@ -394,7 +382,7 @@ def test_serializer_integration_processo_cargos(processo_convocacao):
     data = serializer.data
     
     assert len(data['cargos_processo']) == 2
-    cargos_nomes = [cargo['nome'] for cargo in data['cargos_processo']]
+    cargos_nomes = [cargo['cargo_nome'] for cargo in data['cargos_processo']]
     assert 'Analista' in cargos_nomes
     assert 'Desenvolvedor' in cargos_nomes
 
@@ -411,4 +399,118 @@ def test_serializer_error_handling():
     serializer = ProcessoConvocacaoCreateSerializer(data=data)
     assert not serializer.is_valid()
     assert 'concurso_uuid' in serializer.errors
-    assert 'concurso_nome' in serializer.errors 
+    assert 'concurso_nome' in serializer.errors
+
+
+# --- Testes Carta Convocação (Histórico e Detalhe) ---
+
+
+@pytest.fixture
+def carta_convocacao_historico(processo_convocacao):
+    """Fixture para CartaConvocacaoHistorico."""
+    return CartaConvocacaoHistorico.objects.create(
+        processo_uuid=processo_convocacao.uuid,
+        processo_nome=processo_convocacao.concurso_nome,
+        data=timezone.now().date(),
+        quantidade_candidatos=2,
+    )
+
+
+@pytest.fixture
+def carta_convocacao_candidatos(carta_convocacao_historico):
+    """Fixture para CartaConvocacaoCandidato vinculados ao histórico."""
+    from processos.models.carta_convocacao_candidato import ENVIO_STATUS_SUCESSO, ENVIO_STATUS_ERRO
+    CartaConvocacaoCandidato.objects.create(
+        carta_convocacao_historico=carta_convocacao_historico,
+        nome="Fulano",
+        rf="1234567",
+        email="fulano@test.com",
+        status=ENVIO_STATUS_SUCESSO,
+        conteudo="<p>Conteúdo email 1</p>",
+    )
+    CartaConvocacaoCandidato.objects.create(
+        carta_convocacao_historico=carta_convocacao_historico,
+        nome="Ciclano",
+        rf="7654321",
+        email="ciclano@test.com",
+        status=ENVIO_STATUS_ERRO,
+        conteudo="<p>Conteúdo email 2</p>",
+    )
+    return list(carta_convocacao_historico.candidatos.all())
+
+
+def test_carta_convocacao_historico_serializer_fields(carta_convocacao_historico):
+    """Testa os campos do CartaConvocacaoHistoricoSerializer."""
+    serializer = CartaConvocacaoHistoricoSerializer(carta_convocacao_historico)
+    data = serializer.data
+    assert data["uuid"] == str(carta_convocacao_historico.uuid)
+    assert data["processo_nome"] == carta_convocacao_historico.processo_nome
+    assert data["processo_uuid"] == str(carta_convocacao_historico.processo_uuid)
+    assert "data" in data
+    assert "criado_em" in data
+    assert data["quantidade_convocados"] == carta_convocacao_historico.quantidade_candidatos
+
+
+def test_carta_convocacao_candidato_serializer_fields(carta_convocacao_candidatos):
+    """Testa os campos do CartaConvocacaoCandidatoSerializer."""
+    cand = carta_convocacao_candidatos[0]
+    serializer = CartaConvocacaoCandidatoSerializer(cand)
+    data = serializer.data
+    assert data["nome"] == cand.nome
+    assert data["rf"] == cand.rf
+    assert data["email"] == cand.email
+    assert data["status"] == cand.status
+    assert data["conteudo"] == cand.conteudo
+
+
+def test_carta_convocacao_historico_detalhe_serializer_fields(
+    carta_convocacao_historico, carta_convocacao_candidatos
+):
+    """Testa os campos do CartaConvocacaoHistoricoDetalheSerializer incluindo candidatos."""
+    serializer = CartaConvocacaoHistoricoDetalheSerializer(carta_convocacao_historico)
+    data = serializer.data
+    assert data["uuid"] == str(carta_convocacao_historico.uuid)
+    assert data["processo_nome"] == carta_convocacao_historico.processo_nome
+    assert data["quantidade_convocados"] == carta_convocacao_historico.quantidade_candidatos
+    assert "candidatos" in data
+    assert len(data["candidatos"]) == 2
+    nomes = [c["nome"] for c in data["candidatos"]]
+    assert "Fulano" in nomes
+    assert "Ciclano" in nomes
+
+
+def test_carta_convocacao_envio_serializer_valid(processo_convocacao):
+    """Testa CartaConvocacaoEnvioSerializer com dados válidos."""
+    data = {
+        "processo_uuid": str(processo_convocacao.uuid),
+        "processo_nome": "Processo Teste",
+        "data": "25-12-2024",
+    }
+    serializer = CartaConvocacaoEnvioSerializer(data=data)
+    assert serializer.is_valid()
+    assert serializer.validated_data["processo_nome"] == "Processo Teste"
+    assert serializer.validated_data["processo_uuid"] == processo_convocacao.uuid
+
+
+def test_carta_convocacao_envio_serializer_processo_nao_encontrado():
+    """Testa CartaConvocacaoEnvioSerializer quando processo não existe."""
+    data = {
+        "processo_uuid": str(uuid.uuid4()),
+        "processo_nome": "Processo Inexistente",
+        "data": "25-12-2024",
+    }
+    serializer = CartaConvocacaoEnvioSerializer(data=data)
+    assert not serializer.is_valid()
+    assert "processo_uuid" in serializer.errors
+
+
+def test_carta_convocacao_envio_serializer_data_invalida(processo_convocacao):
+    """Testa CartaConvocacaoEnvioSerializer com formato de data inválido."""
+    data = {
+        "processo_uuid": str(processo_convocacao.uuid),
+        "processo_nome": "Processo Teste",
+        "data": "2024-12-25",  # formato errado (esperado dd-mm-yyyy)
+    }
+    serializer = CartaConvocacaoEnvioSerializer(data=data)
+    assert not serializer.is_valid()
+    assert "data" in serializer.errors

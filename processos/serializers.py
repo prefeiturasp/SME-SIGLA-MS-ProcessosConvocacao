@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import ProcessoConvocacao, CargoProcesso
+from .models import ProcessoConvocacao, CargoProcesso, CartaConvocacaoHistorico, CartaConvocacaoCandidato
 
 
 class CargoProcessoSerializer(serializers.ModelSerializer):
@@ -100,4 +100,49 @@ class ProcessoConvocacaoSelectSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProcessoConvocacao
-        fields = ['value', 'label']
+        fields = ['value', 'label', 'concurso_uuid']
+
+
+class CartaConvocacaoEnvioSerializer(serializers.Serializer):
+    """Serializer para validar o payload do endpoint de carta de convocação."""
+
+    processo_uuid = serializers.UUIDField(help_text='UUID do processo de convocação')
+    processo_nome = serializers.CharField(help_text='Nome do processo')
+    data = serializers.DateField(
+        format='%d-%m-%Y',
+        input_formats=['%d-%m-%Y'],
+        help_text='Data no formato dd-mm-yyyy',
+    )
+
+    def validate_processo_uuid(self, value):
+        """Garante que o processo existe."""
+        if not ProcessoConvocacao.objects.filter(uuid=value).exists():
+            raise serializers.ValidationError('Processo de convocação não encontrado.')
+        return value
+
+
+class CartaConvocacaoHistoricoSerializer(serializers.ModelSerializer):
+    """Serializer para GET /api/v1/carta-convocacao/ (listagem do histórico)."""
+    quantidade_convocados = serializers.IntegerField(source='quantidade_candidatos', read_only=True)
+
+    class Meta:
+        model = CartaConvocacaoHistorico
+        fields = ['uuid', 'processo_nome', 'processo_uuid', 'data', 'criado_em', 'quantidade_convocados']
+
+
+class CartaConvocacaoCandidatoSerializer(serializers.ModelSerializer):
+    """Serializer para candidatos no GET /api/v1/carta-convocacao/<uuid>/ (detalhe do histórico)."""
+
+    class Meta:
+        model = CartaConvocacaoCandidato
+        fields = ['nome', 'rf', 'email', 'status', 'conteudo']
+
+
+class CartaConvocacaoHistoricoDetalheSerializer(serializers.ModelSerializer):
+    """Serializer para GET /api/v1/carta-convocacao/<uuid>/ (detalhe do histórico com candidatos)."""
+    quantidade_convocados = serializers.IntegerField(source='quantidade_candidatos', read_only=True)
+    candidatos = CartaConvocacaoCandidatoSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = CartaConvocacaoHistorico
+        fields = ['uuid', 'processo_nome', 'processo_uuid', 'data', 'criado_em', 'quantidade_convocados', 'candidatos']
