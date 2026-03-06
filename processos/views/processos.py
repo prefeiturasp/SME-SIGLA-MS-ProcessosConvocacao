@@ -7,10 +7,9 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
-from django.db.models import Q
 from datetime import datetime
 import uuid
-import pdb
+import logging
 
 from processos.models import ProcessoConvocacao, CargoProcesso
 from processos.serializers import (
@@ -19,7 +18,24 @@ from processos.serializers import (
     ProcessoConvocacaoSelectSerializer
 )
 from processos.utils import CustomPagination
-from processos.models.constants import TIPO_ESCOLHA_CHOICES
+from processos.models.constants import (
+    TIPO_ESCOLHA_CHOICES,
+    ERROR_PROCESSO_JA_FINALIZADO,
+    ERROR_PROCESSO_JA_CANCELADO,
+    ERROR_CANDIDATOS_PENDENTES_ESCOLHA,
+    ERROR_PROCESSO_NAO_PODE_EDITAR,
+)
+from processos.services.candidatos_api_url import (
+    buscar_habilitados_por_processo,
+    CANDIDATOS_API_URL,
+)
+from processos.services.escolhas_service import buscar_candidatos_com_escolha
+
+logger = logging.getLogger(__name__)
+
+STATUS_EM_ANDAMENTO = 'EM_ANDAMENTO'
+STATUS_FINALIZADO = 'FINALIZADO'
+STATUS_CANCELADO = 'CANCELADO'
 
 class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
     """
@@ -137,3 +153,102 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
         }
 
         return Response(resultado)
+
+    def _extrair_candidato_uuids_convocados(self, habilitados):
+        """Extrai lista de candidato_uuid (str) dos itens retornados pela API de habilitados."""
+        uuids = []
+        for item in habilitados:
+            uid = item.get('candidato_uuid')
+            if uid is None and isinstance(item.get('candidato'), dict):
+                uid = (item.get('candidato') or {}).get('uuid')
+            if uid is not None:
+                uuids.append(str(uid))
+        return uuids
+
+    @action(detail=True, methods=['post'], url_path='finalizar')
+    def finalizar(self, request, pk=None):
+        """
+        Finaliza o processo de convocação.
+        - Só permite se status for EM_ANDAMENTO.
+        - Valida se todos os candidatos convocados fizeram escolha (via MS-Escolha).
+        - Atualiza status para FINALIZADO.
+        """
+        processo = self.get_object()
+
+        if processo.status == STATUS_FINALIZADO:
+            return Response(
+                {'detail': ERROR_PROCESSO_JA_FINALIZADO},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if processo.status == STATUS_CANCELADO:
+            return Response(
+                {'detail': ERROR_PROCESSO_JA_CANCELADO},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if processo.status != STATUS_EM_ANDAMENTO:
+            return Response(
+                {'detail': 'Apenas processos em andamento podem ser finalizados.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Convocados do processo: fonte principal = candidatos_uuids dos cargos do processo.
+        # Fallback: se nenhum cargo tiver candidatos, usar MS-Candidatos (habilitados com processo_uuid).
+        convocados_candidato_uuids = set()
+        for cargo in processo.cargos_processo.all():
+            for uid in (cargo.candidatos_uuids or []):
+                convocados_candidato_uuids.add(str(uid))
+
+        if not convocados_candidato_uuids and CANDIDATOS_API_URL:
+            try:
+                habilitados = buscar_habilitados_por_processo(str(processo.uuid))
+                convocados_candidato_uuids = set(
+                    self._extrair_candidato_uuids_convocados(habilitados)
+                )
+            except Exception as exc:
+                logger.exception('Erro ao buscar habilitados para finalização: %s', exc)
+                return Response(
+                    {'detail': 'Erro ao consultar candidatos convocados.'},
+                    status=status.HTTP_502_BAD_GATEWAY,
+                )
+
+        # Quem fez escolha no concurso (MS-Escolha)
+        try:
+            com_escolha = set(buscar_candidatos_com_escolha(str(processo.concurso_uuid)))
+        except Exception as exc:
+            logger.exception('Erro ao buscar escolhas para finalização: %s', exc)
+            return Response(
+                {'detail': 'Erro ao consultar escolhas dos candidatos.'},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        pendentes = convocados_candidato_uuids - com_escolha
+        if pendentes:
+            return Response(
+                {'detail': ERROR_CANDIDATOS_PENDENTES_ESCOLHA},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        processo.status = STATUS_FINALIZADO
+        processo.save()
+        serializer = ProcessoConvocacaoSerializer(processo)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def update(self, request, *args, **kwargs):
+        """Bloqueia alteração quando processo está finalizado."""
+        instance = self.get_object()
+        if instance.status == STATUS_FINALIZADO:
+            return Response(
+                {'detail': ERROR_PROCESSO_NAO_PODE_EDITAR},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return super().update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        """Bloqueia alteração quando processo está finalizado."""
+        instance = self.get_object()
+        if instance.status == STATUS_FINALIZADO:
+            return Response(
+                {'detail': ERROR_PROCESSO_NAO_PODE_EDITAR},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return super().partial_update(request, *args, **kwargs)

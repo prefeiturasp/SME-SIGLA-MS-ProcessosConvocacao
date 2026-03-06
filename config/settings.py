@@ -192,4 +192,7 @@ CELERY_TASK_DEFAULT_QUEUE = 'processos_convocacao'
 # MS-Candidatos (API de habilitados)
 CANDIDATOS_API_URL = os.environ.get('CANDIDATOS_API_URL', '').rstrip('/')
 
+# MS-Escolha (API para validar se convocados fizeram escolha na finalização)
+ESCOLHAS_API_URL = os.environ.get('ESCOLHAS_API_URL', '').rstrip('/')
+
 MS_URL = os.environ.get('MS_URL', '').rstrip('/')
