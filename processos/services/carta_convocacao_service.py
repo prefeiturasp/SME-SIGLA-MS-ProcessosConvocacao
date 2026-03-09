@@ -114,13 +114,11 @@ def iniciar_processamento_envio(
     # API MS-Candidatos: candidato (objeto aninhado); descricao_cargo = cargo importado; classificacao/classificacao_pcd/classificacao_nna
     ignorados_sem_email = 0
     for item in habilitados:
-        cand = item.get('candidato') or {}
-        nome = (cand.get('nome') or item.get('candidato__nome') or item.get('nome') or '').strip() or '—'
-        rf = str(cand.get('registro_funcional') or item.get('candidato__registro_funcional') or item.get('registro_funcional') or '').strip()
-        email = (cand.get('email') or item.get('candidato__email') or item.get('email') or '').strip()
-        # Cargo exato importado (vagas/habilitados): descricao_cargo no ConcursoCandidato
-        cargo_nome = (item.get('descricao_cargo') or item.get('cargo_nome') or '').strip() or '—'
-        # Classificação exata: geral, PCD ou NNA conforme categoria do candidato
+        cand = item.get('candidato')
+        nome = (cand.get('nome'))
+        rf = str(cand.get('registro_funcional'))
+        email = (cand.get('email'))
+        cargo_nome = (item.get('descricao_cargo'))
         cat = (item.get('categoria_efetiva') or '').strip().upper()
         if cat == 'PCD' and item.get('classificacao_pcd') is not None:
             classificacao = str(item.get('classificacao_pcd'))

@@ -94,13 +94,14 @@ class ProcessoConvocacaoUpdateSerializer(serializers.ModelSerializer):
 class ProcessoConvocacaoSelectSerializer(serializers.ModelSerializer):
     """
     Serializer para selects/dropdowns no frontend.
+    Inclui status para que o front possa filtrar (ex.: não exibir finalizados na Escolha de Candidato).
     """
     value = serializers.UUIDField(source='uuid')
     label = serializers.CharField(source='descricao')
 
     class Meta:
         model = ProcessoConvocacao
-        fields = ['value', 'label', 'concurso_uuid']
+        fields = ['value', 'label', 'concurso_uuid', 'status']
 
 
 class CartaConvocacaoEnvioSerializer(serializers.Serializer):
@@ -135,7 +136,7 @@ class CartaConvocacaoCandidatoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CartaConvocacaoCandidato
-        fields = ['nome', 'rf', 'email', 'status', 'conteudo']
+        fields = ['nome', 'rf', 'email', 'status', 'status_detalhe', 'conteudo']
 
 
 class CartaConvocacaoHistoricoDetalheSerializer(serializers.ModelSerializer):

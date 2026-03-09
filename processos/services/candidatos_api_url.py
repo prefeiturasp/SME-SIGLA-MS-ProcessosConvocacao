@@ -16,7 +16,7 @@ CANDIDATOS_API_URL = getattr(settings, 'CANDIDATOS_API_URL', '').rstrip('/')
 PATH_HABILITADOS = '/api/v1/habilitados/'
 
 FIELDS_HABILITADOS = (
-    'candidato__nome,candidato__registro_funcional,candidato__email,'
+    'candidato__nome,candidato__registro_funcional,candidato__email,candidato__uuid,'
     'descricao_cargo,codigo_cargo,classificacao,classificacao_pcd,classificacao_nna,categoria_efetiva'
 )
 TIMEOUT_SEGUNDOS = 30
