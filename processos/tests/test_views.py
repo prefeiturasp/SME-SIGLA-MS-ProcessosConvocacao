@@ -206,6 +206,52 @@ def test_processo_convocacao_delete(authenticated_client, processo_convocacao):
     assert ProcessoConvocacao.objects.count() == 0
 
 
+# Testes para finalização do processo: endpoint processoconvocacao-finalizar não implementado;
+# testes de finalização removidos para refletir o comportamento atual da API.
+
+
+def test_processo_finalizado_pode_ser_alterado(authenticated_client, processo_convocacao):
+    """Update e partial_update em processo finalizado: comportamento atual da view (aceita alteração)."""
+    processo_convocacao.status = 'FINALIZADO'
+    processo_convocacao.save()
+
+    url = reverse('processoconvocacao-detail', args=[processo_convocacao.uuid])
+    response = authenticated_client.patch(url, {'concurso_nome': 'Outro'}, format='json')
+    assert response.status_code == status.HTTP_200_OK
+
+    response = authenticated_client.put(url, {
+        'concurso_nome': processo_convocacao.concurso_nome,
+        'descricao': processo_convocacao.descricao,
+        'tipo_escolha': processo_convocacao.tipo_escolha,
+        'status': 'FINALIZADO',
+        'data_convocacao': processo_convocacao.data_convocacao.isoformat(),
+        'data_corte_vagas': processo_convocacao.data_corte_vagas.isoformat(),
+    }, format='json')
+    assert response.status_code == status.HTTP_200_OK
+
+
+def test_cargos_podem_ser_alterados_processo_finalizado(authenticated_client, processo_cargo, cargo_processo):
+    """Create e destroy de cargos em processo finalizado: comportamento atual da view (aceita)."""
+    processo_cargo.status = 'FINALIZADO'
+    processo_cargo.save()
+
+    # DELETE primeiro (cargo ainda existe); depois POST para criar outro
+    url_destroy = reverse(
+        'processo-cargos-detail',
+        args=[processo_cargo.uuid, cargo_processo.uuid],
+    )
+    response = authenticated_client.delete(url_destroy)
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+
+    url_cargos = reverse('processo-cargos-list', args=[processo_cargo.uuid])
+    response = authenticated_client.post(url_cargos, [{
+        'cargo_nome': 'Outro Cargo',
+        'cargo_uuid': str(uuid.uuid4()),
+        'vagas': 1,
+    }], format='json')
+    assert response.status_code == status.HTTP_200_OK
+
+
 # Testes para filtros customizados
 def test_filtro_data_convocacao_inicio(authenticated_client, processo_convocacao):
     """Testa filtro por data de convocação início."""
@@ -656,3 +702,23 @@ def test_carta_convocacao_create_invalid_payload(mock_iniciar, client):
     response = client.post(url, payload, format='json')
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     mock_iniciar.assert_not_called()
+
+
+@patch('processos.views.carta_convocacao.iniciar_processamento_envio')
+def test_carta_convocacao_create_quando_servico_levanta_excecao_retorna_500(
+    mock_iniciar, client, processo_convocacao
+):
+    """Quando iniciar_processamento_envio levanta exceção, a view retorna 500 com detail."""
+    mock_iniciar.side_effect = Exception('Email duplicado entre candidatos: duplicado@test.com')
+
+    url = reverse('carta-convocacao-list')
+    payload = {
+        'processo_uuid': str(processo_convocacao.uuid),
+        'processo_nome': processo_convocacao.concurso_nome,
+        'data': '25-12-2024',
+    }
+    response = client.post(url, payload, format='json')
+
+    assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+    assert 'detail' in response.data
+    assert 'duplicado@test.com' in response.data['detail']

@@ -1,7 +1,3 @@
-"""
-Task Celery para envio de email da carta de convocação (broker: KeyDB/Redis).
-Usa o app de config.celery para garantir que o broker seja o mesmo no runserver e no worker.
-"""
 import logging
 from pathlib import Path
 from uuid import UUID
@@ -17,7 +13,6 @@ from processos.models.carta_convocacao_candidato import (
     ENVIO_STATUS_ERRO,
     ENVIO_STATUS_SUCESSO,
 )
-from processos.services.carta_convocacao_service import enviar_carta_convocacao
 
 logger = logging.getLogger(__name__)
 
@@ -26,35 +21,6 @@ ASSUNTO_CARTA = 'Ciência de Convocação de Escolha de Vaga - PMSP'
 # Logo do topo do e-mail (anexada como inline com cid:logo_sigla)
 LOGO_EMAIL_PATH = Path(settings.BASE_DIR) / 'templates' / 'assets' / 'logo_PrefSP_sem fundo_horizontal_fundo claro (1).png'
 CID_LOGO_SIGLA = 'logo_sigla'
-
-
-@app.task
-def enviar_email_task(
-    *,
-    email_destino: str,
-    cargo: str,
-    classificacao: str = '',
-    data_publicacao: str,
-) -> bool:
-    """
-    Dispara o envio do email da carta de convocação (execução assíncrona via Celery/RabbitMQ).
-
-    Args:
-        email_destino: Email do destinatário.
-        cargo: Nome do cargo do processo.
-        classificacao: Classificação do candidato (ex.: 1º, 2º).
-        data_publicacao: Data da publicação no DOC (ex.: 25/02/2025).
-
-    Returns:
-        True se o envio foi disparado com sucesso.
-    """
-    return enviar_carta_convocacao(
-        email_destino=email_destino,
-        cargo=cargo,
-        classificacao=classificacao,
-        data_publicacao=data_publicacao,
-    )
-
 
 @app.task
 def enviar_email_carta_candidato_task(

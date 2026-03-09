@@ -2,7 +2,6 @@
 Serviço de envio da carta de convocação por email.
 """
 import logging
-from collections import defaultdict
 from datetime import date
 from uuid import UUID
 
@@ -11,65 +10,13 @@ from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 
 from processos.models import CartaConvocacaoCandidato, CartaConvocacaoHistorico
-from processos.models.carta_convocacao_candidato import ENVIO_STATUS_PENDENTE, ENVIO_STATUS_ERRO
+from processos.models.carta_convocacao_candidato import ENVIO_STATUS_PENDENTE
 from processos.services.candidatos_api_url import buscar_habilitados_por_processo
-
-MSG_EMAIL_DUPLICADO_PROCESSO = 'E-mail já existente no processo de convocação.'
-
-
-class EmailDuplicadoEntreCandidatosError(Exception):
-    """Exceção quando o mesmo e-mail aparece em candidatos diferentes (RF/uuid distintos)."""
-
-    def __init__(self, emails_duplicados):
-        self.emails_duplicados = frozenset(emails_duplicados)
-        super().__init__(
-            'E-mail duplicado entre candidatos diferentes: '
-            + ', '.join(sorted(self.emails_duplicados))
-        )
-
 
 logger = logging.getLogger(__name__)
 
 ASSUNTO_CARTA = 'Ciência de Convocação de Escolha de Vaga - PMSP'
 TEMPLATE_EMAIL = 'email/carta_convocacao.html'
-
-
-def _extrair_email_e_candidato_id(item):
-    """
-    Extrai email e identificador do candidato (pessoa) de um item de habilitado.
-    candidate_id = candidato_uuid ou candidato.uuid quando disponível, senão RF.
-    Usado para detectar duplicata: mesmo e-mail em candidatos diferentes.
-    """
-    cand = item.get('candidato') or {}
-    email = (
-        cand.get('email') or item.get('candidato__email') or item.get('email') or ''
-    ).strip()
-    rf = str(
-        cand.get('registro_funcional')
-        or item.get('candidato__registro_funcional')
-        or item.get('registro_funcional')
-        or ''
-    ).strip()
-    candidato_uuid = item.get('candidato_uuid') or cand.get('uuid') or cand.get('id')
-    if candidato_uuid is not None:
-        candidate_id = str(candidato_uuid)
-    else:
-        candidate_id = rf or ''
-    return email, candidate_id
-
-
-def _emails_duplicados_entre_candidatos(habilitados):
-    """
-    Retorna o conjunto de e-mails que aparecem em mais de um candidato diferente
-    (mesmo e-mail com candidate_id distintos). Mesmo candidato em várias linhas
-    (mesmo RF/uuid) com mesmo e-mail não é considerado duplicata.
-    """
-    email_to_candidates = defaultdict(set)
-    for item in habilitados:
-        email, candidate_id = _extrair_email_e_candidato_id(item)
-        if email:
-            email_to_candidates[email].add(candidate_id)
-    return {e for e, ids in email_to_candidates.items() if len(ids) > 1}
 
 
 def enviar_carta_convocacao(
@@ -150,20 +97,6 @@ def iniciar_processamento_envio(
     habilitados = buscar_habilitados_por_processo(processo_uuid_str)
     quantidade = len(habilitados)
 
-    # Duplicata "ruim": mesmo e-mail em candidatos diferentes (RF/uuid distintos).
-    # Se houver, não cria histórico nem registros; view deve retornar 400.
-    emails_duplicados_entre_candidatos = _emails_duplicados_entre_candidatos(habilitados)
-    if emails_duplicados_entre_candidatos:
-        raise EmailDuplicadoEntreCandidatosError(emails_duplicados_entre_candidatos)
-
-    # E-mails que aparecem em mais de um candidato diferente (após validação acima, fica vazio)
-    email_to_candidates = defaultdict(set)
-    for item in habilitados:
-        email, candidate_id = _extrair_email_e_candidato_id(item)
-        if email:
-            email_to_candidates[email].add(candidate_id)
-    emails_duplicados_no_processo = {e for e, ids in email_to_candidates.items() if len(ids) > 1}
-
     # 1.2 Criar registro no CartaConvocacaoHistorico
     historico = CartaConvocacaoHistorico.objects.create(
         processo_uuid=processo_uuid,
@@ -176,13 +109,11 @@ def iniciar_processamento_envio(
     # API MS-Candidatos: candidato (objeto aninhado); descricao_cargo = cargo importado; classificacao/classificacao_pcd/classificacao_nna
     ignorados_sem_email = 0
     for item in habilitados:
-        cand = item.get('candidato') or {}
-        nome = (cand.get('nome') or item.get('candidato__nome') or item.get('nome') or '').strip() or '—'
-        rf = str(cand.get('registro_funcional') or item.get('candidato__registro_funcional') or item.get('registro_funcional') or '').strip()
-        email = (cand.get('email') or item.get('candidato__email') or item.get('email') or '').strip()
-        # Cargo exato importado (vagas/habilitados): descricao_cargo no ConcursoCandidato
-        cargo_nome = (item.get('descricao_cargo') or item.get('cargo_nome') or '').strip() or '—'
-        # Classificação exata: geral, PCD ou NNA conforme categoria do candidato
+        cand = item.get('candidato')
+        nome = (cand.get('nome'))
+        rf = str(cand.get('registro_funcional'))
+        email = (cand.get('email'))
+        cargo_nome = (item.get('descricao_cargo'))
         cat = (item.get('categoria_efetiva') or '').strip().upper()
         if cat == 'PCD' and item.get('classificacao_pcd') is not None:
             classificacao = str(item.get('classificacao_pcd'))
@@ -203,35 +134,26 @@ def iniciar_processamento_envio(
         }
         conteudo_html = render_to_string(TEMPLATE_EMAIL, context)
 
-        email_duplicado_no_processo = email in emails_duplicados_no_processo
-        if email_duplicado_no_processo:
-            status_envio = ENVIO_STATUS_ERRO
-            status_detalhe_envio = MSG_EMAIL_DUPLICADO_PROCESSO
-        else:
-            status_envio = ENVIO_STATUS_PENDENTE
-            status_detalhe_envio = ''
-
         registro = CartaConvocacaoCandidato.objects.create(
             carta_convocacao_historico=historico,
             nome=nome,
             rf=rf,
             email=email,
-            status=status_envio,
-            status_detalhe=status_detalhe_envio,
+            status=ENVIO_STATUS_PENDENTE,
+            status_detalhe='',
             conteudo=conteudo_html,
         )
 
-        if not email_duplicado_no_processo:
-            # Envia a task pelo app do config para garantir o mesmo broker (KeyDB/Redis) que o worker
-            from config.celery import app as celery_app
-            celery_app.send_task(
-                'processos.tasks.enviar_email_task.enviar_email_carta_candidato_task',
-                kwargs={
-                    'email': email,
-                    'conteudo': conteudo_html,
-                    'carta_convocacao_candidato_id': str(registro.uuid),
-                },
-            )
+        # Envia a task pelo app do config para garantir o mesmo broker (KeyDB/Redis) que o worker
+        from config.celery import app as celery_app
+        celery_app.send_task(
+            'processos.tasks.enviar_email_task.enviar_email_carta_candidato_task',
+            kwargs={
+                'email': email,
+                'conteudo': conteudo_html,
+                'carta_convocacao_candidato_id': str(registro.uuid),
+            },
+        )
 
     if ignorados_sem_email:
         logger.warning(

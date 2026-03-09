@@ -12,10 +12,7 @@ from processos.serializers import (
     CartaConvocacaoHistoricoSerializer,
     CartaConvocacaoHistoricoDetalheSerializer,
 )
-from processos.services.carta_convocacao_service import (
-    iniciar_processamento_envio,
-    EmailDuplicadoEntreCandidatosError,
-)
+from processos.services.carta_convocacao_service import iniciar_processamento_envio
 from processos.utils import CustomPagination
 
 logger = logging.getLogger(__name__)
@@ -64,14 +61,6 @@ class CartaConvocacaoViewSet(
                     'quantidade_candidatos': historico.quantidade_candidatos,
                 },
                 status=status.HTTP_200_OK,
-            )
-        except EmailDuplicadoEntreCandidatosError as exc:
-            return Response(
-                {
-                    'detail': str(exc),
-                    'emails_duplicados': sorted(exc.emails_duplicados),
-                },
-                status=status.HTTP_400_BAD_REQUEST,
             )
         except Exception as exc:
             logger.exception(

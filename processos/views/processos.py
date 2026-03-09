@@ -154,17 +154,6 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
 
         return Response(resultado)
 
-    def _extrair_candidato_uuids_convocados(self, habilitados):
-        """Extrai lista de candidato_uuid (str) dos itens retornados pela API de habilitados."""
-        uuids = []
-        for item in habilitados:
-            uid = item.get('candidato_uuid')
-            if uid is None and isinstance(item.get('candidato'), dict):
-                uid = (item.get('candidato') or {}).get('uuid')
-            if uid is not None:
-                uuids.append(str(uid))
-        return uuids
-
     @action(detail=True, methods=['post'], url_path='finalizar')
     def finalizar(self, request, pk=None):
         """
@@ -191,25 +180,15 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Convocados do processo: fonte principal = candidatos_uuids dos cargos do processo.
-        # Fallback: se nenhum cargo tiver candidatos, usar MS-Candidatos (habilitados com processo_uuid).
-        convocados_candidato_uuids = set()
-        for cargo in processo.cargos_processo.all():
-            for uid in (cargo.candidatos_uuids or []):
-                convocados_candidato_uuids.add(str(uid))
-
-        if not convocados_candidato_uuids and CANDIDATOS_API_URL:
-            try:
-                habilitados = buscar_habilitados_por_processo(str(processo.uuid))
-                convocados_candidato_uuids = set(
-                    self._extrair_candidato_uuids_convocados(habilitados)
-                )
-            except Exception as exc:
-                logger.exception('Erro ao buscar habilitados para finalização: %s', exc)
-                return Response(
-                    {'detail': 'Erro ao consultar candidatos convocados.'},
-                    status=status.HTTP_502_BAD_GATEWAY,
-                )
+        
+        try:
+            habilitados = buscar_habilitados_por_processo(str(processo.uuid))
+        except Exception as exc:
+            logger.exception('Erro ao buscar habilitados para finalização: %s', exc)
+            return Response(
+                {'detail': 'Erro ao consultar candidatos convocados.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         # Quem fez escolha no concurso (MS-Escolha)
         try:
@@ -218,10 +197,10 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
             logger.exception('Erro ao buscar escolhas para finalização: %s', exc)
             return Response(
                 {'detail': 'Erro ao consultar escolhas dos candidatos.'},
-                status=status.HTTP_502_BAD_GATEWAY,
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
-        pendentes = convocados_candidato_uuids - com_escolha
+        pendentes = habilitados - com_escolha
         if pendentes:
             return Response(
                 {'detail': ERROR_CANDIDATOS_PENDENTES_ESCOLHA},
