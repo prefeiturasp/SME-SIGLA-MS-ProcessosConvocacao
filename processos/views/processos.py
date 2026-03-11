@@ -200,7 +200,8 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        pendentes = habilitados - com_escolha
+        habilitados_uuids = set(str(h.get('uuid')) for h in habilitados if h.get('uuid'))
+        pendentes = habilitados_uuids - com_escolha
         if pendentes:
             return Response(
                 {'detail': ERROR_CANDIDATOS_PENDENTES_ESCOLHA},
