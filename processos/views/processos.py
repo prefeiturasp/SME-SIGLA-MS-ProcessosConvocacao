@@ -25,10 +25,6 @@ from processos.models.constants import (
     ERROR_CANDIDATOS_PENDENTES_ESCOLHA,
     ERROR_PROCESSO_NAO_PODE_EDITAR,
 )
-from processos.services.candidatos_api_url import (
-    buscar_habilitados_por_processo,
-    CANDIDATOS_API_URL,
-)
 from processos.services.escolhas_service import buscar_candidatos_com_escolha
 
 logger = logging.getLogger(__name__)
@@ -159,7 +155,8 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
         """
         Finaliza o processo de convocação.
         - Só permite se status for EM_ANDAMENTO.
-        - Valida se todos os candidatos convocados fizeram escolha (via MS-Escolha).
+        - Valida se todos os candidatos do processo (candidatos_uuids dos cargos) fizeram
+          escolha, reconvocação ou não escolha (via MS-Escolha).
         - Atualiza status para FINALIZADO.
         """
         processo = self.get_object()
@@ -180,17 +177,14 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        
-        try:
-            habilitados = buscar_habilitados_por_processo(str(processo.uuid))
-        except Exception as exc:
-            logger.exception('Erro ao buscar habilitados para finalização: %s', exc)
-            return Response(
-                {'detail': 'Erro ao consultar candidatos convocados.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        # Candidatos do processo = união dos candidatos_uuids de todos os cargos (mesma lista da tela e do banco)
+        habilitados_uuids = {
+            str(uuid)
+            for cargo in processo.cargos_processo.all()
+            for uuid in (cargo.candidatos_uuids or [])
+        }
 
-        # Quem fez escolha no concurso (MS-Escolha)
+        # Quem fez escolha no concurso (MS-Escolha: escolha, reconvocação ou não escolha)
         try:
             com_escolha = set(buscar_candidatos_com_escolha(str(processo.concurso_uuid)))
         except Exception as exc:
@@ -200,7 +194,6 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        habilitados_uuids = set(str(h.get('uuid')) for h in habilitados if h.get('uuid'))
         pendentes = habilitados_uuids - com_escolha
         if pendentes:
             return Response(
