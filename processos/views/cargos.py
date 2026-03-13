@@ -1,9 +1,11 @@
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, status
+from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from django.db import transaction
 
-from processos.models import ProcessoConvocacao
+from processos.models import CargoProcesso, ProcessoConvocacao
 from processos.models.constants import ERROR_PROCESSO_NAO_PODE_EDITAR
 from processos.serializers import (
     CargoProcessoSerializer,
@@ -13,7 +15,7 @@ from processos.serializers import (
 STATUS_FINALIZADO = 'FINALIZADO'
 
 
-class CargoProcessoViewSet(viewsets.ViewSet):
+class CargoProcessoViewSet(viewsets.ModelViewSet):
     """
     ViewSet dedicado para listar e substituir cargos de um processo de convocação.
 
@@ -21,6 +23,12 @@ class CargoProcessoViewSet(viewsets.ViewSet):
     - POST /processos-convocacao/{processo_pk}/cargos/ -> substitui todos os cargos do processo
     """
 
+    queryset = CargoProcesso.objects.all()
+    serializer_class = CargoProcessoSerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['cargo_uuid']
+    search_fields = ['cargo_nome']
+    ordering_fields = ['cargo_nome', 'cargo_codigo', 'vagas']
     permission_classes = [AllowAny]
     lookup_url_kwarg = 'cargo_uuid'
 
