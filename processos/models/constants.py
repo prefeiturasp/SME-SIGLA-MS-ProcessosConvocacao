@@ -28,4 +28,8 @@ ERROR_PRIORIDADE_INVALIDA = "Prioridade deve estar entre 1 e 100."
 ERROR_CARGO_JA_EXISTE = "Este cargo já está associado ao processo."
 ERROR_CARGO_NAO_ENCONTRADO = "Cargo não encontrado no processo."
 ERROR_PROCESSO_JA_FINALIZADO = "Processo já está finalizado."
-ERROR_PROCESSO_JA_CANCELADO = "Processo já está cancelado." 
+ERROR_PROCESSO_JA_CANCELADO = "Processo já está cancelado."
+ERROR_CANDIDATOS_PENDENTES_ESCOLHA = (
+    "Existem candidatos convocados que ainda não fizeram escolha."
+)
+ERROR_PROCESSO_NAO_PODE_EDITAR = "Processo finalizado não pode ser alterado." 

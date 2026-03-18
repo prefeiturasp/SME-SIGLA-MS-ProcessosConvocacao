@@ -373,3 +373,32 @@ def test_constantes_servico():
     """Constantes do módulo."""
     assert ASSUNTO_CARTA == 'Ciência de Convocação de Escolha de Vaga - PMSP'
     assert 'carta_convocacao' in TEMPLATE_EMAIL and TEMPLATE_EMAIL.endswith('.html')
+
+
+# --- mesmo candidato em duas linhas ---
+
+
+@patch('config.celery.app')
+@patch('processos.services.carta_convocacao_service.render_to_string')
+@patch('processos.services.carta_convocacao_service.buscar_habilitados_por_processo')
+def test_iniciar_processamento_envio_mesmo_candidato_duas_linhas_aceito(mock_buscar, mock_render, mock_celery, processo_convocacao):
+    """Mesmo candidato (mesmo RF) em 2 linhas com mesmo email: aceita, cria 2 registros e dispara 2 tasks."""
+    mock_buscar.return_value = [
+        {'candidato': {'nome': 'Fulano', 'email': 'fulano@test.com', 'registro_funcional': '123'}, 'descricao_cargo': 'Cargo A', 'classificacao': 1},
+        {'candidato': {'nome': 'Fulano', 'email': 'fulano@test.com', 'registro_funcional': '123'}, 'descricao_cargo': 'Cargo B', 'classificacao': 2},
+    ]
+    mock_render.return_value = '<p>Email</p>'
+
+    historico = iniciar_processamento_envio(
+        processo_uuid=processo_convocacao.uuid,
+        processo_nome=processo_convocacao.concurso_nome,
+        data=date(2025, 2, 25),
+    )
+
+    assert historico.quantidade_candidatos == 2
+    cands = list(CartaConvocacaoCandidato.objects.filter(carta_convocacao_historico=historico).order_by('nome', 'rf'))
+    assert len(cands) == 2
+    assert cands[0].email == cands[1].email == 'fulano@test.com'
+    assert cands[0].rf == cands[1].rf == '123'
+    assert cands[0].status == cands[1].status == ENVIO_STATUS_PENDENTE
+    assert mock_celery.send_task.call_count == 2
