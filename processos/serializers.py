@@ -86,7 +86,7 @@ class ProcessoConvocacaoUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProcessoConvocacao
         fields = [
-            'concurso_nome', 'descricao', 'tipo_escolha', 'status', 'data_convocacao',
+            'concurso_nome', 'concurso_uuid', 'descricao', 'tipo_escolha', 'status', 'data_convocacao',
             'data_corte_vagas'
         ]
 
