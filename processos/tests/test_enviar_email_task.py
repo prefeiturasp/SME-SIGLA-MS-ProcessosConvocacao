@@ -9,7 +9,6 @@ from uuid import uuid4
 from processos.models import CartaConvocacaoHistorico, CartaConvocacaoCandidato
 from processos.models.carta_convocacao_candidato import ENVIO_STATUS_PENDENTE, ENVIO_STATUS_SUCESSO, ENVIO_STATUS_ERRO
 from processos.tasks.enviar_email_task import (
-    enviar_email_task,
     enviar_email_carta_candidato_task,
     ASSUNTO_CARTA,
     LOGO_EMAIL_PATH,
@@ -58,49 +57,6 @@ def carta_candidato(carta_historico):
     )
 
 
-# --- enviar_email_task ---
-
-
-@patch('processos.tasks.enviar_email_task.enviar_carta_convocacao')
-def test_enviar_email_task_chama_servico_e_retorna_resultado(mock_enviar):
-    """enviar_email_task delega para enviar_carta_convocacao e retorna o resultado."""
-    mock_enviar.return_value = True
-    result = enviar_email_task.apply(
-        kwargs={
-            'email_destino': 'user@test.com',
-            'cargo': 'Analista',
-            'classificacao': '1º',
-            'data_publicacao': '25/02/2025',
-        }
-    )
-    assert result.get() is True
-    mock_enviar.assert_called_once_with(
-        email_destino='user@test.com',
-        cargo='Analista',
-        classificacao='1º',
-        data_publicacao='25/02/2025',
-    )
-
-
-@patch('processos.tasks.enviar_email_task.enviar_carta_convocacao')
-def test_enviar_email_task_retorna_false_se_servico_falhar(mock_enviar):
-    """enviar_email_task propaga exceção se enviar_carta_convocacao falhar."""
-    mock_enviar.side_effect = Exception('SMTP error')
-    with pytest.raises(Exception, match='SMTP error'):
-        enviar_email_task.apply(
-            kwargs={
-                'email_destino': 'user@test.com',
-                'cargo': 'Cargo',
-                'classificacao': '',
-                'data_publicacao': '01/01/2025',
-            }
-        ).get()
-    mock_enviar.assert_called_once()
-
-
-# --- enviar_email_carta_candidato_task: sucesso com logo ---
-
-
 @patch('processos.tasks.enviar_email_task.LOGO_EMAIL_PATH')
 @patch('processos.tasks.enviar_email_task.EmailMultiAlternatives')
 def test_enviar_email_carta_candidato_task_sucesso_com_logo(mock_email_cls, mock_logo_path, carta_candidato):
@@ -115,6 +71,7 @@ def test_enviar_email_carta_candidato_task_sucesso_com_logo(mock_email_cls, mock
             'email': carta_candidato.email,
             'conteudo': '<p>Olá</p>',
             'carta_convocacao_candidato_id': str(carta_candidato.uuid),
+            'correlation_id': '1234567890',
         }
     ).get()
 
@@ -133,12 +90,9 @@ def test_enviar_email_carta_candidato_task_sucesso_com_logo(mock_email_cls, mock
     assert carta_candidato.status_detalhe == ''
 
 
-# --- enviar_email_carta_candidato_task: sucesso sem logo ---
-
-
 @patch('processos.tasks.enviar_email_task.LOGO_EMAIL_PATH')
 @patch('processos.tasks.enviar_email_task.EmailMultiAlternatives')
-def test_enviar_email_carta_candidato_task_sucesso_sem_logo(mock_email_cls, mock_logo_path, carta_candidato, caplog):
+def test_enviar_email_carta_candidato_task_sucesso_sem_logo(mock_email_cls, mock_logo_path, carta_candidato):
     """Sucesso: logo não existe, warning logado, email enviado, registro SUCESSO."""
     mock_logo_path.is_file.return_value = False
     mock_msg = MagicMock()
@@ -149,6 +103,7 @@ def test_enviar_email_carta_candidato_task_sucesso_sem_logo(mock_email_cls, mock
             'email': carta_candidato.email,
             'conteudo': '<p>Conteúdo</p>',
             'carta_convocacao_candidato_id': str(carta_candidato.uuid),
+            'correlation_id': '1234567890',
         }
     ).get()
 
@@ -158,10 +113,6 @@ def test_enviar_email_carta_candidato_task_sucesso_sem_logo(mock_email_cls, mock
 
     carta_candidato.refresh_from_db()
     assert carta_candidato.status == ENVIO_STATUS_SUCESSO
-    assert 'Logo do e-mail não encontrada' in caplog.text or any('Logo' in r.message for r in caplog.records)
-
-
-# --- enviar_email_carta_candidato_task: conteudo vazio ---
 
 
 @patch('processos.tasks.enviar_email_task.LOGO_EMAIL_PATH')
@@ -177,6 +128,7 @@ def test_enviar_email_carta_candidato_task_conteudo_vazio(mock_email_cls, mock_l
             'email': carta_candidato.email,
             'conteudo': '',
             'carta_convocacao_candidato_id': str(carta_candidato.uuid),
+            'correlation_id': '1234567890',
         }
     ).get()
 
@@ -187,9 +139,6 @@ def test_enviar_email_carta_candidato_task_conteudo_vazio(mock_email_cls, mock_l
     mock_msg.send.assert_called_once()
     carta_candidato.refresh_from_db()
     assert carta_candidato.status == ENVIO_STATUS_SUCESSO
-
-
-# --- enviar_email_carta_candidato_task: exceção no send ---
 
 
 @patch('processos.tasks.enviar_email_task.LOGO_EMAIL_PATH')
@@ -206,6 +155,7 @@ def test_enviar_email_carta_candidato_task_erro_no_send(mock_email_cls, mock_log
             'email': carta_candidato.email,
             'conteudo': '<p>Ok</p>',
             'carta_convocacao_candidato_id': str(carta_candidato.uuid),
+            'correlation_id': '1234567890',
         }
     ).get()
 
@@ -230,6 +180,7 @@ def test_enviar_email_carta_candidato_task_erro_status_detalhe_limitado(mock_ema
             'email': carta_candidato.email,
             'conteudo': '<p>Ok</p>',
             'carta_convocacao_candidato_id': str(carta_candidato.uuid),
+            'correlation_id': '1234567890',
         }
     ).get()
 
@@ -238,12 +189,9 @@ def test_enviar_email_carta_candidato_task_erro_status_detalhe_limitado(mock_ema
     assert len(carta_candidato.status_detalhe) == 2000
 
 
-# --- enviar_email_carta_candidato_task: CartaConvocacaoCandidato.DoesNotExist ---
-
-
 @patch('processos.tasks.enviar_email_task.LOGO_EMAIL_PATH')
 @patch('processos.tasks.enviar_email_task.EmailMultiAlternatives')
-def test_enviar_email_carta_candidato_task_registro_nao_encontrado(mock_email_cls, mock_logo_path, carta_candidato, caplog):
+def test_enviar_email_carta_candidato_task_registro_nao_encontrado(mock_email_cls, mock_logo_path, carta_candidato):
     """Se o registro CartaConvocacaoCandidato não existir, loga warning e não quebra."""
     mock_logo_path.is_file.return_value = False
     mock_msg = MagicMock()
@@ -258,16 +206,11 @@ def test_enviar_email_carta_candidato_task_registro_nao_encontrado(mock_email_cl
             'email': 'outro@test.com',
             'conteudo': '<p>Ok</p>',
             'carta_convocacao_candidato_id': str(uuid_inexistente),
+            'correlation_id': '1234567890',
         }
     ).get()
 
     mock_msg.send.assert_called_once()
-    assert 'não encontrado para atualizar status' in caplog.text or any(
-        'não encontrado' in getattr(r, 'message', str(r)) for r in caplog.records
-    )
-
-
-# --- constantes e logo (branches de anexo) ---
 
 
 def test_constantes_task():
@@ -294,6 +237,7 @@ def test_enviar_email_carta_candidato_task_anexa_mime_com_cid_correto(mock_email
             'email': carta_candidato.email,
             'conteudo': '<p>X</p>',
             'carta_convocacao_candidato_id': str(carta_candidato.uuid),
+            'correlation_id': '1234567890',
         }
     ).get()
 

@@ -8,6 +8,7 @@ from urllib.parse import urlencode
 
 import requests
 from django.conf import settings
+from processos.middlewares import get_correlation_id
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +50,16 @@ def buscar_candidatos_com_escolha(concurso_uuid: str) -> List[str]:
     query = urlencode(params)
     url = f"{base_url}{PATH_ESCOLHAS.rstrip('/')}/?{query}"
 
+    logger.info(
+        'Buscando candidatos com escolha',
+        extra={
+            "concurso_uuid": concurso_uuid,
+            "correlation_id": get_correlation_id(),
+            "url": url,
+            "params": params,
+            "method": "GET",
+        }
+    )
     try:
         response = requests.get(url, timeout=DEFAULT_TIMEOUT, headers={'Accept': 'application/json'})
         response.raise_for_status()
@@ -81,4 +92,14 @@ def buscar_candidatos_com_escolha(concurso_uuid: str) -> List[str]:
         uid = item.get('candidato_uuid')
         if uid is not None:
             candidato_uuids.append(str(uid))
+    logger.info(
+        'Candidatos com escolha encontrados',
+        extra={
+            "concurso_uuid": concurso_uuid,
+            "correlation_id": get_correlation_id(),
+            "url": url,
+            "params": params,
+            "method": "GET",
+        }
+    )
     return candidato_uuids

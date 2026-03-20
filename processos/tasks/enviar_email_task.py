@@ -28,6 +28,7 @@ def enviar_email_carta_candidato_task(
     email: str,
     conteudo: str,
     carta_convocacao_candidato_id: str,
+    correlation_id: str,
 ) -> None:
     """
     Envia o email com o conteúdo informado (configs do settings).
@@ -43,7 +44,13 @@ def enviar_email_carta_candidato_task(
     from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@localhost')
     text_plain = strip_tags(conteudo) if conteudo else ''
 
-    logger.info('Enviando email carta convocação para %s (candidato_id=%s)', email, candidato_uuid)
+    logger.info('Enviando email carta convocação',
+        extra={
+            "email": email,
+            "candidato_uuid": str(candidato_uuid),
+            "correlation_id": correlation_id,
+        }
+    )
     if "example.com" not in email:
         try:
             msg = EmailMultiAlternatives(

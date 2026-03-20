@@ -12,6 +12,8 @@ from django.template.loader import render_to_string
 from processos.models import CartaConvocacaoCandidato, CartaConvocacaoHistorico
 from processos.models.carta_convocacao_candidato import ENVIO_STATUS_PENDENTE
 from processos.services.candidatos_api_url import buscar_habilitados_por_processo
+from processos.middlewares import get_correlation_id
+
 
 logger = logging.getLogger(__name__)
 
@@ -90,6 +92,15 @@ def iniciar_processamento_envio(
     Returns:
         O registro CartaConvocacaoHistorico criado.
     """
+    logger.info(
+        'Iniciando processamento de envio da carta de convocação',
+        extra={
+            "processo_uuid": processo_uuid,
+            "processo_nome": processo_nome,
+            "data": data,
+            "correlation_id": get_correlation_id(),
+        }
+    )
     processo_uuid_str = str(processo_uuid)
     data_publicacao_str = data.strftime('%d/%m/%Y') if hasattr(data, 'strftime') else str(data)
 
@@ -103,12 +114,6 @@ def iniciar_processamento_envio(
         processo_nome=processo_nome,
         data=data,
         quantidade_candidatos=quantidade,
-    )
-    logger.info(
-        'Processamento iniciado: historico=%s, processo_uuid=%s, candidatos=%s',
-        historico.uuid,
-        processo_uuid_str,
-        quantidade,
     )
     # 1.3 Iterar em cada candidato
     # API MS-Candidatos: candidato (objeto aninhado); descricao_cargo = cargo importado; classificacao/classificacao_pcd/classificacao_nna
@@ -149,6 +154,21 @@ def iniciar_processamento_envio(
             conteudo=conteudo_html,
         )
 
+        logger.info(
+        'Adicionando candidato na fila',
+        extra={
+            "historico_uuid": historico.uuid,
+            "processo_uuid": processo_uuid_str,
+            "processo_nome": processo_nome,
+            "correlation_id": get_correlation_id(),
+            "nome": nome,
+            "rf": rf,
+            "email": email,
+            "cargo_nome": cargo_nome,
+            "classificacao": classificacao,
+            "data_publicacao": data_publicacao_str,
+        }
+    )
         # Envia a task pelo app do config para garantir o mesmo broker (KeyDB/Redis) que o worker
         from config.celery import app as celery_app
         celery_app.send_task(
@@ -157,6 +177,7 @@ def iniciar_processamento_envio(
                 'email': email,
                 'conteudo': conteudo_html,
                 'carta_convocacao_candidato_id': str(registro.uuid),
+                'correlation_id': get_correlation_id(),
             },
         )
 
