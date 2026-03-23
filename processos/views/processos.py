@@ -26,6 +26,8 @@ from processos.models.constants import (
     ERROR_PROCESSO_NAO_PODE_EDITAR,
 )
 from processos.services.escolhas_service import buscar_candidatos_com_escolha
+from processos.middlewares import get_correlation_id
+
 
 logger = logging.getLogger(__name__)
 
@@ -94,6 +96,16 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
         Lista todos os processos de convocação.
         Se formato=select, retorna sem paginação.
         """
+        logger.info(
+            'Iniciando lista de processos de convocação',
+            extra={
+                "params": request.query_params,
+                "correlation_id": get_correlation_id(),
+                "user": request.user,
+                "path": request.path,
+                "method": request.method,
+            }
+        )
         queryset = self.filter_queryset(self.get_queryset())
         if request.query_params.get('formato') == 'select':
             serializer = self.get_serializer(queryset, many=True)
@@ -160,6 +172,17 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
         - Atualiza status para FINALIZADO.
         """
         processo = self.get_object()
+        logger.info(
+            'Iniciando finalização de processo de convocação',
+            extra={
+                "processo_uuid": processo.uuid,
+                "processo_status": processo.status,
+                "correlation_id": get_correlation_id(),
+                "user": request.user,
+                "path": request.path,
+                "method": request.method,
+            }
+        )
 
         if processo.status == STATUS_FINALIZADO:
             return Response(
@@ -196,6 +219,16 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
 
         pendentes = habilitados_uuids - com_escolha
         if pendentes:
+            logger.info(
+                'Candidatos pendentes de escolha',
+                extra={
+                    "processo_uuid": processo.uuid,
+                    "correlation_id": get_correlation_id(),
+                    "pendentes": len(pendentes),
+                    "habilitados_uuids": len(habilitados_uuids),
+                    "com_escolha": len(com_escolha),
+                }
+            )
             return Response(
                 {'detail': ERROR_CANDIDATOS_PENDENTES_ESCOLHA},
                 status=status.HTTP_400_BAD_REQUEST,
