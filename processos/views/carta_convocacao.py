@@ -14,6 +14,8 @@ from processos.serializers import (
 )
 from processos.services.carta_convocacao_service import iniciar_processamento_envio
 from processos.utils import CustomPagination
+from processos.middlewares import get_correlation_id
+
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +42,18 @@ class CartaConvocacaoViewSet(
         return CartaConvocacaoHistoricoSerializer
 
     def create(self, request):
+        logger.info(
+        'Iniciando processamento de envio da carta de convocação',
+        extra={
+            "processo_uuid": request.data.get('processo_uuid'),
+            "processo_nome": request.data.get('processo_nome'),
+            "data": request.data.get('data'),
+            "correlation_id": get_correlation_id(),
+            "user": request.user,
+            "path": request.path,
+            "method": request.method,
+        }
+    )
         serializer = CartaConvocacaoEnvioSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

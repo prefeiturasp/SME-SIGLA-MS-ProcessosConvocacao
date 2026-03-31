@@ -14,6 +14,12 @@ import uuid
 from unittest.mock import patch
 
 from ..models import ProcessoConvocacao, CargoProcesso, CartaConvocacaoHistorico, CartaConvocacaoCandidato
+from ..models.constants import (
+    ERROR_PROCESSO_JA_FINALIZADO,
+    ERROR_PROCESSO_JA_CANCELADO,
+    ERROR_CANDIDATOS_PENDENTES_ESCOLHA,
+    ERROR_PROCESSO_NAO_PODE_EDITAR,
+)
 from ..serializers import (
     ProcessoConvocacaoSerializer,
     ProcessoConvocacaoCreateSerializer,
@@ -206,53 +212,6 @@ def test_processo_convocacao_delete(authenticated_client, processo_convocacao):
     assert ProcessoConvocacao.objects.count() == 0
 
 
-# Testes para finalização do processo: endpoint processoconvocacao-finalizar não implementado;
-# testes de finalização removidos para refletir o comportamento atual da API.
-
-
-def test_processo_finalizado_pode_ser_alterado(authenticated_client, processo_convocacao):
-    """Update e partial_update em processo finalizado: comportamento atual da view (aceita alteração)."""
-    processo_convocacao.status = 'FINALIZADO'
-    processo_convocacao.save()
-
-    url = reverse('processoconvocacao-detail', args=[processo_convocacao.uuid])
-    response = authenticated_client.patch(url, {'concurso_nome': 'Outro'}, format='json')
-    assert response.status_code == status.HTTP_200_OK
-
-    response = authenticated_client.put(url, {
-        'concurso_nome': processo_convocacao.concurso_nome,
-        'descricao': processo_convocacao.descricao,
-        'tipo_escolha': processo_convocacao.tipo_escolha,
-        'status': 'FINALIZADO',
-        'data_convocacao': processo_convocacao.data_convocacao.isoformat(),
-        'data_corte_vagas': processo_convocacao.data_corte_vagas.isoformat(),
-    }, format='json')
-    assert response.status_code == status.HTTP_200_OK
-
-
-def test_cargos_podem_ser_alterados_processo_finalizado(authenticated_client, processo_cargo, cargo_processo):
-    """Create e destroy de cargos em processo finalizado: comportamento atual da view (aceita)."""
-    processo_cargo.status = 'FINALIZADO'
-    processo_cargo.save()
-
-    # DELETE primeiro (cargo ainda existe); depois POST para criar outro
-    url_destroy = reverse(
-        'processo-cargos-detail',
-        args=[processo_cargo.uuid, cargo_processo.uuid],
-    )
-    response = authenticated_client.delete(url_destroy)
-    assert response.status_code == status.HTTP_204_NO_CONTENT
-
-    url_cargos = reverse('processo-cargos-list', args=[processo_cargo.uuid])
-    response = authenticated_client.post(url_cargos, [{
-        'cargo_nome': 'Outro Cargo',
-        'cargo_uuid': str(uuid.uuid4()),
-        'vagas': 1,
-    }], format='json')
-    assert response.status_code == status.HTTP_200_OK
-
-
-# Testes para filtros customizados
 def test_filtro_data_convocacao_inicio(authenticated_client, processo_convocacao):
     """Testa filtro por data de convocação início."""
     url = reverse('processoconvocacao-list')
@@ -327,6 +286,180 @@ def test_filtro_cargo_uuid_invalido(authenticated_client):
     assert response.status_code == status.HTTP_200_OK
     # Deve retornar lista vazia devido ao tratamento de erro
     assert len(response.data['results']) == 0
+
+
+# Testes para CargoProcessoViewSet
+def test_cargos_list_sucesso(authenticated_client, processo_convocacao, cargos_processo):
+    """Lista cargos do processo com sucesso."""
+    url = reverse('processo-cargos-list', kwargs={'processo_pk': processo_convocacao.uuid})
+    response = authenticated_client.get(url)
+
+    assert response.status_code == status.HTTP_200_OK
+    assert len(response.data) == 2
+    nomes = [c['cargo_nome'] for c in response.data]
+    assert 'Analista de Sistemas' in nomes
+    assert 'Desenvolvedor Backend' in nomes
+
+
+def test_cargos_list_processo_nao_encontrado(authenticated_client):
+    """Retorna 404 quando processo não existe."""
+    url = reverse('processo-cargos-list', kwargs={'processo_pk': uuid.uuid4()})
+    response = authenticated_client.get(url)
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.data['error'] == 'Processo de convocação não encontrado'
+
+
+def test_cargos_create_novos_cargos(authenticated_client, processo_convocacao):
+    """POST cria novos cargos quando payload não tem uuid."""
+    url = reverse('processo-cargos-list', kwargs={'processo_pk': processo_convocacao.uuid})
+    payload = [
+        {'cargo_nome': 'Cargo Novo 1', 'cargo_uuid': str(uuid.uuid4())},
+        {'cargo_nome': 'Cargo Novo 2', 'cargo_uuid': str(uuid.uuid4())},
+    ]
+    response = authenticated_client.post(url, payload, format='json')
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.data['success'] is True
+    assert response.data['cargos_criados'] == 2
+    assert response.data['cargos_atualizados'] == 0
+    assert response.data['cargos_removidos'] == 0
+    assert len(response.data['cargos']) == 2
+
+
+def test_cargos_create_atualiza_existentes(authenticated_client, processo_convocacao, cargos_processo):
+    """POST atualiza cargos existentes quando payload tem uuid."""
+    cargo = cargos_processo[0]
+    url = reverse('processo-cargos-list', kwargs={'processo_pk': processo_convocacao.uuid})
+    payload = [
+        {
+            'uuid': str(cargo.uuid),
+            'cargo_nome': 'Analista Atualizado',
+            'cargo_uuid': str(cargo.cargo_uuid),
+        },
+    ]
+    response = authenticated_client.post(url, payload, format='json')
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.data['cargos_criados'] == 0
+    assert response.data['cargos_atualizados'] == 1
+    assert response.data['cargos_removidos'] == 1  # o segundo cargo foi removido
+    cargo.refresh_from_db()
+    assert cargo.cargo_nome == 'Analista Atualizado'
+
+
+def test_cargos_create_remove_cargos_nao_enviados(authenticated_client, processo_convocacao, cargos_processo):
+    """POST remove cargos que não estão no payload."""
+    cargo = cargos_processo[0]
+    url = reverse('processo-cargos-list', kwargs={'processo_pk': processo_convocacao.uuid})
+    payload = [
+        {'uuid': str(cargo.uuid), 'cargo_nome': cargo.cargo_nome, 'cargo_uuid': str(cargo.cargo_uuid)},
+    ]
+    response = authenticated_client.post(url, payload, format='json')
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.data['cargos_removidos'] == 1
+    assert CargoProcesso.objects.filter(processo=processo_convocacao).count() == 1
+
+
+def test_cargos_create_processo_nao_encontrado(authenticated_client):
+    """POST retorna 404 quando processo não existe."""
+    url = reverse('processo-cargos-list', kwargs={'processo_pk': uuid.uuid4()})
+    response = authenticated_client.post(url, [], format='json')
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.data['error'] == 'Processo de convocação não encontrado'
+
+
+def test_cargos_create_processo_finalizado(authenticated_client, processo_convocacao):
+    """POST retorna 400 quando processo está finalizado."""
+    processo_convocacao.status = 'FINALIZADO'
+    processo_convocacao.save()
+
+    url = reverse('processo-cargos-list', kwargs={'processo_pk': processo_convocacao.uuid})
+    response = authenticated_client.post(url, [
+        {'cargo_nome': 'Cargo', 'cargo_uuid': str(uuid.uuid4())},
+    ], format='json')
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.data['detail'] == ERROR_PROCESSO_NAO_PODE_EDITAR
+
+
+def test_cargos_create_payload_nao_e_lista(authenticated_client, processo_convocacao):
+    """POST retorna 400 quando payload não é uma lista."""
+    url = reverse('processo-cargos-list', kwargs={'processo_pk': processo_convocacao.uuid})
+    response = authenticated_client.post(url, {'cargo_nome': 'Cargo'}, format='json')
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.data['error'] == 'Dados devem ser uma lista de cargos'
+
+
+def test_cargos_create_uuid_nao_encontrado_retorna_207(authenticated_client, processo_convocacao, cargos_processo):
+    """POST com uuid de cargo inexistente retorna 207 com erros."""
+    url = reverse('processo-cargos-list', kwargs={'processo_pk': processo_convocacao.uuid})
+    payload = [
+        {'uuid': str(uuid.uuid4()), 'cargo_nome': 'Inexistente', 'cargo_uuid': str(uuid.uuid4())},
+    ]
+    response = authenticated_client.post(url, payload, format='json')
+
+    assert response.status_code == status.HTTP_207_MULTI_STATUS
+    assert response.data['success'] is True
+    assert 'erros' in response.data
+    assert len(response.data['erros']) == 1
+    assert response.data['erros'][0]['erros'] == 'Cargo não encontrado para este processo'
+
+
+def test_cargos_destroy_sucesso(authenticated_client, processo_cargo, cargo_processo):
+    """DELETE remove cargo do processo."""
+    url = reverse(
+        'processo-cargos-detail',
+        kwargs={'processo_pk': processo_cargo.uuid, 'cargo_uuid': cargo_processo.uuid},
+    )
+    response = authenticated_client.delete(url)
+
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+    assert not CargoProcesso.objects.filter(uuid=cargo_processo.uuid).exists()
+
+
+def test_cargos_destroy_processo_nao_encontrado(authenticated_client, cargo_processo):
+    """DELETE retorna 404 quando processo não existe."""
+    processo_inexistente = uuid.uuid4()
+    url = reverse(
+        'processo-cargos-detail',
+        kwargs={'processo_pk': processo_inexistente, 'cargo_uuid': cargo_processo.uuid},
+    )
+    response = authenticated_client.delete(url)
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.data['error'] == 'Processo de convocação não encontrado'
+
+
+def test_cargos_destroy_processo_finalizado(authenticated_client, processo_cargo, cargo_processo):
+    """DELETE retorna 400 quando processo está finalizado."""
+    processo_cargo.status = 'FINALIZADO'
+    processo_cargo.save()
+
+    url = reverse(
+        'processo-cargos-detail',
+        kwargs={'processo_pk': processo_cargo.uuid, 'cargo_uuid': cargo_processo.uuid},
+    )
+    response = authenticated_client.delete(url)
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.data['detail'] == ERROR_PROCESSO_NAO_PODE_EDITAR
+
+
+def test_cargos_destroy_cargo_nao_encontrado(authenticated_client, processo_convocacao):
+    """DELETE retorna 404 quando cargo não pertence ao processo."""
+    cargo_uuid_outro_processo = uuid.uuid4()
+    url = reverse(
+        'processo-cargos-detail',
+        kwargs={'processo_pk': processo_convocacao.uuid, 'cargo_uuid': cargo_uuid_outro_processo},
+    )
+    response = authenticated_client.delete(url)
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.data['error'] == 'Cargo não encontrado para este processo'
 
 
 # Testes para o endpoint /filtros/
@@ -544,6 +677,189 @@ def test_endpoint_filtros_tipos_escolha(authenticated_client):
         assert tipo['label'] == tipos_esperados[tipo['value']]
         assert 'value' in tipo
         assert 'label' in tipo
+
+
+# Testes para a action finalizar
+@patch('processos.views.processos.buscar_candidatos_com_escolha')
+def test_finalizar_sucesso_todos_com_escolha(mock_buscar, authenticated_client, processo_convocacao):
+    """Finaliza processo quando todos os candidatos fizeram escolha."""
+    cand1 = uuid.uuid4()
+    cand2 = uuid.uuid4()
+    CargoProcesso.objects.create(
+        processo=processo_convocacao,
+        cargo_nome='Cargo A',
+        cargo_uuid=uuid.uuid4(),
+        candidatos_uuids=[cand1, cand2],
+    )
+    mock_buscar.return_value = [str(cand1), str(cand2)]
+
+    url = reverse('processoconvocacao-finalizar', args=[processo_convocacao.uuid])
+    response = authenticated_client.post(url)
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.data['status'] == 'FINALIZADO'
+    processo_convocacao.refresh_from_db()
+    assert processo_convocacao.status == 'FINALIZADO'
+    mock_buscar.assert_called_once_with(str(processo_convocacao.concurso_uuid))
+
+
+@patch('processos.views.processos.buscar_candidatos_com_escolha')
+def test_finalizar_sucesso_sem_candidatos(mock_buscar, authenticated_client, processo_convocacao):
+    """Finaliza processo quando não há candidatos (habilitados vazio)."""
+    CargoProcesso.objects.create(
+        processo=processo_convocacao,
+        cargo_nome='Cargo A',
+        cargo_uuid=uuid.uuid4(),
+        candidatos_uuids=[],
+    )
+    mock_buscar.return_value = []
+
+    url = reverse('processoconvocacao-finalizar', args=[processo_convocacao.uuid])
+    response = authenticated_client.post(url)
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.data['status'] == 'FINALIZADO'
+    processo_convocacao.refresh_from_db()
+    assert processo_convocacao.status == 'FINALIZADO'
+
+
+def test_finalizar_ja_finalizado(authenticated_client, processo_convocacao):
+    """Retorna 400 quando processo já está finalizado."""
+    processo_convocacao.status = 'FINALIZADO'
+    processo_convocacao.save()
+
+    url = reverse('processoconvocacao-finalizar', args=[processo_convocacao.uuid])
+    response = authenticated_client.post(url)
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.data['detail'] == ERROR_PROCESSO_JA_FINALIZADO
+    processo_convocacao.refresh_from_db()
+    assert processo_convocacao.status == 'FINALIZADO'
+
+
+def test_finalizar_ja_cancelado(authenticated_client, processo_convocacao):
+    """Retorna 400 quando processo está cancelado."""
+    processo_convocacao.status = 'CANCELADO'
+    processo_convocacao.save()
+
+    url = reverse('processoconvocacao-finalizar', args=[processo_convocacao.uuid])
+    response = authenticated_client.post(url)
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.data['detail'] == ERROR_PROCESSO_JA_CANCELADO
+    processo_convocacao.refresh_from_db()
+    assert processo_convocacao.status == 'CANCELADO'
+
+
+def test_finalizar_status_nao_em_andamento(authenticated_client, processo_convocacao):
+    """Retorna 400 quando processo não está em andamento (status diferente de EM_ANDAMENTO)."""
+    # Usa um status fora dos 3 principais para acionar a mensagem genérica
+    processo_convocacao.status = 'PENDENTE'
+    processo_convocacao.save(update_fields=['status'])
+
+    url = reverse('processoconvocacao-finalizar', args=[processo_convocacao.uuid])
+    response = authenticated_client.post(url)
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert 'Apenas processos em andamento podem ser finalizados' in response.data['detail']
+
+
+@patch('processos.views.processos.buscar_candidatos_com_escolha')
+def test_finalizar_candidatos_pendentes(mock_buscar, authenticated_client, processo_convocacao):
+    """Retorna 400 quando existem candidatos sem escolha."""
+    cand1 = uuid.uuid4()
+    cand2 = uuid.uuid4()
+    CargoProcesso.objects.create(
+        processo=processo_convocacao,
+        cargo_nome='Cargo A',
+        cargo_uuid=uuid.uuid4(),
+        candidatos_uuids=[cand1, cand2],
+    )
+    # Apenas cand1 fez escolha; cand2 está pendente
+    mock_buscar.return_value = [str(cand1)]
+
+    url = reverse('processoconvocacao-finalizar', args=[processo_convocacao.uuid])
+    response = authenticated_client.post(url)
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.data['detail'] == ERROR_CANDIDATOS_PENDENTES_ESCOLHA
+    processo_convocacao.refresh_from_db()
+    assert processo_convocacao.status == 'EM_ANDAMENTO'
+
+
+@patch('processos.views.processos.buscar_candidatos_com_escolha')
+def test_finalizar_erro_ao_buscar_escolhas(mock_buscar, authenticated_client, processo_convocacao):
+    """Retorna 400 quando buscar_candidatos_com_escolha levanta exceção."""
+    CargoProcesso.objects.create(
+        processo=processo_convocacao,
+        cargo_nome='Cargo A',
+        cargo_uuid=uuid.uuid4(),
+        candidatos_uuids=[uuid.uuid4()],
+    )
+    mock_buscar.side_effect = Exception('Erro de conexão com MS-Escolha')
+
+    url = reverse('processoconvocacao-finalizar', args=[processo_convocacao.uuid])
+    response = authenticated_client.post(url)
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.data['detail'] == 'Erro ao consultar escolhas dos candidatos.'
+    processo_convocacao.refresh_from_db()
+    assert processo_convocacao.status == 'EM_ANDAMENTO'
+
+
+@patch('processos.views.processos.buscar_candidatos_com_escolha')
+def test_finalizar_multiplos_cargos_todos_com_escolha(mock_buscar, authenticated_client, processo_convocacao):
+    """Finaliza processo com múltiplos cargos quando todos fizeram escolha."""
+    cand1 = uuid.uuid4()
+    cand2 = uuid.uuid4()
+    cand3 = uuid.uuid4()
+    CargoProcesso.objects.create(
+        processo=processo_convocacao,
+        cargo_nome='Cargo A',
+        cargo_uuid=uuid.uuid4(),
+        candidatos_uuids=[cand1, cand2],
+    )
+    CargoProcesso.objects.create(
+        processo=processo_convocacao,
+        cargo_nome='Cargo B',
+        cargo_uuid=uuid.uuid4(),
+        candidatos_uuids=[cand3],
+    )
+    mock_buscar.return_value = [str(cand1), str(cand2), str(cand3)]
+
+    url = reverse('processoconvocacao-finalizar', args=[processo_convocacao.uuid])
+    response = authenticated_client.post(url)
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.data['status'] == 'FINALIZADO'
+    processo_convocacao.refresh_from_db()
+    assert processo_convocacao.status == 'FINALIZADO'
+
+
+@patch('processos.views.processos.buscar_candidatos_com_escolha')
+def test_finalizar_multiplos_cargos_um_pendente(mock_buscar, authenticated_client, processo_convocacao):
+    """Retorna 400 quando um cargo tem candidato pendente."""
+    cand1 = uuid.uuid4()
+    cand2 = uuid.uuid4()
+    CargoProcesso.objects.create(
+        processo=processo_convocacao,
+        cargo_nome='Cargo A',
+        cargo_uuid=uuid.uuid4(),
+        candidatos_uuids=[cand1],
+    )
+    CargoProcesso.objects.create(
+        processo=processo_convocacao,
+        cargo_nome='Cargo B',
+        cargo_uuid=uuid.uuid4(),
+        candidatos_uuids=[cand2],
+    )
+    mock_buscar.return_value = [str(cand1)]  # cand2 pendente
+
+    url = reverse('processoconvocacao-finalizar', args=[processo_convocacao.uuid])
+    response = authenticated_client.post(url)
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.data['detail'] == ERROR_CANDIDATOS_PENDENTES_ESCOLHA
 
 
 # Testes de Filtros e Ordenação

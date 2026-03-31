@@ -8,6 +8,9 @@ from urllib.parse import urlencode
 import requests
 from django.conf import settings
 
+from processos.middlewares import get_correlation_id
+
+
 logger = logging.getLogger(__name__)
 
 # URL base do MS-Candidatos (ex.: http://localhost:8002)
@@ -52,7 +55,16 @@ def buscar_habilitados_por_processo(processo_uuid: str) -> list[dict[str, Any]]:
 
     url = _url_habilitados_por_processo(processo_uuid)
     headers = {'Accept': 'application/json'}
-
+    logger.info(
+        'Buscando habilitados por processo',
+        extra={
+            "processo_uuid": processo_uuid,
+            "correlation_id": get_correlation_id(),
+            "url": url,
+            "headers": headers,
+            "method": "GET",
+        }
+    )
     try:
         response = requests.get(
             url,
@@ -60,14 +72,6 @@ def buscar_habilitados_por_processo(processo_uuid: str) -> list[dict[str, Any]]:
             timeout=TIMEOUT_SEGUNDOS,
         )
         response.raise_for_status()
-        data = response.json()
-        if isinstance(data, list):
-            return data
-        if isinstance(data, dict) and 'results' in data:
-            return data['results']
-        if isinstance(data, dict):
-            return []
-        return []
     except requests.RequestException as exc:
         logger.exception(
             'Erro ao buscar habilitados no MS-Candidatos (processo_uuid=%s): %s',
@@ -75,3 +79,21 @@ def buscar_habilitados_por_processo(processo_uuid: str) -> list[dict[str, Any]]:
             exc,
         )
         raise
+    data = response.json()
+    logger.info(
+        'Habilitados encontrados',
+        extra={
+            "processo_uuid": processo_uuid,
+            "correlation_id": get_correlation_id(),
+            "url": url,
+            "headers": headers,
+            "method": "GET",
+        }
+    )
+    if isinstance(data, list):
+        return data
+    if isinstance(data, dict) and 'results' in data:
+        return data['results']
+    if isinstance(data, dict):
+        return []
+    return []

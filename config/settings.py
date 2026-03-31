@@ -34,6 +34,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'processos.middlewares.CorrelationIdMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -42,6 +43,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'auditlog.middleware.AuditlogMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -145,18 +147,44 @@ REST_FRAMEWORK = {
 # AuditLog settings
 AUDITLOG_INCLUDE_ALL_MODELS = False 
 
-# Logging
+import threading
+_thread_locals = threading.local()
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
+    'formatters': {
+        'json': {
+            '()': 'processos.logging_utils.CustomJsonFormatter', # Usa sua classe
+            # Estes campos do logging padrão virarão chaves no JSON
+            'format': '%(levelname)s %(asctime)s %(module)s %(filename)s %(lineno)d %(funcName)s %(message)s'
         },
     },
-    'root': {
-        'handlers': ['console'],
-        'level': 'INFO',
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'json',
+        },
+    },
+    'loggers': {
+        # Logger do Django (Framework)
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        # Seu Logger de Aplicação (substitua pelo nome do seu app)
+        'processos': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'django.server': {
+            'handlers': ['console'],
+            'level': 'ERROR',  # Alterando para ERROR, ele para de mostrar os GET/POST/OPTIONS de rotina (INFO)
+            'propagate': False,
+        },
     },
 }
 
