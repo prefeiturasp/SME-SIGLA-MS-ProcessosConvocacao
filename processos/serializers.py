@@ -103,6 +103,12 @@ class ProcessoConvocacaoUpdateSerializer(serializers.ModelSerializer):
         return attrs
 
 
+class ProcessoConvocacaoPassoSerializer(serializers.ModelSerializer):
+    """Serializer para atualização de passo do processo de convocação."""
+    class Meta:
+        model = ProcessoConvocacao
+        fields = ['passo']
+
 class ProcessoConvocacaoSelectSerializer(serializers.ModelSerializer):
     """
     Serializer para selects/dropdowns no frontend.
