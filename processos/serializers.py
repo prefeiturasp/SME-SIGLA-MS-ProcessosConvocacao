@@ -86,21 +86,9 @@ class ProcessoConvocacaoUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProcessoConvocacao
         fields = [
-            'concurso_nome', 'concurso_uuid', 'descricao', 'tipo_escolha', 'status', 'passo',
+            'concurso_nome', 'concurso_uuid', 'descricao', 'tipo_escolha', 'status',
             'data_convocacao', 'data_corte_vagas'
         ]
-
-    def validate(self, attrs):
-        if not attrs:
-            raise serializers.ValidationError('Informe "status" ou "passo".')
-
-        provided_fields = set(attrs.keys())
-        if provided_fields not in ({'status'}, {'passo'}):
-            raise serializers.ValidationError(
-                'Envie apenas um campo por vez: "status" ou "passo".'
-            )
-
-        return attrs
 
 
 class ProcessoConvocacaoPassoSerializer(serializers.ModelSerializer):
