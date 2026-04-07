@@ -15,7 +15,7 @@ from processos.models import ProcessoConvocacao, CargoProcesso
 from processos.serializers import (
     ProcessoConvocacaoSerializer, ProcessoConvocacaoCreateSerializer, ProcessoConvocacaoListSerializer,
     ProcessoConvocacaoUpdateSerializer, CargoProcessoSerializer, CargoProcessoCreateSerializer,
-    ProcessoConvocacaoSelectSerializer
+    ProcessoConvocacaoSelectSerializer, ProcessoConvocacaoPassoSerializer
 )
 from processos.utils import CustomPagination
 from processos.models.constants import (
@@ -258,3 +258,15 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         return super().partial_update(request, *args, **kwargs)
+
+    @action(detail=True, methods=['patch'], url_path='passo')
+    def atualizar_passo(self, request, pk=None):
+        processo = self.get_object()
+        serializer = ProcessoConvocacaoPassoSerializer(
+            processo,
+            data=request.data,
+            partial=True,
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(ProcessoConvocacaoSerializer(processo).data, status=status.HTTP_200_OK)

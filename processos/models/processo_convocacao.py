@@ -25,8 +25,13 @@ class ProcessoConvocacao(BaseModel):
     status = models.CharField(
         max_length=20,
         choices=PROCESSO_STATUS_CHOICES,
-        default='EM_ANDAMENTO',
+        default='PENDENTE',
         verbose_name="Status"
+    )
+    passo = models.PositiveSmallIntegerField(
+        choices=[(1, '1'), (2, '2'), (3, '3'), (4, '4')],
+        default=1,
+        verbose_name="Passo"
     )
 
     data_convocacao = models.DateTimeField(verbose_name="Data de Convocação", default=timezone.now)

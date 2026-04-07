@@ -883,6 +883,49 @@ def test_processo_convocacao_filters(authenticated_client, processo_convocacao):
     assert len(response.data['results']) == 1
 
 
+def test_atualizar_passo_sucesso(authenticated_client, processo_convocacao):
+    """Atualiza passo do processo com sucesso."""
+    url = reverse('processoconvocacao-atualizar-passo', args=[processo_convocacao.uuid])
+    response = authenticated_client.patch(url, {'passo': 2}, format='json')
+
+    assert response.status_code == status.HTTP_200_OK
+    processo_convocacao.refresh_from_db()
+    assert processo_convocacao.passo == 2
+
+
+def test_atualizar_passo_nao_regrede(authenticated_client, processo_convocacao):
+    """Não permite regressão de passo."""
+    processo_convocacao.passo = 3
+    processo_convocacao.save(update_fields=['passo'])
+
+    url = reverse('processoconvocacao-atualizar-passo', args=[processo_convocacao.uuid])
+    response = authenticated_client.patch(url, {'passo': 2}, format='json')
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert 'passo' in response.data
+    processo_convocacao.refresh_from_db()
+    assert processo_convocacao.passo == 3
+
+
+def test_atualizar_passo_invalido(authenticated_client, processo_convocacao):
+    """Retorna 400 para passo inválido."""
+    url = reverse('processoconvocacao-atualizar-passo', args=[processo_convocacao.uuid])
+    response = authenticated_client.patch(url, {'passo': 5}, format='json')
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+def test_atualizar_passo_processo_finalizado(authenticated_client, processo_convocacao):
+    """Retorna 400 quando processo está finalizado."""
+    processo_convocacao.status = 'FINALIZADO'
+    processo_convocacao.save(update_fields=['status'])
+
+    url = reverse('processoconvocacao-atualizar-passo', args=[processo_convocacao.uuid])
+    response = authenticated_client.patch(url, {'passo': 2}, format='json')
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
 # Testes de Busca
 def test_processo_convocacao_search(authenticated_client, processo_convocacao):
     """Testa busca por texto nos processos."""
