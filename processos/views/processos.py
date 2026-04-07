@@ -5,6 +5,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
+from rest_framework.views import APIView
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 from datetime import datetime
@@ -34,6 +35,47 @@ logger = logging.getLogger(__name__)
 STATUS_EM_ANDAMENTO = 'EM_ANDAMENTO'
 STATUS_FINALIZADO = 'FINALIZADO'
 STATUS_CANCELADO = 'CANCELADO'
+
+
+class AtualizarPassoProcessoView(APIView):
+    permission_classes = [AllowAny]
+
+    def patch(self, request):
+        processo_uuid = request.query_params.get('processo_uuid')
+        passo = request.data.get('passo')
+
+        if not processo_uuid:
+            return Response(
+                {'detail': 'Parâmetro "processo_uuid" é obrigatório.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if passo not in [1, 2, 3, 4]:
+            return Response(
+                {'detail': 'Campo "passo" deve ser 1, 2, 3 ou 4.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            processo = ProcessoConvocacao.objects.get(uuid=processo_uuid)
+        except ProcessoConvocacao.DoesNotExist:
+            return Response(
+                {'detail': 'Processo de convocação não encontrado.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if processo.status == STATUS_FINALIZADO:
+            return Response(
+                {'detail': ERROR_PROCESSO_NAO_PODE_EDITAR},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if passo > processo.passo:
+            processo.passo = passo
+            processo.save(update_fields=['passo', 'atualizado_em'])
+
+        serializer = ProcessoConvocacaoSerializer(processo)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
     """
