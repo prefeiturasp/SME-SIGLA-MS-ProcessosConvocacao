@@ -15,7 +15,8 @@ MS_PATH = os.environ.get('MS_PATH', '/ms-processos-convocacao')
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-your-secret-key-here')
 DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0', 'qa-api-sigla.sme.prefeitura.sp.gov.br', 'hom-api-sigla.sme.prefeitura.sp.gov.br']
+CSRF_TRUSTED_ORIGINS = ['https://qa-api-sigla.sme.prefeitura.sp.gov.br', 'https://hom-api-sigla.sme.prefeitura.sp.gov.br']
 
 # Application definition
 INSTALLED_APPS = [
@@ -113,8 +114,17 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+_ms_path_segment = (MS_PATH or '/ms-processos-convocacao').strip('/')
+if DJANGO_ENVIRONMENT != 'local':
+    STATIC_URL = f'/{_ms_path_segment}/django_static/'
+    MEDIA_URL = f'/{_ms_path_segment}/media/'
+else:
+    STATIC_URL = '/django_static/'
+    MEDIA_URL = '/media/'
+
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
