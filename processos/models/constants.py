@@ -4,6 +4,7 @@ Constantes e enums para os modelos de processos de convocação.
 
 # Status dos processos
 PROCESSO_STATUS_CHOICES = [
+    ('PENDENTE', 'Pendente'),
     ('EM_ANDAMENTO', 'Em Andamento'),
     ('FINALIZADO', 'Concluído'),
     ('CANCELADO', 'Cancelado'),

@@ -1,4 +1,4 @@
-from .processos import ProcessoConvocacaoViewSet
+from .processos import ProcessoConvocacaoViewSet, AtualizarPassoProcessoView
 from .swagger import SwaggerFromFileView
 from .carta_convocacao import CartaConvocacaoViewSet
 

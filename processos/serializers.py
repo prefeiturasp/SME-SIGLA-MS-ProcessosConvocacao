@@ -38,7 +38,7 @@ class ProcessoConvocacaoSerializer(serializers.ModelSerializer):
         fields = [
             'uuid', 'concurso_uuid', 'concurso_nome', 'descricao', 
             'tipo_escolha', 'status', 'data_convocacao',
-            'data_corte_vagas', 'cargos_processo', 'criado_em', 'atualizado_em'
+            'data_corte_vagas','passo', 'cargos_processo', 'criado_em', 'atualizado_em'
         ]
         read_only_fields = ['uuid', 'criado_em', 'atualizado_em']
 
@@ -50,7 +50,7 @@ class ProcessoConvocacaoCreateSerializer(serializers.ModelSerializer):
         model = ProcessoConvocacao
         fields = [
             'uuid', 'concurso_uuid', 'concurso_nome', 'descricao', 'tipo_escolha',
-            'status', 'data_convocacao', 'data_corte_vagas'
+            'status', 'data_convocacao', 'data_corte_vagas', 'passo'
         ]
         read_only_fields = ['uuid']
 
@@ -72,7 +72,7 @@ class ProcessoConvocacaoListSerializer(serializers.ModelSerializer):
         model = ProcessoConvocacao
         fields = [
             'uuid', 'concurso_nome', 'concurso_uuid', 'descricao', 'tipo_escolha',
-            'status', 'data_convocacao', 'data_corte_vagas',
+            'status', 'passo', 'data_convocacao', 'data_corte_vagas',
             'quantidade_cargos', 'criado_em'
         ]
 
@@ -86,9 +86,21 @@ class ProcessoConvocacaoUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProcessoConvocacao
         fields = [
-            'concurso_nome', 'concurso_uuid', 'descricao', 'tipo_escolha', 'status', 'data_convocacao',
-            'data_corte_vagas'
+            'concurso_nome', 'concurso_uuid', 'descricao', 'tipo_escolha', 'status', 'passo',
+            'data_convocacao', 'data_corte_vagas'
         ]
+
+    def validate(self, attrs):
+        if not attrs:
+            raise serializers.ValidationError('Informe "status" ou "passo".')
+
+        provided_fields = set(attrs.keys())
+        if provided_fields not in ({'status'}, {'passo'}):
+            raise serializers.ValidationError(
+                'Envie apenas um campo por vez: "status" ou "passo".'
+            )
+
+        return attrs
 
 
 class ProcessoConvocacaoSelectSerializer(serializers.ModelSerializer):
