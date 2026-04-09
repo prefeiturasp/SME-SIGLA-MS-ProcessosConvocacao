@@ -109,7 +109,7 @@ def test_enviar_carta_convocacao_excecao_propaga(mock_render, mock_email_cls):
 # --- iniciar_processamento_envio ---
 
 
-@patch('processos.services.carta_convocacao_service.buscar_habilitados_por_processo')
+@patch('processos.services.carta_convocacao_service.CandidatosApiService.buscar_habilitados_por_processo')
 def test_iniciar_processamento_envio_lista_vazia(mock_buscar, processo_convocacao):
     """Com zero habilitados: cria histórico com quantidade 0 e não dispara tasks."""
     mock_buscar.return_value = []
@@ -130,7 +130,7 @@ def test_iniciar_processamento_envio_lista_vazia(mock_buscar, processo_convocaca
 
 @patch('config.celery.app')
 @patch('processos.services.carta_convocacao_service.render_to_string')
-@patch('processos.services.carta_convocacao_service.buscar_habilitados_por_processo')
+@patch('processos.services.carta_convocacao_service.CandidatosApiService.buscar_habilitados_por_processo')
 def test_iniciar_processamento_envio_um_habilitado_com_email(mock_buscar, mock_render, mock_celery, processo_convocacao):
     """Um habilitado com email: cria histórico, um CartaConvocacaoCandidato e dispara uma task."""
     mock_buscar.return_value = [
@@ -166,7 +166,7 @@ def test_iniciar_processamento_envio_um_habilitado_com_email(mock_buscar, mock_r
 
 @patch('config.celery.app')
 @patch('processos.services.carta_convocacao_service.render_to_string')
-@patch('processos.services.carta_convocacao_service.buscar_habilitados_por_processo')
+@patch('processos.services.carta_convocacao_service.CandidatosApiService.buscar_habilitados_por_processo')
 def test_iniciar_processamento_envio_habilitado_sem_email_ignorado(mock_buscar, mock_render, mock_celery, processo_convocacao):
     """Habilitado sem email é ignorado e não dispara task; warning logado."""
     mock_buscar.return_value = [
@@ -191,7 +191,7 @@ def test_iniciar_processamento_envio_habilitado_sem_email_ignorado(mock_buscar, 
 
 @patch('config.celery.app')
 @patch('processos.services.carta_convocacao_service.render_to_string')
-@patch('processos.services.carta_convocacao_service.buscar_habilitados_por_processo')
+@patch('processos.services.carta_convocacao_service.CandidatosApiService.buscar_habilitados_por_processo')
 def test_iniciar_processamento_envio_classificacao_pcd(mock_buscar, mock_render, mock_celery, processo_convocacao):
     """Categoria PCD usa classificacao_pcd no contexto do template."""
     mock_buscar.return_value = [
@@ -221,7 +221,7 @@ def test_iniciar_processamento_envio_classificacao_pcd(mock_buscar, mock_render,
 
 @patch('config.celery.app')
 @patch('processos.services.carta_convocacao_service.render_to_string')
-@patch('processos.services.carta_convocacao_service.buscar_habilitados_por_processo')
+@patch('processos.services.carta_convocacao_service.CandidatosApiService.buscar_habilitados_por_processo')
 def test_iniciar_processamento_envio_classificacao_nna(mock_buscar, mock_render, mock_celery, processo_convocacao):
     """Categoria NNA usa classificacao_nna no contexto."""
     mock_buscar.return_value = [
@@ -249,7 +249,7 @@ def test_iniciar_processamento_envio_classificacao_nna(mock_buscar, mock_render,
 
 @patch('config.celery.app')
 @patch('processos.services.carta_convocacao_service.render_to_string')
-@patch('processos.services.carta_convocacao_service.buscar_habilitados_por_processo')
+@patch('processos.services.carta_convocacao_service.CandidatosApiService.buscar_habilitados_por_processo')
 def test_iniciar_processamento_envio_nome_rf_email_de_item_ou_candidato(mock_buscar, mock_render, mock_celery, processo_convocacao):
     """Nome, RF e email podem vir de item.get('nome') ou candidato aninhado."""
     mock_buscar.return_value = [
@@ -280,7 +280,7 @@ def test_iniciar_processamento_envio_nome_rf_email_de_item_ou_candidato(mock_bus
 
 @patch('config.celery.app')
 @patch('processos.services.carta_convocacao_service.render_to_string')
-@patch('processos.services.carta_convocacao_service.buscar_habilitados_por_processo')
+@patch('processos.services.carta_convocacao_service.CandidatosApiService.buscar_habilitados_por_processo')
 def test_iniciar_processamento_envio_cargo_nome_fallback(mock_buscar, mock_render, mock_celery, processo_convocacao):
     """cargo_nome usa descricao_cargo ou cargo_nome do item."""
     mock_buscar.return_value = [
@@ -304,7 +304,7 @@ def test_iniciar_processamento_envio_cargo_nome_fallback(mock_buscar, mock_rende
 
 
 @patch('config.celery.app')
-@patch('processos.services.carta_convocacao_service.buscar_habilitados_por_processo')
+@patch('processos.services.carta_convocacao_service.CandidatosApiService.buscar_habilitados_por_processo')
 def test_iniciar_processamento_envio_retorna_historico_com_data_formatada(mock_buscar, mock_celery, processo_convocacao):
     """iniciar_processamento_envio usa data com strftime para data_publicacao no template."""
     mock_buscar.return_value = []
@@ -322,7 +322,7 @@ def test_iniciar_processamento_envio_retorna_historico_com_data_formatada(mock_b
 
 @patch('config.celery.app')
 @patch('processos.services.carta_convocacao_service.render_to_string')
-@patch('processos.services.carta_convocacao_service.buscar_habilitados_por_processo')
+@patch('processos.services.carta_convocacao_service.CandidatosApiService.buscar_habilitados_por_processo')
 def test_iniciar_processamento_envio_multiplos_candidatos(mock_buscar, mock_render, mock_celery, processo_convocacao):
     """Vários habilitados com email: vários registros e várias tasks."""
     mock_buscar.return_value = [
@@ -344,7 +344,7 @@ def test_iniciar_processamento_envio_multiplos_candidatos(mock_buscar, mock_rend
 
 @patch('config.celery.app')
 @patch('processos.services.carta_convocacao_service.render_to_string')
-@patch('processos.services.carta_convocacao_service.buscar_habilitados_por_processo')
+@patch('processos.services.carta_convocacao_service.CandidatosApiService.buscar_habilitados_por_processo')
 def test_iniciar_processamento_envio_nome_vazio_vira_traco(mock_buscar, mock_render, mock_celery, processo_convocacao):
     """Nome vazio ou só espaços vira '—' no registro."""
     mock_buscar.return_value = [
@@ -378,7 +378,7 @@ def test_constantes_servico():
 
 @patch('config.celery.app')
 @patch('processos.services.carta_convocacao_service.render_to_string')
-@patch('processos.services.carta_convocacao_service.buscar_habilitados_por_processo')
+@patch('processos.services.carta_convocacao_service.CandidatosApiService.buscar_habilitados_por_processo')
 def test_iniciar_processamento_envio_mesmo_candidato_duas_linhas_aceito(mock_buscar, mock_render, mock_celery, processo_convocacao):
     """Mesmo candidato (mesmo RF) em 2 linhas com mesmo email: aceita, cria 2 registros e dispara 2 tasks."""
     mock_buscar.return_value = [

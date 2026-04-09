@@ -203,13 +203,28 @@ def test_processo_convocacao_update(authenticated_client, processo_convocacao):
     assert processo_convocacao.status == 'FINALIZADO'
 
 
-def test_processo_convocacao_delete(authenticated_client, processo_convocacao):
-    """Testa a exclusão de um processo."""
+@patch('processos.views.processos.ProcessoConvocacaoService.excluir_processo_e_dependencias')
+def test_processo_convocacao_delete(
+    mock_excluir_dependencias,
+    authenticated_client,
+    processo_convocacao,
+):
+    """Testa a exclusão lógica de um processo."""
+    # Para poder deletar, o status não pode ser EM_ANDAMENTO nem FINALIZADO
+    processo_convocacao.status = 'CANCELADO'
+    processo_convocacao.save(update_fields=['status'])
+
+    def _excluir_e_inativar(*, processo, auth_header=None):
+        processo.inativar()
+
+    mock_excluir_dependencias.side_effect = _excluir_e_inativar
+
     url = reverse('processoconvocacao-detail', args=[processo_convocacao.uuid])
     response = authenticated_client.delete(url)
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
-    assert ProcessoConvocacao.objects.count() == 0
+    processo_convocacao.refresh_from_db()
+    assert processo_convocacao.esta_ativo is False
 
 
 def test_filtro_data_convocacao_inicio(authenticated_client, processo_convocacao):
@@ -680,7 +695,7 @@ def test_endpoint_filtros_tipos_escolha(authenticated_client):
 
 
 # Testes para a action finalizar
-@patch('processos.views.processos.buscar_candidatos_com_escolha')
+@patch('processos.views.processos.EscolhasApiService.buscar_candidatos_com_escolha')
 def test_finalizar_sucesso_todos_com_escolha(mock_buscar, authenticated_client, processo_convocacao):
     """Finaliza processo quando todos os candidatos fizeram escolha."""
     cand1 = uuid.uuid4()
@@ -703,7 +718,7 @@ def test_finalizar_sucesso_todos_com_escolha(mock_buscar, authenticated_client, 
     mock_buscar.assert_called_once_with(str(processo_convocacao.concurso_uuid))
 
 
-@patch('processos.views.processos.buscar_candidatos_com_escolha')
+@patch('processos.views.processos.EscolhasApiService.buscar_candidatos_com_escolha')
 def test_finalizar_sucesso_sem_candidatos(mock_buscar, authenticated_client, processo_convocacao):
     """Finaliza processo quando não há candidatos (habilitados vazio)."""
     CargoProcesso.objects.create(
@@ -764,7 +779,7 @@ def test_finalizar_status_nao_em_andamento(authenticated_client, processo_convoc
     assert 'Apenas processos em andamento podem ser finalizados' in response.data['detail']
 
 
-@patch('processos.views.processos.buscar_candidatos_com_escolha')
+@patch('processos.views.processos.EscolhasApiService.buscar_candidatos_com_escolha')
 def test_finalizar_candidatos_pendentes(mock_buscar, authenticated_client, processo_convocacao):
     """Retorna 400 quando existem candidatos sem escolha."""
     cand1 = uuid.uuid4()
@@ -787,7 +802,7 @@ def test_finalizar_candidatos_pendentes(mock_buscar, authenticated_client, proce
     assert processo_convocacao.status == 'EM_ANDAMENTO'
 
 
-@patch('processos.views.processos.buscar_candidatos_com_escolha')
+@patch('processos.views.processos.EscolhasApiService.buscar_candidatos_com_escolha')
 def test_finalizar_erro_ao_buscar_escolhas(mock_buscar, authenticated_client, processo_convocacao):
     """Retorna 400 quando buscar_candidatos_com_escolha levanta exceção."""
     CargoProcesso.objects.create(
@@ -807,7 +822,7 @@ def test_finalizar_erro_ao_buscar_escolhas(mock_buscar, authenticated_client, pr
     assert processo_convocacao.status == 'EM_ANDAMENTO'
 
 
-@patch('processos.views.processos.buscar_candidatos_com_escolha')
+@patch('processos.views.processos.EscolhasApiService.buscar_candidatos_com_escolha')
 def test_finalizar_multiplos_cargos_todos_com_escolha(mock_buscar, authenticated_client, processo_convocacao):
     """Finaliza processo com múltiplos cargos quando todos fizeram escolha."""
     cand1 = uuid.uuid4()
@@ -836,7 +851,7 @@ def test_finalizar_multiplos_cargos_todos_com_escolha(mock_buscar, authenticated
     assert processo_convocacao.status == 'FINALIZADO'
 
 
-@patch('processos.views.processos.buscar_candidatos_com_escolha')
+@patch('processos.views.processos.EscolhasApiService.buscar_candidatos_com_escolha')
 def test_finalizar_multiplos_cargos_um_pendente(mock_buscar, authenticated_client, processo_convocacao):
     """Retorna 400 quando um cargo tem candidato pendente."""
     cand1 = uuid.uuid4()

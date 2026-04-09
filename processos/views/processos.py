@@ -4,7 +4,7 @@ DRF views for the processes module.
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 from datetime import datetime
@@ -25,7 +25,11 @@ from processos.models.constants import (
     ERROR_CANDIDATOS_PENDENTES_ESCOLHA,
     ERROR_PROCESSO_NAO_PODE_EDITAR,
 )
-from processos.services.escolhas_service import buscar_candidatos_com_escolha
+from processos.services import EscolhasApiService
+from processos.services.processo_service import (
+    ProcessoConvocacaoService,
+    ProcessoServiceError,
+)
 from processos.middlewares import get_correlation_id
 
 
@@ -39,9 +43,10 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
     """
     ViewSet para gerenciar processos de convocação.
     """
-    queryset = ProcessoConvocacao.objects.prefetch_related('cargos_processo')
+    queryset = ProcessoConvocacao.objects.filter(esta_ativo=True).prefetch_related('cargos_processo')
     serializer_class = ProcessoConvocacaoSerializer
     permission_classes = [AllowAny]
+    # permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['concurso_uuid', 'status']
     search_fields = ['concurso_nome', 'descricao']
@@ -209,7 +214,7 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
 
         # Quem fez escolha no concurso (MS-Escolha: escolha, reconvocação ou não escolha)
         try:
-            com_escolha = set(buscar_candidatos_com_escolha(str(processo.concurso_uuid)))
+            com_escolha = set(EscolhasApiService().buscar_candidatos_com_escolha(str(processo.concurso_uuid)))
         except Exception as exc:
             logger.exception('Erro ao buscar escolhas para finalização: %s', exc)
             return Response(
@@ -270,3 +275,32 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(ProcessoConvocacaoSerializer(processo).data, status=status.HTTP_200_OK)
+    def destroy(self, request, *args, **kwargs):
+        """
+        Exclui o processo e executa limpeza nos MS dependentes:
+        - MS-Agenda: excluir agendas do processo
+        - MS-Candidatos: desconvocar candidatos por cargo do processo
+        - MS-Escolha: excluir lotes de vagas-escolas do processo
+        """
+        processo = self.get_object()
+        processo_uuid = str(processo.uuid)
+
+        if not processo.pode_deletar():
+            return Response(
+                {'detail': 'Processo não pode ser deletado.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        auth_header = request.headers.get('Authorization')
+        try:
+            ProcessoConvocacaoService().excluir_processo_e_dependencias(
+                processo=processo,
+                auth_header=auth_header,
+            )
+        except ProcessoServiceError as exc:
+            return Response(
+                {'detail': str(exc)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
