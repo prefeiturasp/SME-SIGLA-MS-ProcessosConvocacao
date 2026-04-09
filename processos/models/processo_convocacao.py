@@ -25,7 +25,7 @@ class ProcessoConvocacao(BaseModel):
     status = models.CharField(
         max_length=20,
         choices=PROCESSO_STATUS_CHOICES,
-        default='EM_ANDAMENTO',
+        default='PENDENTE',
         verbose_name="Status"
     )
     passo = models.PositiveSmallIntegerField(
