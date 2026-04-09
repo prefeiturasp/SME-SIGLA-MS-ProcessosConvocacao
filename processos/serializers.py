@@ -67,17 +67,21 @@ class ProcessoConvocacaoCreateSerializer(serializers.ModelSerializer):
 class ProcessoConvocacaoListSerializer(serializers.ModelSerializer):
     """Serializer simplificado para listagem de processos de convocação."""
     quantidade_cargos = serializers.SerializerMethodField()
+    pode_deletar = serializers.SerializerMethodField()
 
     class Meta:
         model = ProcessoConvocacao
         fields = [
             'uuid', 'concurso_nome', 'concurso_uuid', 'descricao', 'tipo_escolha',
             'status', 'passo', 'data_convocacao', 'data_corte_vagas',
-            'quantidade_cargos', 'criado_em'
+            'quantidade_cargos', 'pode_deletar', 'criado_em'
         ]
 
     def get_quantidade_cargos(self, obj):
         return obj.cargos_processo.count()
+
+    def get_pode_deletar(self, obj):
+        return bool(obj.pode_deletar())
 
 
 class ProcessoConvocacaoUpdateSerializer(serializers.ModelSerializer):

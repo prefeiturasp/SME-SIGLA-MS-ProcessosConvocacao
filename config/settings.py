@@ -147,9 +147,11 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',
+        #'rest_framework.permissions.AllowAny',
+        'rest_framework.permissions.IsAuthenticated',
     ],
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
@@ -230,7 +232,24 @@ CELERY_TASK_DEFAULT_QUEUE = 'processos_convocacao'
 # MS-Candidatos (API de habilitados)
 CANDIDATOS_API_URL = os.environ.get('CANDIDATOS_API_URL', '').rstrip('/')
 
+# MS-Agenda (exclusão de agendas por processo)
+AGENDA_API_URL = os.environ.get('AGENDA_API_URL', '').rstrip('/')
+
 # MS-Escolha (API para validar se convocados fizeram escolha na finalização)
 ESCOLHAS_API_URL = os.environ.get('ESCOLHAS_API_URL', '').rstrip('/')
 
 MS_URL = os.environ.get('MS_URL', '').rstrip('/')
+
+from datetime import timedelta
+JWT_SIGNING_KEY = os.environ.get(
+    'JWT_SIGNING_KEY',
+    os.environ.get('SECRET_KEY', 'fallback-só-dev'),
+)
+
+SIMPLE_JWT = {
+    'SIGNING_KEY': JWT_SIGNING_KEY,
+    'ALGORITHM': 'HS256',
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=1440),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
