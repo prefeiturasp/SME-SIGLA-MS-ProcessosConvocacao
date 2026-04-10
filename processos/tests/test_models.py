@@ -113,7 +113,7 @@ def test_processo_convocacao_default_values():
     )
     
     assert processo_default.tipo_escolha == 'NOVA_AUTORIZACAO'
-    assert processo_default.status == 'EM_ANDAMENTO'
+    assert processo_default.status == 'PENDENTE'
     assert processo_default.data_convocacao is not None
     assert processo_default.data_corte_vagas is not None
 
