@@ -1,22 +1,29 @@
-# import requests
-# import json_logging
-# from .models import ExternalRequestLog  # Se você for usar o model que criamos
+import requests
+from processos.middlewares import get_auth_header, get_correlation_id
 
-# class ServiceSession(requests.Session):
-#     def request(self, method, url, *args, **kwargs):
-#         # Tenta recuperar o ID gerado pela biblioteca json-logging
-#         # Por padrão, ela armazena isso no contexto da requisição
-#         correlation_id = json_logging.get_correlation_id()
-        
-#         # Injeta o ID nos headers para o próximo microserviço
-#         if correlation_id:
-#             headers = kwargs.get('headers', {})
-#             # Usamos o nome padrão que a lib espera ou o seu X-Correlation-ID
-#             headers['X-Correlation-ID'] = correlation_id
-#             kwargs['headers'] = headers
 
-#         # Executa a chamada
-#         response = super().request(method, url, *args, **kwargs)
+class ServiceSession(requests.Session):
+    """
+    requests.Session que injeta automaticamente os headers de rastreamento
+    e autenticação em todas as chamadas de saída, a partir do contexto
+    da thread corrente (capturado pelo CorrelationIdMiddleware).
 
-# # Instância global para aproveitar o pool de conexões (performance)
-# http_client = ServiceSession()
+    Usa setdefault() para nunca sobrescrever headers definidos explicitamente
+    pelo chamador.
+    """
+
+    def request(self, method, url, *args, **kwargs):
+        headers = kwargs.pop('headers', {}) or {}
+
+        if cid := get_correlation_id():
+            headers.setdefault('X-Correlation-ID', cid)
+
+        if auth := get_auth_header():
+            headers.setdefault('Authorization', auth)
+
+        kwargs['headers'] = headers
+        return super().request(method, url, *args, **kwargs)
+
+
+# Singleton — reutiliza o pool de conexões do urllib3 entre chamadas.
+http_client = ServiceSession()

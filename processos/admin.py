@@ -16,7 +16,7 @@ class CargoProcessoInline(admin.TabularInline):
     """Inline para gerenciar cargos do processo."""
     model = CargoProcesso
     extra = 1
-    fields = ('nome',)
+    fields = ('cargo_nome',)
 
 
 @admin.register(ProcessoConvocacao)
