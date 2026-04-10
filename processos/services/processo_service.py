@@ -36,7 +36,7 @@ class ProcessoConvocacaoService:
         self._candidatos = candidatos_api or CandidatosApiService()
         self._escolhas = escolhas_api or EscolhasApiService()
 
-    def excluir_processo_e_dependencias(self, *, processo, auth_header: str | None = None) -> None:
+    def excluir_processo_e_dependencias(self, *, processo) -> None:
         """
         Executa a limpeza nos MS dependentes e faz a deleção lógica do processo.
 
@@ -46,27 +46,22 @@ class ProcessoConvocacaoService:
         - Local: processo.inativar() (marca esta_ativo=False e remove cargos)
         """
         processo_uuid = str(processo.uuid)
-        extra_headers = {'Authorization': auth_header} if auth_header else {}
 
         try:
-            self._agenda.excluir_agendas_por_processo(processo_uuid, headers=extra_headers)
+            self._agenda.excluir_agendas_por_processo(processo_uuid)
         except AgendaServiceError as exc:
             logger.exception(
                 'Falha ao excluir agendas do processo',
                 extra={
                     "processo_uuid": processo_uuid,
                     "correlation_id": get_correlation_id(),
-                    "headers": extra_headers,
                     "error": str(exc),
                 },
             )
             raise ProcessoServiceError(str(exc)) from exc
 
         try:
-            self._candidatos.desconvocar_por_processo(
-                processo_uuid=processo_uuid,
-                headers=extra_headers,
-            )
+            self._candidatos.desconvocar_por_processo(processo_uuid=processo_uuid)
         except CandidatosServiceError as exc:
             logger.exception(
                 'Falha ao desconvocar candidatos do processo',
@@ -78,7 +73,7 @@ class ProcessoConvocacaoService:
             raise ProcessoServiceError(str(exc)) from exc
 
         try:
-            self._escolhas.excluir_lotes_vagas_por_processo(processo_uuid, headers=extra_headers)
+            self._escolhas.excluir_lotes_vagas_por_processo(processo_uuid)
         except EscolhasServiceError as exc:
             logger.exception(
                 'Falha ao excluir lotes de vagas do processo',

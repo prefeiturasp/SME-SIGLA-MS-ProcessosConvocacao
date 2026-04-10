@@ -45,8 +45,6 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
     """
     queryset = ProcessoConvocacao.objects.filter(esta_ativo=True).prefetch_related('cargos_processo')
     serializer_class = ProcessoConvocacaoSerializer
-    permission_classes = [AllowAny]
-    # permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['concurso_uuid', 'status']
     search_fields = ['concurso_nome', 'descricao']
@@ -291,11 +289,9 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        auth_header = request.headers.get('Authorization')
         try:
             ProcessoConvocacaoService().excluir_processo_e_dependencias(
                 processo=processo,
-                auth_header=auth_header,
             )
         except ProcessoServiceError as exc:
             return Response(

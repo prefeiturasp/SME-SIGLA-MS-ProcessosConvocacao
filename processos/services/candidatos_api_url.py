@@ -5,9 +5,9 @@ import logging
 from typing import Any
 from urllib.parse import urlencode
 
-import requests
 from django.conf import settings
 
+from processos.api_client import http_client
 from processos.middlewares import get_correlation_id
 from processos.services.exceptions import CandidatosServiceError
 
@@ -19,7 +19,8 @@ class CandidatosApiService:
     PATH_HABILITADOS = '/api/v1/habilitados/'
     FIELDS_HABILITADOS = (
         'candidato__nome,candidato__registro_funcional,candidato__email,candidato__uuid,'
-        'descricao_cargo,codigo_cargo,classificacao,classificacao_pcd,classificacao_nna,categoria_efetiva'
+        'descricao_cargo,codigo_cargo,classificacao,classificacao_pcd,classificacao_nna,categoria_efetiva', 
+        'candidato'
     )
     TIMEOUT_SEGUNDOS = 30
 
@@ -32,7 +33,7 @@ class CandidatosApiService:
         params = {
             'processo_uuid': processo_uuid,
             'foi_convocado': 'true',
-            'fields': self.FIELDS_HABILITADOS,
+            #'fields': self.FIELDS_HABILITADOS,
         }
         base = self._candidatos_api_url or ''
         path = self.PATH_HABILITADOS.rstrip('/')
@@ -67,13 +68,13 @@ class CandidatosApiService:
             }
         )
         try:
-            response = requests.get(
+            response = http_client.get(
                 url,
                 headers=headers,
                 timeout=self.TIMEOUT_SEGUNDOS,
             )
             response.raise_for_status()
-        except requests.RequestException as exc:
+        except Exception as exc:
             logger.exception(
                 'Erro ao buscar habilitados no MS-Candidatos (processo_uuid=%s): %s',
                 processo_uuid,
@@ -83,12 +84,13 @@ class CandidatosApiService:
         data = response.json()
         logger.info(
             'Habilitados encontrados',
-            extra={
+            extra={                
                 "processo_uuid": processo_uuid,
                 "correlation_id": get_correlation_id(),
                 "url": url,
                 "headers": headers,
                 "method": "GET",
+                "data": str(data)[:200],  # Limitar tamanho do log
             }
         )
         if isinstance(data, list):
@@ -99,11 +101,7 @@ class CandidatosApiService:
             return []
         return []
 
-    def desconvocar_por_processo(
-        self,
-        processo_uuid: str,
-        headers: dict | None = None,
-    ) -> dict:
+    def desconvocar_por_processo(self, processo_uuid: str) -> dict:
         """
         PATCH /api/v1/habilitados/desconvocar
 
@@ -115,7 +113,7 @@ class CandidatosApiService:
 
         url = f"{settings.CANDIDATOS_API_URL}/api/v1/habilitados/desconvocar/"
         payload = {"processo_uuid": str(processo_uuid)}
-        headers = {'Accept': 'application/json', 'Content-Type': 'application/json', **(headers or {})}
+        headers = {'Accept': 'application/json', 'Content-Type': 'application/json'}
         logger.info(
             'Desconvocando candidatos no MS-Candidatos',
             extra={
@@ -128,13 +126,13 @@ class CandidatosApiService:
             },
         )
         try:
-            response = requests.patch(
+            response = http_client.patch(
                 url,
                 json=payload,
                 headers=headers,
                 timeout=self.TIMEOUT_SEGUNDOS,
             )
-        except requests.RequestException as exc:
+        except Exception as exc:
             raise CandidatosServiceError(f'Falha ao conectar no MS-Candidatos: {str(exc)}') from exc
 
         if response.status_code != 200:

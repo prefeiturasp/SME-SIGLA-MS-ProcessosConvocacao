@@ -6,8 +6,8 @@ import logging
 from typing import List
 from urllib.parse import urlencode
 
-import requests
 from django.conf import settings
+from processos.api_client import http_client
 from processos.middlewares import get_correlation_id
 from processos.services.exceptions import EscolhasServiceError
 
@@ -64,10 +64,10 @@ class EscolhasApiService:
             }
         )
         try:
-            response = requests.get(url, timeout=self.DEFAULT_TIMEOUT, headers={'Accept': 'application/json'})
+            response = http_client.get(url, timeout=self.DEFAULT_TIMEOUT, headers={'Accept': 'application/json'})
             response.raise_for_status()
             data = response.json()
-        except requests.RequestException as exc:
+        except Exception as exc:
             logger.exception(
                 'Erro ao buscar escolhas no MS-Escolha (concurso_uuid=%s): %s',
                 concurso_uuid,
@@ -107,11 +107,7 @@ class EscolhasApiService:
         )
         return candidato_uuids
 
-    def excluir_lotes_vagas_por_processo(
-        self,
-        processo_uuid: str,
-        headers: dict | None = None,
-    ) -> dict:
+    def excluir_lotes_vagas_por_processo(self, processo_uuid: str) -> dict:
         """
         Remove lotes de vagas (e vagas em cascata) do processo no MS-Escolha.
 
@@ -124,7 +120,7 @@ class EscolhasApiService:
 
         url = f"{base_url}/api/v1/vagas-escolas/por-processo/"
         params = {'processo_uuid': processo_uuid}
-        headers = {'Accept': 'application/json', **(headers or {})}
+        headers = {'Accept': 'application/json'}
         logger.info(
             'Excluindo lotes de vagas no MS-Escolha',
             extra={
@@ -137,13 +133,13 @@ class EscolhasApiService:
             },
         )
         try:
-            response = requests.delete(
+            response = http_client.delete(
                 url,
                 params=params,
                 headers=headers,
                 timeout=self.TIMEOUT_SEGUNDOS,
             )
-        except requests.RequestException as exc:
+        except Exception as exc:
             raise EscolhasServiceError(f'Falha ao conectar no MS-Escolha: {str(exc)}') from exc
 
         if response.status_code != 200:

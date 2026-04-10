@@ -44,7 +44,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'auditlog.middleware.AuditlogMiddleware',
+    'processos.middlewares.AuditlogJWTMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -149,9 +149,8 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.BasicAuthentication',
         # 'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',
-        # 'rest_framework.permissions.IsAuthenticated',
+    'DEFAULT_PERMISSION_CLASSES': [        
+        'rest_framework.permissions.IsAuthenticated',
     ],
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
@@ -233,7 +232,7 @@ CELERY_TASK_DEFAULT_QUEUE = 'processos_convocacao'
 CANDIDATOS_API_URL = os.environ.get('CANDIDATOS_API_URL', '').rstrip('/')
 
 # MS-Agenda (exclusão de agendas por processo)
-AGENDA_API_URL = os.environ.get('AGENDA_API_URL', '').rstrip('/')
+AGENDA_API_URL = os.environ.get('AGENDAS_API_URL', '').rstrip('/')
 
 # MS-Escolha (API para validar se convocados fizeram escolha na finalização)
 ESCOLHAS_API_URL = os.environ.get('ESCOLHAS_API_URL', '').rstrip('/')
