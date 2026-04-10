@@ -13,7 +13,6 @@ def get_correlation_id():
 
 
 def get_auth_header():
-    print(getattr(_thread_locals, 'auth_header', None))
     return getattr(_thread_locals, 'auth_header', None)
 
 logger = logging.getLogger('django.request_logger')
@@ -59,7 +58,6 @@ class CorrelationIdMiddleware:
         start_time = time.perf_counter()
         cid = request.headers.get('X-Correlation-ID', str(uuid.uuid4()))
         _thread_locals.correlation_id = cid
-        print("############ autorização ############")
         print(request.headers.get('Authorization'))
         _thread_locals.auth_header = request.headers.get('Authorization')
 

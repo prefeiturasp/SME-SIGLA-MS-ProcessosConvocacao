@@ -45,8 +45,6 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
     """
     queryset = ProcessoConvocacao.objects.filter(esta_ativo=True).prefetch_related('cargos_processo')
     serializer_class = ProcessoConvocacaoSerializer
-    # permission_classes = [AllowAny]
-    # permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['concurso_uuid', 'status']
     search_fields = ['concurso_nome', 'descricao']

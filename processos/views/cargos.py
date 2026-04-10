@@ -29,7 +29,6 @@ class CargoProcessoViewSet(viewsets.ModelViewSet):
     filterset_fields = ['cargo_uuid']
     search_fields = ['cargo_nome']
     ordering_fields = ['cargo_nome', 'cargo_codigo', 'vagas']
-    #permission_classes = [AllowAny]
     lookup_url_kwarg = 'cargo_uuid'
 
     def _get_processo(self, pk):
