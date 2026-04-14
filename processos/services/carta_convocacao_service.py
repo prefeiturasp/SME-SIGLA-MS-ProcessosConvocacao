@@ -11,7 +11,7 @@ from django.template.loader import render_to_string
 
 from processos.models import CartaConvocacaoCandidato, CartaConvocacaoHistorico
 from processos.models.carta_convocacao_candidato import ENVIO_STATUS_PENDENTE
-from processos.services.candidatos_api_url import buscar_habilitados_por_processo
+from processos.services.candidatos_api_url import CandidatosApiService
 from processos.middlewares import get_correlation_id
 
 
@@ -105,7 +105,7 @@ def iniciar_processamento_envio(
     data_publicacao_str = data.strftime('%d/%m/%Y') if hasattr(data, 'strftime') else str(data)
 
     # 1.1 Buscar habilitados pelo processo_uuid
-    habilitados = buscar_habilitados_por_processo(processo_uuid_str)
+    habilitados = CandidatosApiService().buscar_habilitados_por_processo(processo_uuid_str)
     quantidade = len(habilitados)
 
     # 1.2 Criar registro no CartaConvocacaoHistorico

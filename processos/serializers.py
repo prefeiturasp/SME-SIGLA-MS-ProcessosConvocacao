@@ -38,7 +38,7 @@ class ProcessoConvocacaoSerializer(serializers.ModelSerializer):
         fields = [
             'uuid', 'concurso_uuid', 'concurso_nome', 'descricao', 
             'tipo_escolha', 'status', 'data_convocacao',
-            'data_corte_vagas', 'cargos_processo', 'criado_em', 'atualizado_em'
+            'data_corte_vagas','passo', 'cargos_processo', 'criado_em', 'atualizado_em'
         ]
         read_only_fields = ['uuid', 'criado_em', 'atualizado_em']
 
@@ -50,7 +50,7 @@ class ProcessoConvocacaoCreateSerializer(serializers.ModelSerializer):
         model = ProcessoConvocacao
         fields = [
             'uuid', 'concurso_uuid', 'concurso_nome', 'descricao', 'tipo_escolha',
-            'status', 'data_convocacao', 'data_corte_vagas'
+            'status', 'data_convocacao', 'data_corte_vagas', 'passo'
         ]
         read_only_fields = ['uuid']
 
@@ -67,17 +67,21 @@ class ProcessoConvocacaoCreateSerializer(serializers.ModelSerializer):
 class ProcessoConvocacaoListSerializer(serializers.ModelSerializer):
     """Serializer simplificado para listagem de processos de convocação."""
     quantidade_cargos = serializers.SerializerMethodField()
+    pode_deletar = serializers.SerializerMethodField()
 
     class Meta:
         model = ProcessoConvocacao
         fields = [
             'uuid', 'concurso_nome', 'concurso_uuid', 'descricao', 'tipo_escolha',
-            'status', 'data_convocacao', 'data_corte_vagas',
-            'quantidade_cargos', 'criado_em'
+            'status', 'passo', 'data_convocacao', 'data_corte_vagas',
+            'quantidade_cargos', 'pode_deletar', 'criado_em'
         ]
 
     def get_quantidade_cargos(self, obj):
         return obj.cargos_processo.count()
+
+    def get_pode_deletar(self, obj):
+        return bool(obj.pode_deletar())
 
 
 class ProcessoConvocacaoUpdateSerializer(serializers.ModelSerializer):
@@ -86,10 +90,16 @@ class ProcessoConvocacaoUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProcessoConvocacao
         fields = [
-            'concurso_nome', 'concurso_uuid', 'descricao', 'tipo_escolha', 'status', 'data_convocacao',
-            'data_corte_vagas'
+            'concurso_nome', 'concurso_uuid', 'descricao', 'tipo_escolha', 'status',
+            'data_convocacao', 'data_corte_vagas'
         ]
 
+
+class ProcessoConvocacaoPassoSerializer(serializers.ModelSerializer):
+    """Serializer para atualização de passo do processo de convocação."""
+    class Meta:
+        model = ProcessoConvocacao
+        fields = ['passo']
 
 class ProcessoConvocacaoSelectSerializer(serializers.ModelSerializer):
     """

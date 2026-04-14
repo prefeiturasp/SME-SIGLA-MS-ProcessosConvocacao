@@ -15,7 +15,8 @@ MS_PATH = os.environ.get('MS_PATH', '/ms-processos-convocacao')
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-your-secret-key-here')
 DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0', 'qa-api-sigla.sme.prefeitura.sp.gov.br', 'hom-api-sigla.sme.prefeitura.sp.gov.br']
+CSRF_TRUSTED_ORIGINS = ['https://qa-api-sigla.sme.prefeitura.sp.gov.br', 'https://hom-api-sigla.sme.prefeitura.sp.gov.br']
 
 # Application definition
 INSTALLED_APPS = [
@@ -43,7 +44,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'auditlog.middleware.AuditlogMiddleware',
+    'processos.middlewares.AuditlogJWTMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -113,8 +114,17 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+_ms_path_segment = (MS_PATH or '/ms-processos-convocacao').strip('/')
+if DJANGO_ENVIRONMENT != 'local':
+    STATIC_URL = f'/{_ms_path_segment}/django_static/'
+    MEDIA_URL = f'/{_ms_path_segment}/media/'
+else:
+    STATIC_URL = '/django_static/'
+    MEDIA_URL = '/media/'
+
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -137,8 +147,10 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
+        # 'rest_framework.permissions.IsAuthenticated',
         'rest_framework.permissions.AllowAny',
     ],
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
@@ -220,7 +232,24 @@ CELERY_TASK_DEFAULT_QUEUE = 'processos_convocacao'
 # MS-Candidatos (API de habilitados)
 CANDIDATOS_API_URL = os.environ.get('CANDIDATOS_API_URL', '').rstrip('/')
 
+# MS-Agenda (exclusão de agendas por processo)
+AGENDA_API_URL = os.environ.get('AGENDAS_API_URL', '').rstrip('/')
+
 # MS-Escolha (API para validar se convocados fizeram escolha na finalização)
 ESCOLHAS_API_URL = os.environ.get('ESCOLHAS_API_URL', '').rstrip('/')
 
 MS_URL = os.environ.get('MS_URL', '').rstrip('/')
+
+from datetime import timedelta
+JWT_SIGNING_KEY = os.environ.get(
+    'JWT_SIGNING_KEY',
+    os.environ.get('SECRET_KEY', 'fallback-só-dev'),
+)
+
+SIMPLE_JWT = {
+    'SIGNING_KEY': JWT_SIGNING_KEY,
+    'ALGORITHM': 'HS256',
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=1440),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}

@@ -25,8 +25,18 @@ class ProcessoConvocacao(BaseModel):
     status = models.CharField(
         max_length=20,
         choices=PROCESSO_STATUS_CHOICES,
-        default='EM_ANDAMENTO',
+        default='PENDENTE',
         verbose_name="Status"
+    )
+    passo = models.PositiveSmallIntegerField(
+        choices=[(1, '1'), (2, '2'), (3, '3'), (4, '4')],
+        default=1,
+        verbose_name="Passo"
+    )
+
+    esta_ativo = models.BooleanField(
+        verbose_name="Está ativo",
+        default=True,
     )
 
     data_convocacao = models.DateTimeField(verbose_name="Data de Convocação", default=timezone.now)
@@ -42,5 +52,13 @@ class ProcessoConvocacao(BaseModel):
     def __str__(self):
         return f"{self.concurso_nome} - {self.tipo_escolha}"
 
+    def pode_deletar(self):
+        return self.status not in ('FINALIZADO', 'EM_ANDAMENTO')
+    
+    def inativar(self):
+        # Remove cargos associados (não faz sentido manter cargos em processo inativo)
+        self.cargos_processo.all().delete()
+        self.esta_ativo = False
+        self.save(update_fields=['esta_ativo'])
 
 auditlog.register(ProcessoConvocacao)

@@ -203,13 +203,28 @@ def test_processo_convocacao_update(authenticated_client, processo_convocacao):
     assert processo_convocacao.status == 'FINALIZADO'
 
 
-def test_processo_convocacao_delete(authenticated_client, processo_convocacao):
-    """Testa a exclusão de um processo."""
+@patch('processos.views.processos.ProcessoConvocacaoService.excluir_processo_e_dependencias')
+def test_processo_convocacao_delete(
+    mock_excluir_dependencias,
+    authenticated_client,
+    processo_convocacao,
+):
+    """Testa a exclusão lógica de um processo."""
+    # Para poder deletar, o status não pode ser EM_ANDAMENTO nem FINALIZADO
+    processo_convocacao.status = 'CANCELADO'
+    processo_convocacao.save(update_fields=['status'])
+
+    def _excluir_e_inativar(*, processo, auth_header=None):
+        processo.inativar()
+
+    mock_excluir_dependencias.side_effect = _excluir_e_inativar
+
     url = reverse('processoconvocacao-detail', args=[processo_convocacao.uuid])
     response = authenticated_client.delete(url)
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
-    assert ProcessoConvocacao.objects.count() == 0
+    processo_convocacao.refresh_from_db()
+    assert processo_convocacao.esta_ativo is False
 
 
 def test_filtro_data_convocacao_inicio(authenticated_client, processo_convocacao):
@@ -680,7 +695,7 @@ def test_endpoint_filtros_tipos_escolha(authenticated_client):
 
 
 # Testes para a action finalizar
-@patch('processos.views.processos.buscar_candidatos_com_escolha')
+@patch('processos.views.processos.EscolhasApiService.buscar_candidatos_com_escolha')
 def test_finalizar_sucesso_todos_com_escolha(mock_buscar, authenticated_client, processo_convocacao):
     """Finaliza processo quando todos os candidatos fizeram escolha."""
     cand1 = uuid.uuid4()
@@ -703,7 +718,7 @@ def test_finalizar_sucesso_todos_com_escolha(mock_buscar, authenticated_client, 
     mock_buscar.assert_called_once_with(str(processo_convocacao.concurso_uuid))
 
 
-@patch('processos.views.processos.buscar_candidatos_com_escolha')
+@patch('processos.views.processos.EscolhasApiService.buscar_candidatos_com_escolha')
 def test_finalizar_sucesso_sem_candidatos(mock_buscar, authenticated_client, processo_convocacao):
     """Finaliza processo quando não há candidatos (habilitados vazio)."""
     CargoProcesso.objects.create(
@@ -764,7 +779,7 @@ def test_finalizar_status_nao_em_andamento(authenticated_client, processo_convoc
     assert 'Apenas processos em andamento podem ser finalizados' in response.data['detail']
 
 
-@patch('processos.views.processos.buscar_candidatos_com_escolha')
+@patch('processos.views.processos.EscolhasApiService.buscar_candidatos_com_escolha')
 def test_finalizar_candidatos_pendentes(mock_buscar, authenticated_client, processo_convocacao):
     """Retorna 400 quando existem candidatos sem escolha."""
     cand1 = uuid.uuid4()
@@ -787,7 +802,7 @@ def test_finalizar_candidatos_pendentes(mock_buscar, authenticated_client, proce
     assert processo_convocacao.status == 'EM_ANDAMENTO'
 
 
-@patch('processos.views.processos.buscar_candidatos_com_escolha')
+@patch('processos.views.processos.EscolhasApiService.buscar_candidatos_com_escolha')
 def test_finalizar_erro_ao_buscar_escolhas(mock_buscar, authenticated_client, processo_convocacao):
     """Retorna 400 quando buscar_candidatos_com_escolha levanta exceção."""
     CargoProcesso.objects.create(
@@ -807,7 +822,7 @@ def test_finalizar_erro_ao_buscar_escolhas(mock_buscar, authenticated_client, pr
     assert processo_convocacao.status == 'EM_ANDAMENTO'
 
 
-@patch('processos.views.processos.buscar_candidatos_com_escolha')
+@patch('processos.views.processos.EscolhasApiService.buscar_candidatos_com_escolha')
 def test_finalizar_multiplos_cargos_todos_com_escolha(mock_buscar, authenticated_client, processo_convocacao):
     """Finaliza processo com múltiplos cargos quando todos fizeram escolha."""
     cand1 = uuid.uuid4()
@@ -836,7 +851,7 @@ def test_finalizar_multiplos_cargos_todos_com_escolha(mock_buscar, authenticated
     assert processo_convocacao.status == 'FINALIZADO'
 
 
-@patch('processos.views.processos.buscar_candidatos_com_escolha')
+@patch('processos.views.processos.EscolhasApiService.buscar_candidatos_com_escolha')
 def test_finalizar_multiplos_cargos_um_pendente(mock_buscar, authenticated_client, processo_convocacao):
     """Retorna 400 quando um cargo tem candidato pendente."""
     cand1 = uuid.uuid4()
@@ -881,6 +896,50 @@ def test_processo_convocacao_filters(authenticated_client, processo_convocacao):
     response = authenticated_client.get(url, {'concurso_uuid': str(processo_convocacao.concurso_uuid)})
     assert response.status_code == status.HTTP_200_OK
     assert len(response.data['results']) == 1
+
+
+def test_atualizar_passo_sucesso(authenticated_client, processo_convocacao):
+    """Atualiza passo do processo com sucesso."""
+    url = reverse('processoconvocacao-atualizar-passo', args=[processo_convocacao.uuid])
+    response = authenticated_client.patch(url, {'passo': 2}, format='json')
+
+    assert response.status_code == status.HTTP_200_OK
+    processo_convocacao.refresh_from_db()
+    assert processo_convocacao.passo == 2
+
+
+def test_atualizar_passo_nao_regrede(authenticated_client, processo_convocacao):
+    """Permite regressão de passo no comportamento atual da API."""
+    processo_convocacao.passo = 3
+    processo_convocacao.save(update_fields=['passo'])
+
+    url = reverse('processoconvocacao-atualizar-passo', args=[processo_convocacao.uuid])
+    response = authenticated_client.patch(url, {'passo': 2}, format='json')
+
+    assert response.status_code == status.HTTP_200_OK
+    processo_convocacao.refresh_from_db()
+    assert processo_convocacao.passo == 2
+
+
+def test_atualizar_passo_invalido(authenticated_client, processo_convocacao):
+    """Retorna 400 para passo inválido."""
+    url = reverse('processoconvocacao-atualizar-passo', args=[processo_convocacao.uuid])
+    response = authenticated_client.patch(url, {'passo': 5}, format='json')
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+def test_atualizar_passo_processo_finalizado(authenticated_client, processo_convocacao):
+    """Permite atualização de passo mesmo com processo finalizado no comportamento atual da API."""
+    processo_convocacao.status = 'FINALIZADO'
+    processo_convocacao.save(update_fields=['status'])
+
+    url = reverse('processoconvocacao-atualizar-passo', args=[processo_convocacao.uuid])
+    response = authenticated_client.patch(url, {'passo': 2}, format='json')
+
+    assert response.status_code == status.HTTP_200_OK
+    processo_convocacao.refresh_from_db()
+    assert processo_convocacao.passo == 2
 
 
 # Testes de Busca
@@ -936,10 +995,10 @@ def carta_convocacao_candidatos(carta_convocacao_historico):
     return list(carta_convocacao_historico.candidatos.all())
 
 
-def test_carta_convocacao_list(client, carta_convocacao_historico):
+def test_carta_convocacao_list(authenticated_client, carta_convocacao_historico):
     """Testa GET /api/v1/carta-convocacao/ (listagem do histórico)."""
     url = reverse('carta-convocacao-list')
-    response = client.get(url)
+    response = authenticated_client.get(url)
     assert response.status_code == status.HTTP_200_OK
     assert 'results' in response.data
     assert response.data['count'] >= 1
@@ -949,19 +1008,19 @@ def test_carta_convocacao_list(client, carta_convocacao_historico):
     assert item['quantidade_convocados'] == carta_convocacao_historico.quantidade_candidatos
 
 
-def test_carta_convocacao_list_pagination(client, carta_convocacao_historico):
+def test_carta_convocacao_list_pagination(authenticated_client, carta_convocacao_historico):
     """Testa paginação na listagem do histórico."""
     url = reverse('carta-convocacao-list')
-    response = client.get(url, {'page': 1, 'page_size': 10})
+    response = authenticated_client.get(url, {'page': 1, 'page_size': 10})
     assert response.status_code == status.HTTP_200_OK
     assert 'results' in response.data
     assert 'count' in response.data
 
 
-def test_carta_convocacao_retrieve(client, carta_convocacao_historico, carta_convocacao_candidatos):
+def test_carta_convocacao_retrieve(authenticated_client, carta_convocacao_historico, carta_convocacao_candidatos):
     """Testa GET /api/v1/carta-convocacao/<uuid>/ (detalhe com candidatos)."""
     url = reverse('carta-convocacao-detail', args=[carta_convocacao_historico.uuid])
-    response = client.get(url)
+    response = authenticated_client.get(url)
     assert response.status_code == status.HTTP_200_OK
     assert response.data['uuid'] == str(carta_convocacao_historico.uuid)
     assert response.data['processo_nome'] == carta_convocacao_historico.processo_nome
@@ -972,15 +1031,15 @@ def test_carta_convocacao_retrieve(client, carta_convocacao_historico, carta_con
     assert 'Ciclano' in nomes
 
 
-def test_carta_convocacao_retrieve_not_found(client):
+def test_carta_convocacao_retrieve_not_found(authenticated_client):
     """Testa GET detalhe com UUID inexistente."""
     url = reverse('carta-convocacao-detail', args=[uuid.uuid4()])
-    response = client.get(url)
+    response = authenticated_client.get(url)
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
 @patch('processos.views.carta_convocacao.iniciar_processamento_envio')
-def test_carta_convocacao_create(mock_iniciar, client, processo_convocacao):
+def test_carta_convocacao_create(mock_iniciar, authenticated_client, processo_convocacao):
     """Testa POST /api/v1/carta-convocacao/ (inicia processamento de envio)."""
     mock_historico = CartaConvocacaoHistorico.objects.create(
         processo_uuid=processo_convocacao.uuid,
@@ -996,7 +1055,7 @@ def test_carta_convocacao_create(mock_iniciar, client, processo_convocacao):
         'processo_nome': processo_convocacao.concurso_nome,
         'data': '25-12-2024',
     }
-    response = client.post(url, payload, format='json')
+    response = authenticated_client.post(url, payload, format='json')
     assert response.status_code == status.HTTP_200_OK
     assert 'detail' in response.data
     assert 'historico_uuid' in response.data
@@ -1007,7 +1066,7 @@ def test_carta_convocacao_create(mock_iniciar, client, processo_convocacao):
 
 
 @patch('processos.views.carta_convocacao.iniciar_processamento_envio')
-def test_carta_convocacao_create_invalid_payload(mock_iniciar, client):
+def test_carta_convocacao_create_invalid_payload(mock_iniciar, authenticated_client):
     """Testa POST com payload inválido (processo não encontrado)."""
     url = reverse('carta-convocacao-list')
     payload = {
@@ -1015,14 +1074,14 @@ def test_carta_convocacao_create_invalid_payload(mock_iniciar, client):
         'processo_nome': 'Inexistente',
         'data': '25-12-2024',
     }
-    response = client.post(url, payload, format='json')
+    response = authenticated_client.post(url, payload, format='json')
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     mock_iniciar.assert_not_called()
 
 
 @patch('processos.views.carta_convocacao.iniciar_processamento_envio')
 def test_carta_convocacao_create_quando_servico_levanta_excecao_retorna_500(
-    mock_iniciar, client, processo_convocacao
+    mock_iniciar, authenticated_client, processo_convocacao
 ):
     """Quando iniciar_processamento_envio levanta exceção, a view retorna 500 com detail."""
     mock_iniciar.side_effect = Exception('Email duplicado entre candidatos: duplicado@test.com')
@@ -1033,7 +1092,7 @@ def test_carta_convocacao_create_quando_servico_levanta_excecao_retorna_500(
         'processo_nome': processo_convocacao.concurso_nome,
         'data': '25-12-2024',
     }
-    response = client.post(url, payload, format='json')
+    response = authenticated_client.post(url, payload, format='json')
 
     assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
     assert 'detail' in response.data

@@ -30,7 +30,6 @@ class CartaConvocacaoViewSet(
     GET  /api/v1/carta-convocacao/<uuid>/  -> detalhe do histórico + candidatos (nome, rf, email, status, conteudo).
     POST /api/v1/carta-convocacao/         -> inicia o processamento (envio).
     """
-    permission_classes = [AllowAny]
     queryset = CartaConvocacaoHistorico.objects.prefetch_related('candidatos').order_by('-criado_em')
     pagination_class = CustomPagination
     lookup_field = 'uuid'
