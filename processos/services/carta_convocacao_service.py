@@ -12,7 +12,7 @@ from django.template.loader import render_to_string
 from processos.models import CartaConvocacaoCandidato, CartaConvocacaoHistorico
 from processos.models.carta_convocacao_candidato import ENVIO_STATUS_PENDENTE
 from processos.services.candidatos_api_url import CandidatosApiService
-from processos.middlewares import get_correlation_id
+from sigla_sdk.context import get_correlation_id
 
 
 logger = logging.getLogger(__name__)
