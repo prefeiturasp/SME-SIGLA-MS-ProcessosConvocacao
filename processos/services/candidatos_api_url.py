@@ -7,8 +7,8 @@ from urllib.parse import urlencode
 
 from django.conf import settings
 
-from processos.api_client import http_client
-from processos.middlewares import get_correlation_id
+from sigla_sdk.context import get_correlation_id
+from sigla_sdk.http.api_client import http_client
 from processos.services.exceptions import CandidatosServiceError
 
 

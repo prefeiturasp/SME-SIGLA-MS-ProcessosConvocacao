@@ -5,7 +5,7 @@ Centraliza operações que envolvem múltiplos microsserviços.
 """
 import logging
 
-from processos.middlewares import get_correlation_id
+from sigla_sdk.context import get_correlation_id
 from processos.services.agenda_api_service import AgendaApiService
 from processos.services.candidatos_api_url import CandidatosApiService
 from processos.services.escolhas_service import EscolhasApiService

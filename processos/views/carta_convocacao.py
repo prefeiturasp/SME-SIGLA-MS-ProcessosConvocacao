@@ -14,7 +14,7 @@ from processos.serializers import (
 )
 from processos.services.carta_convocacao_service import iniciar_processamento_envio
 from processos.utils import CustomPagination
-from processos.middlewares import get_correlation_id
+from sigla_sdk.context import get_correlation_id
 
 
 logger = logging.getLogger(__name__)
