@@ -10,4 +10,5 @@ drf-spectacular==0.28.0
 celery[redis]==5.4.0
 redis==5.2.1
 python-json-logger==4.0.0
-djangorestframework_simplejwt
+djangorestframework_simplejwt==5.5.1
+git+https://github.com/prefeiturasp/SME-SIGLA-SDK-Microsservico.git@1.0.1#egg=sigla-sdk

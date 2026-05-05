@@ -35,7 +35,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'processos.middlewares.CorrelationIdMiddleware',
+    'sigla_sdk.middlewares.CorrelationIdMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -44,7 +44,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'processos.middlewares.AuditlogJWTMiddleware',
+    'sigla_sdk.middlewares.AuditlogJWTMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -157,17 +157,14 @@ REST_FRAMEWORK = {
 }
 
 # AuditLog settings
-AUDITLOG_INCLUDE_ALL_MODELS = False 
-
-import threading
-_thread_locals = threading.local()
+AUDITLOG_INCLUDE_ALL_MODELS = False
 
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
         'json': {
-            '()': 'processos.logging_utils.CustomJsonFormatter', # Usa sua classe
+            '()': 'sigla_sdk.logging.json_formatter.CustomJsonFormatter',
             # Estes campos do logging padrão virarão chaves no JSON
             'format': '%(levelname)s %(asctime)s %(module)s %(filename)s %(lineno)d %(funcName)s %(message)s'
         },
