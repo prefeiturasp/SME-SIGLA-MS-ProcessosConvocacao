@@ -3,13 +3,13 @@ from rest_framework import viewsets, status
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
-from django.db import transaction
+from processos.services.cargos_service import CargosProcessoService
 
 from processos.models import CargoProcesso, ProcessoConvocacao
 from processos.models.constants import ERROR_PROCESSO_NAO_PODE_EDITAR
 from processos.serializers import (
     CargoProcessoSerializer,
-    CargoProcessoCreateSerializer,
+    ProcessoCargosPayloadSerializer,
 )
 
 STATUS_FINALIZADO = 'FINALIZADO'
@@ -62,79 +62,33 @@ class CargoProcessoViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        cargos_data = request.data
+        payload_serializer = ProcessoCargosPayloadSerializer(data=request.data)
+        payload_serializer.is_valid(raise_exception=True)
+        payload = payload_serializer.validated_data
+        cargos_data = payload["cargos"]
 
-        if not isinstance(cargos_data, list):
-            return Response(
-                {"error": "Dados devem ser uma lista de cargos"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        # Persistir porcentagens no processo (se vierem no payload)
+        update_fields = []
+        if "porcentagem_nna" in payload and payload["porcentagem_nna"] != processo.porcentagem_nna:
+            processo.porcentagem_nna = payload["porcentagem_nna"]
+            update_fields.append("porcentagem_nna")
+        if "porcentagem_pcd" in payload and payload["porcentagem_pcd"] != processo.porcentagem_pcd:
+            processo.porcentagem_pcd = payload["porcentagem_pcd"]
+            update_fields.append("porcentagem_pcd")
+        if update_fields:
+            processo.save(update_fields=update_fields)
 
-        cargos_criados = []
-        cargos_atualizados = []
-        erros = []
+        result = CargosProcessoService.salvar_cargos(processo=processo, cargos_data=cargos_data)
 
-        existing_qs = processo.cargos_processo.all()
-        existing_by_uuid = {str(obj.uuid): obj for obj in existing_qs}
-        processed_uuid_strings = set()
-
-        with transaction.atomic():
-            for cargo_data in cargos_data:
-                item_uuid = cargo_data.get("uuid")
-                # Atualizar quando vier uuid
-                if item_uuid:
-                    item_uuid_str = str(item_uuid)
-                    instance = existing_by_uuid.get(item_uuid_str)
-                    if not instance:
-                        erros.append(
-                            {
-                                "uuid": item_uuid_str,
-                                "erros": "Cargo não encontrado para este processo",
-                            }
-                        )
-                        continue
-                    serializer = CargoProcessoCreateSerializer(
-                        instance, data=cargo_data, partial=True
-                    )
-                    if serializer.is_valid():
-                        cargo = serializer.save()
-                        cargos_atualizados.append(CargoProcessoSerializer(cargo).data)
-                        processed_uuid_strings.add(item_uuid_str)
-                    else:
-                        erros.append({"uuid": item_uuid_str, "erros": serializer.errors})
-                else:
-                    # Criar quando não vier uuid
-                    serializer = CargoProcessoCreateSerializer(data=cargo_data)
-                    if serializer.is_valid():
-                        cargo = serializer.save(processo=processo)
-                        cargos_criados.append(CargoProcessoSerializer(cargo).data)
-                        processed_uuid_strings.add(str(cargo.uuid))
-                    else:
-                        erros.append(
-                            {
-                                "cargo": cargo_data.get("cargo_nome", "N/A"),
-                                "erros": serializer.errors,
-                            }
-                        )
-
-            # Remover registros que não estão no payload
-            to_delete_qs = existing_qs.exclude(uuid__in=processed_uuid_strings)
-            cargos_removidos = to_delete_qs.count()
-            to_delete_qs.delete()
-
-        resultado_atual = CargoProcessoSerializer(
-            processo.cargos_processo.all(), many=True
-        ).data
-
-        if erros:
+        if result.erros:
             return Response(
                 {
                     "success": True,
-                    "cargos_criados": len(cargos_criados),
-                    "cargos_atualizados": len(cargos_atualizados),
-                    "cargos_removidos": cargos_removidos,
-                    "erros": erros,
-                    "cargos": resultado_atual,
+                    "cargos_criados": len(result.cargos_criados),
+                    "cargos_atualizados": len(result.cargos_atualizados),
+                    "cargos_removidos": result.cargos_removidos,
+                    "erros": result.erros,
+                    "cargos": result.cargos,
                 },
                 status=status.HTTP_207_MULTI_STATUS,
             )
@@ -142,10 +96,10 @@ class CargoProcessoViewSet(viewsets.ModelViewSet):
         return Response(
             {
                 "success": True,
-                "cargos_criados": len(cargos_criados),
-                "cargos_atualizados": len(cargos_atualizados),
-                "cargos_removidos": cargos_removidos,
-                "cargos": resultado_atual,
+                "cargos_criados": len(result.cargos_criados),
+                "cargos_atualizados": len(result.cargos_atualizados),
+                "cargos_removidos": result.cargos_removidos,
+                "cargos": result.cargos,
             },
             status=status.HTTP_200_OK,
         )

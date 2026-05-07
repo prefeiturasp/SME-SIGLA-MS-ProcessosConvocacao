@@ -41,6 +41,8 @@ class ProcessoConvocacao(BaseModel):
 
     data_convocacao = models.DateTimeField(verbose_name="Data de Convocação", default=timezone.now)
     data_corte_vagas = models.DateTimeField(verbose_name="Data de Corte de Vagas", default=timezone.now)
+    porcentagem_nna = models.FloatField(verbose_name="Porcentagem de NNA", default=0.2)
+    porcentagem_pcd = models.FloatField(verbose_name="Porcentagem de PCD", default=0.05)
 
 
     class Meta:
