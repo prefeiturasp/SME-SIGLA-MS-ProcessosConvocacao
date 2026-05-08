@@ -328,10 +328,14 @@ def test_cargos_list_processo_nao_encontrado(authenticated_client):
 def test_cargos_create_novos_cargos(authenticated_client, processo_convocacao):
     """POST cria novos cargos quando payload não tem uuid."""
     url = reverse('processo-cargos-list', kwargs={'processo_pk': processo_convocacao.uuid})
-    payload = [
-        {'cargo_nome': 'Cargo Novo 1', 'cargo_uuid': str(uuid.uuid4())},
-        {'cargo_nome': 'Cargo Novo 2', 'cargo_uuid': str(uuid.uuid4())},
-    ]
+    payload = {
+        "porcentagem_nna": 0.2,
+        "porcentagem_pcd": 0.05,
+        "cargos": [
+            {'cargo_nome': 'Cargo Novo 1', 'cargo_uuid': str(uuid.uuid4())},
+            {'cargo_nome': 'Cargo Novo 2', 'cargo_uuid': str(uuid.uuid4())},
+        ],
+    }
     response = authenticated_client.post(url, payload, format='json')
 
     assert response.status_code == status.HTTP_200_OK
@@ -346,13 +350,15 @@ def test_cargos_create_atualiza_existentes(authenticated_client, processo_convoc
     """POST atualiza cargos existentes quando payload tem uuid."""
     cargo = cargos_processo[0]
     url = reverse('processo-cargos-list', kwargs={'processo_pk': processo_convocacao.uuid})
-    payload = [
-        {
-            'uuid': str(cargo.uuid),
-            'cargo_nome': 'Analista Atualizado',
-            'cargo_uuid': str(cargo.cargo_uuid),
-        },
-    ]
+    payload = {
+        "cargos": [
+            {
+                'uuid': str(cargo.uuid),
+                'cargo_nome': 'Analista Atualizado',
+                'cargo_uuid': str(cargo.cargo_uuid),
+            },
+        ]
+    }
     response = authenticated_client.post(url, payload, format='json')
 
     assert response.status_code == status.HTTP_200_OK
@@ -367,9 +373,11 @@ def test_cargos_create_remove_cargos_nao_enviados(authenticated_client, processo
     """POST remove cargos que não estão no payload."""
     cargo = cargos_processo[0]
     url = reverse('processo-cargos-list', kwargs={'processo_pk': processo_convocacao.uuid})
-    payload = [
-        {'uuid': str(cargo.uuid), 'cargo_nome': cargo.cargo_nome, 'cargo_uuid': str(cargo.cargo_uuid)},
-    ]
+    payload = {
+        "cargos": [
+            {'uuid': str(cargo.uuid), 'cargo_nome': cargo.cargo_nome, 'cargo_uuid': str(cargo.cargo_uuid)},
+        ]
+    }
     response = authenticated_client.post(url, payload, format='json')
 
     assert response.status_code == status.HTTP_200_OK
@@ -380,7 +388,7 @@ def test_cargos_create_remove_cargos_nao_enviados(authenticated_client, processo
 def test_cargos_create_processo_nao_encontrado(authenticated_client):
     """POST retorna 404 quando processo não existe."""
     url = reverse('processo-cargos-list', kwargs={'processo_pk': uuid.uuid4()})
-    response = authenticated_client.post(url, [], format='json')
+    response = authenticated_client.post(url, {"cargos": []}, format='json')
 
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.data['error'] == 'Processo de convocação não encontrado'
@@ -392,29 +400,33 @@ def test_cargos_create_processo_finalizado(authenticated_client, processo_convoc
     processo_convocacao.save()
 
     url = reverse('processo-cargos-list', kwargs={'processo_pk': processo_convocacao.uuid})
-    response = authenticated_client.post(url, [
-        {'cargo_nome': 'Cargo', 'cargo_uuid': str(uuid.uuid4())},
-    ], format='json')
+    response = authenticated_client.post(
+        url,
+        {"cargos": [{'cargo_nome': 'Cargo', 'cargo_uuid': str(uuid.uuid4())}]},
+        format='json',
+    )
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert response.data['detail'] == ERROR_PROCESSO_NAO_PODE_EDITAR
 
 
 def test_cargos_create_payload_nao_e_lista(authenticated_client, processo_convocacao):
-    """POST retorna 400 quando payload não é uma lista."""
+    """POST retorna 400 quando payload é lista (espera dict com chave cargos)."""
     url = reverse('processo-cargos-list', kwargs={'processo_pk': processo_convocacao.uuid})
-    response = authenticated_client.post(url, {'cargo_nome': 'Cargo'}, format='json')
+    response = authenticated_client.post(url, [{'cargo_nome': 'Cargo'}], format='json')
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
-    assert response.data['error'] == 'Dados devem ser uma lista de cargos'
+    assert 'non_field_errors' in response.data
 
 
 def test_cargos_create_uuid_nao_encontrado_retorna_207(authenticated_client, processo_convocacao, cargos_processo):
     """POST com uuid de cargo inexistente retorna 207 com erros."""
     url = reverse('processo-cargos-list', kwargs={'processo_pk': processo_convocacao.uuid})
-    payload = [
-        {'uuid': str(uuid.uuid4()), 'cargo_nome': 'Inexistente', 'cargo_uuid': str(uuid.uuid4())},
-    ]
+    payload = {
+        "cargos": [
+            {'uuid': str(uuid.uuid4()), 'cargo_nome': 'Inexistente', 'cargo_uuid': str(uuid.uuid4())},
+        ]
+    }
     response = authenticated_client.post(url, payload, format='json')
 
     assert response.status_code == status.HTTP_207_MULTI_STATUS
