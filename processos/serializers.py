@@ -29,6 +29,37 @@ class CargoProcessoCreateSerializer(serializers.ModelSerializer):
         read_only_fields = ['uuid', 'criado_em', 'atualizado_em']
 
 
+class CargoProcessoUpsertSerializer(CargoProcessoCreateSerializer):
+    """
+    Serializer de entrada para criar/atualizar CargoProcesso.
+
+    - Se vier `uuid`, a view tenta atualizar o registro existente do processo.
+    - Se não vier `uuid`, cria um novo registro.
+    """
+
+    uuid = serializers.UUIDField(required=False, allow_null=True)
+
+    class Meta(CargoProcessoCreateSerializer.Meta):
+        fields = ['uuid'] + list(CargoProcessoCreateSerializer.Meta.fields)
+
+
+class ProcessoCargosPayloadSerializer(serializers.Serializer):
+    """
+    Valida o payload do endpoint de substituição de cargos de um processo.
+
+    Exemplo:
+    {
+      "porcentagem_nna": 0.2,
+      "porcentagem_pcd": 0.05,
+      "cargos": [ ... ]
+    }
+    """
+
+    porcentagem_nna = serializers.FloatField(min_value=0.0, max_value=1.0, required=False)
+    porcentagem_pcd = serializers.FloatField(min_value=0.0, max_value=1.0, required=False)
+    cargos = CargoProcessoUpsertSerializer(many=True)
+
+
 class ProcessoConvocacaoSerializer(serializers.ModelSerializer):
     """Serializer para o modelo ProcessoConvocacao."""
     cargos_processo = CargoProcessoSerializer(many=True, read_only=True)
