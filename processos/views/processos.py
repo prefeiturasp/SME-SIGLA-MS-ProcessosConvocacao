@@ -17,7 +17,7 @@ from processos.serializers import (
     ProcessoConvocacaoUpdateSerializer, CargoProcessoSerializer, CargoProcessoCreateSerializer,
     ProcessoConvocacaoSelectSerializer, ProcessoConvocacaoPassoSerializer
 )
-from processos.utils import CustomPagination
+from processos.utils.pagination import CustomPagination
 from processos.models.constants import (
     TIPO_ESCOLHA_CHOICES,
     ERROR_PROCESSO_JA_FINALIZADO,

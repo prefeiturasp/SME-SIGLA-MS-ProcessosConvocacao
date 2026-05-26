@@ -1,0 +1,718 @@
+{
+  "generated_at": "2026-05-18 16:19:23 UTC",
+  "command": "python manage.py gerar_relatorio_pep",
+  "git_commit": "6560d9a",
+  "scope": "processos app code (no tests, no migrations)",
+  "max_line_length": 79,
+  "summary": {
+    "files_count": 31,
+    "loc_total": 2311,
+    "lines_over_79": 150,
+    "lines_length_eligible": 1941,
+    "modules_with_docstring": 12,
+    "modules_without_docstring": 19,
+    "functions_methods_total": 46,
+    "functions_methods_with_docstring": 22,
+    "functions_methods_without_docstring": 24,
+    "classes_total": 42,
+    "classes_with_docstring": 33,
+    "classes_without_docstring": 9,
+    "symbols_with_docstring": 55,
+    "symbols_without_docstring": 33,
+    "hints_completo": 13,
+    "hints_parcial": 1,
+    "hints_sem": 32,
+    "missing_docstrings_top": [
+      {
+        "path": "apps.py",
+        "lineno": 4,
+        "name": "ProcessosConfig",
+        "kind": "class"
+      },
+      {
+        "path": "apps.py",
+        "lineno": 8,
+        "name": "ProcessosConfig.ready",
+        "kind": "function"
+      },
+      {
+        "path": "management/commands/criar_processos.py",
+        "lineno": 12,
+        "name": "Command",
+        "kind": "class"
+      },
+      {
+        "path": "management/commands/criar_processos.py",
+        "lineno": 15,
+        "name": "Command.add_arguments",
+        "kind": "function"
+      },
+      {
+        "path": "management/commands/criar_processos.py",
+        "lineno": 29,
+        "name": "Command.handle",
+        "kind": "function"
+      },
+      {
+        "path": "management/commands/limpar_processos.py",
+        "lineno": 9,
+        "name": "Command",
+        "kind": "class"
+      },
+      {
+        "path": "management/commands/limpar_processos.py",
+        "lineno": 12,
+        "name": "Command.handle",
+        "kind": "function"
+      },
+      {
+        "path": "models/cargo_processo.py",
+        "lineno": 60,
+        "name": "CargoProcesso.__str__",
+        "kind": "function"
+      },
+      {
+        "path": "models/carta_convocacao_candidato.py",
+        "lineno": 50,
+        "name": "CartaConvocacaoCandidato.__str__",
+        "kind": "function"
+      },
+      {
+        "path": "models/carta_convocacao_historico.py",
+        "lineno": 24,
+        "name": "CartaConvocacaoHistorico.__str__",
+        "kind": "function"
+      },
+      {
+        "path": "models/processo_convocacao.py",
+        "lineno": 54,
+        "name": "ProcessoConvocacao.__str__",
+        "kind": "function"
+      },
+      {
+        "path": "models/processo_convocacao.py",
+        "lineno": 57,
+        "name": "ProcessoConvocacao.pode_deletar",
+        "kind": "function"
+      },
+      {
+        "path": "models/processo_convocacao.py",
+        "lineno": 60,
+        "name": "ProcessoConvocacao.inativar",
+        "kind": "function"
+      },
+      {
+        "path": "serializers.py",
+        "lineno": 111,
+        "name": "ProcessoConvocacaoListSerializer.get_quantidade_cargos",
+        "kind": "function"
+      },
+      {
+        "path": "serializers.py",
+        "lineno": 114,
+        "name": "ProcessoConvocacaoListSerializer.get_pode_deletar",
+        "kind": "function"
+      },
+      {
+        "path": "services/agenda_api_service.py",
+        "lineno": 14,
+        "name": "AgendaApiService",
+        "kind": "class"
+      },
+      {
+        "path": "services/candidatos_api_url.py",
+        "lineno": 18,
+        "name": "CandidatosApiService",
+        "kind": "class"
+      },
+      {
+        "path": "services/candidatos_api_url.py",
+        "lineno": 28,
+        "name": "CandidatosApiService._candidatos_api_url",
+        "kind": "function"
+      },
+      {
+        "path": "services/cargos_service.py",
+        "lineno": 13,
+        "name": "SubstituirCargosResult",
+        "kind": "class"
+      },
+      {
+        "path": "services/cargos_service.py",
+        "lineno": 21,
+        "name": "CargosProcessoService",
+        "kind": "class"
+      },
+      {
+        "path": "services/cargos_service.py",
+        "lineno": 23,
+        "name": "CargosProcessoService.salvar_cargos",
+        "kind": "function"
+      },
+      {
+        "path": "services/escolhas_service.py",
+        "lineno": 17,
+        "name": "EscolhasApiService",
+        "kind": "class"
+      },
+      {
+        "path": "services/processo_service.py",
+        "lineno": 28,
+        "name": "ProcessoConvocacaoService.__init__",
+        "kind": "function"
+      },
+      {
+        "path": "utils.py",
+        "lineno": 8,
+        "name": "CustomPagination",
+        "kind": "class"
+      },
+      {
+        "path": "utils.py",
+        "lineno": 13,
+        "name": "CustomPagination.get_paginated_response",
+        "kind": "function"
+      }
+    ]
+  },
+  "simple": {
+    "pep8_line_width_compliance_pct": 92.27,
+    "pep8_line_width_eligible_lines": 1941,
+    "pep8_lines_over_max": 150,
+    "pep8_flake8_violations": 311,
+    "pep257_docstring_compliance_pct": 62.5,
+    "pep257_symbols_total": 88,
+    "pep484_full_hints_pct": 28.26,
+    "pep484_full_or_partial_pct": 30.43,
+    "pep484_functions_methods_total": 46,
+    "pep440_requirement_lines_parseable_pct": 100.0,
+    "pep440_requirement_lines_total": 25,
+    "pep440_invalid_lines": 0,
+    "max_line_length": 79
+  },
+  "flake8": {
+    "E501": 211,
+    "W293": 42,
+    "W291": 13,
+    "F401": 11,
+    "W292": 8,
+    "F541": 7,
+    "E122": 6,
+    "E302": 3,
+    "W391": 2,
+    "F403": 1,
+    "E303": 1,
+    "E305": 1,
+    "E231": 1,
+    "E265": 1,
+    "E128": 1,
+    "E301": 1,
+    "F841": 1
+  },
+  "pep440": {
+    "files_analyzed": [
+      "base.txt",
+      "local.txt",
+      "production.txt"
+    ],
+    "total_dependency_lines": 25,
+    "pypi_valid": 24,
+    "git_pins": 1,
+    "pinned_with_eq": 24,
+    "invalid_lines": [],
+    "entries": [
+      {
+        "file": "base.txt",
+        "line": "Django==5.2.5",
+        "type": "pypi",
+        "name": "Django"
+      },
+      {
+        "file": "base.txt",
+        "line": "djangorestframework==3.15.2",
+        "type": "pypi",
+        "name": "djangorestframework"
+      },
+      {
+        "file": "base.txt",
+        "line": "django-cors-headers==4.7.0",
+        "type": "pypi",
+        "name": "django-cors-headers"
+      },
+      {
+        "file": "base.txt",
+        "line": "django-filter==25.1",
+        "type": "pypi",
+        "name": "django-filter"
+      },
+      {
+        "file": "base.txt",
+        "line": "psycopg2-binary==2.9.9",
+        "type": "pypi",
+        "name": "psycopg2-binary"
+      },
+      {
+        "file": "base.txt",
+        "line": "requests==2.32.4",
+        "type": "pypi",
+        "name": "requests"
+      },
+      {
+        "file": "base.txt",
+        "line": "django-auditlog==3.2.1",
+        "type": "pypi",
+        "name": "django-auditlog"
+      },
+      {
+        "file": "base.txt",
+        "line": "python-dotenv==1.1.1",
+        "type": "pypi",
+        "name": "python-dotenv"
+      },
+      {
+        "file": "base.txt",
+        "line": "drf-spectacular==0.28.0",
+        "type": "pypi",
+        "name": "drf-spectacular"
+      },
+      {
+        "file": "base.txt",
+        "line": "celery[redis]==5.4.0",
+        "type": "pypi",
+        "name": "celery"
+      },
+      {
+        "file": "base.txt",
+        "line": "redis==5.2.1",
+        "type": "pypi",
+        "name": "redis"
+      },
+      {
+        "file": "base.txt",
+        "line": "python-json-logger==4.0.0",
+        "type": "pypi",
+        "name": "python-json-logger"
+      },
+      {
+        "file": "base.txt",
+        "line": "djangorestframework_simplejwt==5.5.1",
+        "type": "pypi",
+        "name": "djangorestframework_simplejwt"
+      },
+      {
+        "file": "base.txt",
+        "line": "git+https://github.com/prefeiturasp/SME-SIGLA-SDK-Microsservico.git@1.0.1#egg=sigla-sdk",
+        "type": "git"
+      },
+      {
+        "file": "local.txt",
+        "line": "pytest==7.4.3",
+        "type": "pypi",
+        "name": "pytest"
+      },
+      {
+        "file": "local.txt",
+        "line": "pytest-django==4.7.0",
+        "type": "pypi",
+        "name": "pytest-django"
+      },
+      {
+        "file": "local.txt",
+        "line": "pytest-cov==4.1.0",
+        "type": "pypi",
+        "name": "pytest-cov"
+      },
+      {
+        "file": "local.txt",
+        "line": "factory-boy==3.3.0",
+        "type": "pypi",
+        "name": "factory-boy"
+      },
+      {
+        "file": "local.txt",
+        "line": "black==23.11.0",
+        "type": "pypi",
+        "name": "black"
+      },
+      {
+        "file": "local.txt",
+        "line": "flake8==6.1.0",
+        "type": "pypi",
+        "name": "flake8"
+      },
+      {
+        "file": "local.txt",
+        "line": "isort==5.12.0",
+        "type": "pypi",
+        "name": "isort"
+      },
+      {
+        "file": "local.txt",
+        "line": "packaging==24.2",
+        "type": "pypi",
+        "name": "packaging"
+      },
+      {
+        "file": "local.txt",
+        "line": "django-extensions==3.2.3",
+        "type": "pypi",
+        "name": "django-extensions"
+      },
+      {
+        "file": "local.txt",
+        "line": "django-debug-toolbar==4.3.0",
+        "type": "pypi",
+        "name": "django-debug-toolbar"
+      },
+      {
+        "file": "production.txt",
+        "line": "gunicorn==21.2.0",
+        "type": "pypi",
+        "name": "gunicorn"
+      }
+    ]
+  },
+  "by_file": [
+    {
+      "path": "__init__.py",
+      "loc": 1,
+      "lines_over_max": 0,
+      "module_has_docstring": false,
+      "functions_count": 0,
+      "functions_with_docstring": 0,
+      "hints_completo": 0,
+      "hints_parcial": 0,
+      "hints_sem": 0
+    },
+    {
+      "path": "admin.py",
+      "loc": 115,
+      "lines_over_max": 4,
+      "module_has_docstring": true,
+      "functions_count": 2,
+      "functions_with_docstring": 2,
+      "hints_completo": 0,
+      "hints_parcial": 0,
+      "hints_sem": 2
+    },
+    {
+      "path": "apps.py",
+      "loc": 12,
+      "lines_over_max": 0,
+      "module_has_docstring": false,
+      "functions_count": 1,
+      "functions_with_docstring": 0,
+      "hints_completo": 0,
+      "hints_parcial": 0,
+      "hints_sem": 1
+    },
+    {
+      "path": "management/__init__.py",
+      "loc": 1,
+      "lines_over_max": 0,
+      "module_has_docstring": false,
+      "functions_count": 0,
+      "functions_with_docstring": 0,
+      "hints_completo": 0,
+      "hints_parcial": 0,
+      "hints_sem": 0
+    },
+    {
+      "path": "management/commands/__init__.py",
+      "loc": 1,
+      "lines_over_max": 0,
+      "module_has_docstring": false,
+      "functions_count": 0,
+      "functions_with_docstring": 0,
+      "hints_completo": 0,
+      "hints_parcial": 0,
+      "hints_sem": 0
+    },
+    {
+      "path": "management/commands/criar_processos.py",
+      "loc": 210,
+      "lines_over_max": 29,
+      "module_has_docstring": true,
+      "functions_count": 2,
+      "functions_with_docstring": 0,
+      "hints_completo": 0,
+      "hints_parcial": 0,
+      "hints_sem": 2
+    },
+    {
+      "path": "management/commands/limpar_processos.py",
+      "loc": 63,
+      "lines_over_max": 4,
+      "module_has_docstring": true,
+      "functions_count": 1,
+      "functions_with_docstring": 0,
+      "hints_completo": 0,
+      "hints_parcial": 0,
+      "hints_sem": 1
+    },
+    {
+      "path": "models/__init__.py",
+      "loc": 22,
+      "lines_over_max": 0,
+      "module_has_docstring": false,
+      "functions_count": 0,
+      "functions_with_docstring": 0,
+      "hints_completo": 0,
+      "hints_parcial": 0,
+      "hints_sem": 0
+    },
+    {
+      "path": "models/base.py",
+      "loc": 17,
+      "lines_over_max": 3,
+      "module_has_docstring": false,
+      "functions_count": 0,
+      "functions_with_docstring": 0,
+      "hints_completo": 0,
+      "hints_parcial": 0,
+      "hints_sem": 0
+    },
+    {
+      "path": "models/cargo_processo.py",
+      "loc": 64,
+      "lines_over_max": 3,
+      "module_has_docstring": false,
+      "functions_count": 1,
+      "functions_with_docstring": 0,
+      "hints_completo": 0,
+      "hints_parcial": 0,
+      "hints_sem": 1
+    },
+    {
+      "path": "models/carta_convocacao_candidato.py",
+      "loc": 54,
+      "lines_over_max": 0,
+      "module_has_docstring": false,
+      "functions_count": 1,
+      "functions_with_docstring": 0,
+      "hints_completo": 0,
+      "hints_parcial": 0,
+      "hints_sem": 1
+    },
+    {
+      "path": "models/carta_convocacao_historico.py",
+      "loc": 28,
+      "lines_over_max": 2,
+      "module_has_docstring": false,
+      "functions_count": 1,
+      "functions_with_docstring": 0,
+      "hints_completo": 0,
+      "hints_parcial": 0,
+      "hints_sem": 1
+    },
+    {
+      "path": "models/constants.py",
+      "loc": 36,
+      "lines_over_max": 1,
+      "module_has_docstring": true,
+      "functions_count": 0,
+      "functions_with_docstring": 0,
+      "hints_completo": 0,
+      "hints_parcial": 0,
+      "hints_sem": 0
+    },
+    {
+      "path": "models/processo_convocacao.py",
+      "loc": 66,
+      "lines_over_max": 5,
+      "module_has_docstring": false,
+      "functions_count": 3,
+      "functions_with_docstring": 0,
+      "hints_completo": 0,
+      "hints_parcial": 0,
+      "hints_sem": 3
+    },
+    {
+      "path": "serializers.py",
+      "loc": 190,
+      "lines_over_max": 20,
+      "module_has_docstring": false,
+      "functions_count": 4,
+      "functions_with_docstring": 2,
+      "hints_completo": 0,
+      "hints_parcial": 0,
+      "hints_sem": 4
+    },
+    {
+      "path": "services/__init__.py",
+      "loc": 12,
+      "lines_over_max": 0,
+      "module_has_docstring": false,
+      "functions_count": 0,
+      "functions_with_docstring": 0,
+      "hints_completo": 0,
+      "hints_parcial": 0,
+      "hints_sem": 0
+    },
+    {
+      "path": "services/agenda_api_service.py",
+      "loc": 61,
+      "lines_over_max": 2,
+      "module_has_docstring": true,
+      "functions_count": 1,
+      "functions_with_docstring": 1,
+      "hints_completo": 1,
+      "hints_parcial": 0,
+      "hints_sem": 0
+    },
+    {
+      "path": "services/candidatos_api_url.py",
+      "loc": 155,
+      "lines_over_max": 10,
+      "module_has_docstring": true,
+      "functions_count": 4,
+      "functions_with_docstring": 3,
+      "hints_completo": 4,
+      "hints_parcial": 0,
+      "hints_sem": 0
+    },
+    {
+      "path": "services/cargos_service.py",
+      "loc": 85,
+      "lines_over_max": 8,
+      "module_has_docstring": false,
+      "functions_count": 1,
+      "functions_with_docstring": 0,
+      "hints_completo": 1,
+      "hints_parcial": 0,
+      "hints_sem": 0
+    },
+    {
+      "path": "services/carta_convocacao_service.py",
+      "loc": 191,
+      "lines_over_max": 6,
+      "module_has_docstring": true,
+      "functions_count": 2,
+      "functions_with_docstring": 2,
+      "hints_completo": 2,
+      "hints_parcial": 0,
+      "hints_sem": 0
+    },
+    {
+      "path": "services/escolhas_service.py",
+      "loc": 162,
+      "lines_over_max": 11,
+      "module_has_docstring": true,
+      "functions_count": 3,
+      "functions_with_docstring": 3,
+      "hints_completo": 3,
+      "hints_parcial": 0,
+      "hints_sem": 0
+    },
+    {
+      "path": "services/exceptions.py",
+      "loc": 15,
+      "lines_over_max": 0,
+      "module_has_docstring": false,
+      "functions_count": 0,
+      "functions_with_docstring": 0,
+      "hints_completo": 0,
+      "hints_parcial": 0,
+      "hints_sem": 0
+    },
+    {
+      "path": "services/processo_service.py",
+      "loc": 87,
+      "lines_over_max": 2,
+      "module_has_docstring": true,
+      "functions_count": 2,
+      "functions_with_docstring": 1,
+      "hints_completo": 1,
+      "hints_parcial": 1,
+      "hints_sem": 0
+    },
+    {
+      "path": "tasks/__init__.py",
+      "loc": 4,
+      "lines_over_max": 0,
+      "module_has_docstring": false,
+      "functions_count": 0,
+      "functions_with_docstring": 0,
+      "hints_completo": 0,
+      "hints_parcial": 0,
+      "hints_sem": 0
+    },
+    {
+      "path": "tasks/enviar_email_task.py",
+      "loc": 93,
+      "lines_over_max": 11,
+      "module_has_docstring": false,
+      "functions_count": 1,
+      "functions_with_docstring": 1,
+      "hints_completo": 1,
+      "hints_parcial": 0,
+      "hints_sem": 0
+    },
+    {
+      "path": "urls.py",
+      "loc": 17,
+      "lines_over_max": 2,
+      "module_has_docstring": true,
+      "functions_count": 0,
+      "functions_with_docstring": 0,
+      "hints_completo": 0,
+      "hints_parcial": 0,
+      "hints_sem": 0
+    },
+    {
+      "path": "utils.py",
+      "loc": 23,
+      "lines_over_max": 1,
+      "module_has_docstring": false,
+      "functions_count": 1,
+      "functions_with_docstring": 0,
+      "hints_completo": 0,
+      "hints_parcial": 0,
+      "hints_sem": 1
+    },
+    {
+      "path": "views/__init__.py",
+      "loc": 4,
+      "lines_over_max": 0,
+      "module_has_docstring": false,
+      "functions_count": 0,
+      "functions_with_docstring": 0,
+      "hints_completo": 0,
+      "hints_parcial": 0,
+      "hints_sem": 0
+    },
+    {
+      "path": "views/cargos.py",
+      "loc": 134,
+      "lines_over_max": 6,
+      "module_has_docstring": false,
+      "functions_count": 4,
+      "functions_with_docstring": 0,
+      "hints_completo": 0,
+      "hints_parcial": 0,
+      "hints_sem": 4
+    },
+    {
+      "path": "views/carta_convocacao.py",
+      "loc": 86,
+      "lines_over_max": 7,
+      "module_has_docstring": true,
+      "functions_count": 2,
+      "functions_with_docstring": 0,
+      "hints_completo": 0,
+      "hints_parcial": 0,
+      "hints_sem": 2
+    },
+    {
+      "path": "views/processos.py",
+      "loc": 302,
+      "lines_over_max": 13,
+      "module_has_docstring": true,
+      "functions_count": 9,
+      "functions_with_docstring": 7,
+      "hints_completo": 0,
+      "hints_parcial": 0,
+      "hints_sem": 9
+    }
+  ]
+}
