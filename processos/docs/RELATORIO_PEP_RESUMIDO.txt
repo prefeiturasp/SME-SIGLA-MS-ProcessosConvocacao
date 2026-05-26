@@ -1,0 +1,63 @@
+================================================================
+  RESUMO DE BOAS PRÁTICAS DO CÓDIGO PYTHON (PEPs)
+  MS-ProcessoConvocacao
+================================================================
+
+O que é este relatório?
+---------------------
+PEP significa "Python Enhancement Proposal" — são recomendações oficiais
+de como escrever código Python de forma clara, uniforme e fácil de manter.
+Este arquivo resume o quanto o módulo de processos de convocação segue
+essas recomendações. Quanto maior o percentual, melhor.
+
+Data da análise: 2026-05-18 16:19:23 UTC
+Versão do código (commit): 6560d9a
+
+----------------------------------------------------------------
+PEP 8 — Organização e leitura do código
+----------------------------------------------------------------
+Significado: regras de formatação — tamanho de linha, espaços, nomes
+e estrutura — para o código ficar parecido em todo o projeto e mais fácil
+de ler na tela e em revisões.
+
+  Resultado: 92.3% das linhas respeitam até 79 caracteres
+  Situação: Bom
+  Detalhe: 150 linha(s) ainda passam desse limite (de 1941 linhas analisadas).
+
+----------------------------------------------------------------
+PEP 257 — Documentação dentro do código (docstrings)
+----------------------------------------------------------------
+Significado: cada função, método e classe deve ter um texto curto
+explicando o que faz — ajuda quem mantém o sistema sem precisar adivinhar.
+
+  Resultado: 62.5% dos trechos importantes têm essa explicação
+  Situação: Regular
+  Detalhe: 55 de 88 funções, métodos e classes documentados.
+
+----------------------------------------------------------------
+PEP 484 — Indicação de tipos de dados (type hints)
+----------------------------------------------------------------
+Significado: informar se um dado é texto, número, lista etc. reduz erros
+e facilita ferramentas de apoio ao desenvolvimento.
+
+  Resultado (anotação completa): 28.3%
+  Resultado (completa ou parcial): 30.4%
+  Situação: Precisa melhorar
+  Detalhe: 13 de 46 funções/métodos com tipagem completa.
+
+----------------------------------------------------------------
+PEP 440 — Versões das bibliotecas usadas pelo sistema
+----------------------------------------------------------------
+Significado: o arquivo de dependências (requirements) deve declarar
+versões de forma padronizada, para instalar sempre o mesmo ambiente.
+
+  Resultado: 100.0% das dependências com versão bem definida
+  Situação: Bom
+  Detalhe: 25 de 25 linhas em requirements/; problemas encontrados: 0.
+
+----------------------------------------------------------------
+Próximos passos
+----------------------------------------------------------------
+Estimativa grosseira para alinhar o código às PEPs: ~4h
+(valor orientativo; o relatório técnico completo está em RELATORIO_PEP.md)
+

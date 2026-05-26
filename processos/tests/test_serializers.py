@@ -7,7 +7,8 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 import uuid
 
-from ..models import ProcessoConvocacao, CargoProcesso, CartaConvocacaoHistorico, CartaConvocacaoCandidato
+from ..models import ProcessoConvocacao, CargoProcesso, EnvioEmail, EnvioEmailCandidato
+from ..models.envio_email import TIPO_CONVOCACAO
 from ..serializers import (
     ProcessoConvocacaoSerializer,
     ProcessoConvocacaoCreateSerializer,
@@ -15,10 +16,10 @@ from ..serializers import (
     ProcessoConvocacaoUpdateSerializer,
     CargoProcessoSerializer,
     CargoProcessoCreateSerializer,
-    CartaConvocacaoHistoricoSerializer,
-    CartaConvocacaoCandidatoSerializer,
-    CartaConvocacaoHistoricoDetalheSerializer,
-    CartaConvocacaoEnvioSerializer,
+    EnvioEmailSerializer,
+    EnvioEmailCandidatoSerializer,
+    EnvioEmailDetalheSerializer,
+    EnvioEmailEnvioSerializer,
 )
 
 
@@ -402,76 +403,74 @@ def test_serializer_error_handling():
     assert 'concurso_nome' in serializer.errors
 
 
-# --- Testes Carta Convocação (Histórico e Detalhe) ---
+# --- Testes Envio Email (histórico e detalhe) ---
 
 
 @pytest.fixture
-def carta_convocacao_historico(processo_convocacao):
-    """Fixture para CartaConvocacaoHistorico."""
-    return CartaConvocacaoHistorico.objects.create(
+def envio_email(processo_convocacao):
+    """Fixture para EnvioEmail."""
+    return EnvioEmail.objects.create(
         processo_uuid=processo_convocacao.uuid,
         processo_nome=processo_convocacao.concurso_nome,
-        data=timezone.now().date(),
+        tipo=TIPO_CONVOCACAO,
         quantidade_candidatos=2,
     )
 
 
 @pytest.fixture
-def carta_convocacao_candidatos(carta_convocacao_historico):
-    """Fixture para CartaConvocacaoCandidato vinculados ao histórico."""
-    from processos.models.carta_convocacao_candidato import ENVIO_STATUS_SUCESSO, ENVIO_STATUS_ERRO
-    CartaConvocacaoCandidato.objects.create(
-        carta_convocacao_historico=carta_convocacao_historico,
+def envio_email_candidatos(envio_email):
+    """Fixture para EnvioEmailCandidato vinculados ao envio."""
+    from processos.models.envio_email_candidato import ENVIO_STATUS_SUCESSO, ENVIO_STATUS_ERRO
+    EnvioEmailCandidato.objects.create(
+        envio_email=envio_email,
         nome="Fulano",
         rf="1234567",
         email="fulano@test.com",
         status=ENVIO_STATUS_SUCESSO,
         conteudo="<p>Conteúdo email 1</p>",
     )
-    CartaConvocacaoCandidato.objects.create(
-        carta_convocacao_historico=carta_convocacao_historico,
+    EnvioEmailCandidato.objects.create(
+        envio_email=envio_email,
         nome="Ciclano",
         rf="7654321",
         email="ciclano@test.com",
         status=ENVIO_STATUS_ERRO,
         conteudo="<p>Conteúdo email 2</p>",
     )
-    return list(carta_convocacao_historico.candidatos.all())
+    return list(envio_email.candidatos.all())
 
 
-def test_carta_convocacao_historico_serializer_fields(carta_convocacao_historico):
-    """Testa os campos do CartaConvocacaoHistoricoSerializer."""
-    serializer = CartaConvocacaoHistoricoSerializer(carta_convocacao_historico)
+def test_envio_email_serializer_fields(envio_email):
+    """Testa os campos do EnvioEmailSerializer."""
+    serializer = EnvioEmailSerializer(envio_email)
     data = serializer.data
-    assert data["uuid"] == str(carta_convocacao_historico.uuid)
-    assert data["processo_nome"] == carta_convocacao_historico.processo_nome
-    assert data["processo_uuid"] == str(carta_convocacao_historico.processo_uuid)
-    assert "data" in data
+    assert data["uuid"] == str(envio_email.uuid)
+    assert data["processo_nome"] == envio_email.processo_nome
+    assert data["processo_uuid"] == str(envio_email.processo_uuid)
+    assert data["tipo"] == TIPO_CONVOCACAO
     assert "criado_em" in data
-    assert data["quantidade_convocados"] == carta_convocacao_historico.quantidade_candidatos
+    assert data["quantidade_candidatos"] == envio_email.quantidade_candidatos
 
 
-def test_carta_convocacao_candidato_serializer_fields(carta_convocacao_candidatos):
-    """Testa os campos do CartaConvocacaoCandidatoSerializer."""
-    cand = carta_convocacao_candidatos[0]
-    serializer = CartaConvocacaoCandidatoSerializer(cand)
+def test_envio_email_candidato_serializer_fields(envio_email_candidatos):
+    """Testa os campos do EnvioEmailCandidatoSerializer."""
+    dest = envio_email_candidatos[0]
+    serializer = EnvioEmailCandidatoSerializer(dest)
     data = serializer.data
-    assert data["nome"] == cand.nome
-    assert data["rf"] == cand.rf
-    assert data["email"] == cand.email
-    assert data["status"] == cand.status
-    assert data["conteudo"] == cand.conteudo
+    assert data["nome"] == dest.nome
+    assert data["rf"] == dest.rf
+    assert data["email"] == dest.email
+    assert data["status"] == dest.status
+    assert data["conteudo"] == dest.conteudo
 
 
-def test_carta_convocacao_historico_detalhe_serializer_fields(
-    carta_convocacao_historico, carta_convocacao_candidatos
-):
-    """Testa os campos do CartaConvocacaoHistoricoDetalheSerializer incluindo candidatos."""
-    serializer = CartaConvocacaoHistoricoDetalheSerializer(carta_convocacao_historico)
+def test_envio_email_detalhe_serializer_fields(envio_email, envio_email_candidatos):
+    """Testa os campos do EnvioEmailDetalheSerializer incluindo candidatos."""
+    serializer = EnvioEmailDetalheSerializer(envio_email)
     data = serializer.data
-    assert data["uuid"] == str(carta_convocacao_historico.uuid)
-    assert data["processo_nome"] == carta_convocacao_historico.processo_nome
-    assert data["quantidade_convocados"] == carta_convocacao_historico.quantidade_candidatos
+    assert data["uuid"] == str(envio_email.uuid)
+    assert data["processo_nome"] == envio_email.processo_nome
+    assert data["quantidade_candidatos"] == envio_email.quantidade_candidatos
     assert "candidatos" in data
     assert len(data["candidatos"]) == 2
     nomes = [c["nome"] for c in data["candidatos"]]
@@ -479,38 +478,53 @@ def test_carta_convocacao_historico_detalhe_serializer_fields(
     assert "Ciclano" in nomes
 
 
-def test_carta_convocacao_envio_serializer_valid(processo_convocacao):
-    """Testa CartaConvocacaoEnvioSerializer com dados válidos."""
+def test_envio_email_envio_serializer_valid(processo_convocacao):
+    """Testa EnvioEmailEnvioSerializer com dados válidos."""
     data = {
         "processo_uuid": str(processo_convocacao.uuid),
         "processo_nome": "Processo Teste",
-        "data": "25-12-2024",
+        "tipo": TIPO_CONVOCACAO,
+        "data_publicacao": "25-12-2024",
     }
-    serializer = CartaConvocacaoEnvioSerializer(data=data)
+    serializer = EnvioEmailEnvioSerializer(data=data)
     assert serializer.is_valid()
     assert serializer.validated_data["processo_nome"] == "Processo Teste"
     assert serializer.validated_data["processo_uuid"] == processo_convocacao.uuid
 
 
-def test_carta_convocacao_envio_serializer_processo_nao_encontrado():
-    """Testa CartaConvocacaoEnvioSerializer quando processo não existe."""
+def test_envio_email_envio_serializer_processo_nao_encontrado():
+    """Testa EnvioEmailEnvioSerializer quando processo não existe."""
     data = {
         "processo_uuid": str(uuid.uuid4()),
         "processo_nome": "Processo Inexistente",
-        "data": "25-12-2024",
+        "tipo": TIPO_CONVOCACAO,
+        "data_publicacao": "25-12-2024",
     }
-    serializer = CartaConvocacaoEnvioSerializer(data=data)
+    serializer = EnvioEmailEnvioSerializer(data=data)
     assert not serializer.is_valid()
     assert "processo_uuid" in serializer.errors
 
 
-def test_carta_convocacao_envio_serializer_data_invalida(processo_convocacao):
-    """Testa CartaConvocacaoEnvioSerializer com formato de data inválido."""
+def test_envio_email_envio_serializer_convocacao_sem_data_publicacao(processo_convocacao):
+    """Convocação exige data_publicacao."""
     data = {
         "processo_uuid": str(processo_convocacao.uuid),
         "processo_nome": "Processo Teste",
-        "data": "2024-12-25",  # formato errado (esperado dd-mm-yyyy)
+        "tipo": TIPO_CONVOCACAO,
     }
-    serializer = CartaConvocacaoEnvioSerializer(data=data)
+    serializer = EnvioEmailEnvioSerializer(data=data)
     assert not serializer.is_valid()
-    assert "data" in serializer.errors
+    assert "data_publicacao" in serializer.errors
+
+
+def test_envio_email_envio_serializer_data_publicacao_invalida(processo_convocacao):
+    """Testa formato de data_publicacao inválido."""
+    data = {
+        "processo_uuid": str(processo_convocacao.uuid),
+        "processo_nome": "Processo Teste",
+        "tipo": TIPO_CONVOCACAO,
+        "data_publicacao": "2024-12-25",
+    }
+    serializer = EnvioEmailEnvioSerializer(data=data)
+    assert not serializer.is_valid()
+    assert "data_publicacao" in serializer.errors
