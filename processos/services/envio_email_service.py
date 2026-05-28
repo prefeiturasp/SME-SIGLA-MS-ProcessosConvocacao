@@ -38,21 +38,18 @@ TEMPLATE_POR_TIPO = {
 
 TEMPLATE_DINAMICO = 'email/envio_email_dinamico.html'
 
-def _montar_contexto_convocacao(*, item: dict, data_publicacao_str: str) -> dict:
-    cand = item.get('candidato') or {}
-    cargo_nome = item.get('descricao_cargo') or '—'
-    cat = (item.get('categoria_efetiva') or '').strip().upper()
-    if cat == 'PCD' and item.get('classificacao_pcd') is not None:
-        classificacao = str(item.get('classificacao_pcd'))
-    elif cat == 'NNA' and item.get('classificacao_nna') is not None:
-        classificacao = str(item.get('classificacao_nna'))
+def dados_template(candidato: dict) -> dict:
+    cargo_nome = candidato.get('descricao_cargo') or '—'
+    cat = (candidato.get('categoria_efetiva') or '').strip().upper()
+    if cat == 'PCD' and candidato.get('classificacao_pcd') is not None:
+        classificacao = str(candidato.get('classificacao_pcd'))
+    elif cat == 'NNA' and candidato.get('classificacao_nna') is not None:
+        classificacao = str(candidato.get('classificacao_nna'))
     else:
-        classificacao = str(item.get('classificacao') or '').strip() or '—'
+        classificacao = str(candidato.get('classificacao') or '').strip() or '—'
     return {
         'cargo': cargo_nome,
         'classificacao': classificacao,
-        'data_publicacao': data_publicacao_str,
-        'ms_url': getattr(settings, 'MS_URL', ''),
     }
 
 def _preencher_template(conteudo, dados):
@@ -113,11 +110,7 @@ def iniciar_processamento_envio(
             ignorados_sem_email += 1
             continue
 
-        dados_template = {
-            'cargo': item.get('descricao_cargo') or '—',
-            'classificacao': item.get('classificacao') or '—',
-        }
-        conteudo_preenchido = _preencher_template(conteudo, dados_template)
+        conteudo_preenchido = _preencher_template(conteudo, dados_template(item))
         context = {
             "email_body": conteudo_preenchido,
             "email_title": TITULO_POR_TIPO.get(tipo, TITULO_POR_TIPO[TIPO_CONVOCACAO]),
