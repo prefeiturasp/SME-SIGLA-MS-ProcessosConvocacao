@@ -503,28 +503,3 @@ def test_envio_email_envio_serializer_processo_nao_encontrado():
     serializer = EnvioEmailEnvioSerializer(data=data)
     assert not serializer.is_valid()
     assert "processo_uuid" in serializer.errors
-
-
-def test_envio_email_envio_serializer_convocacao_sem_data_publicacao(processo_convocacao):
-    """Convocação exige data_publicacao."""
-    data = {
-        "processo_uuid": str(processo_convocacao.uuid),
-        "processo_nome": "Processo Teste",
-        "tipo": TIPO_CONVOCACAO,
-    }
-    serializer = EnvioEmailEnvioSerializer(data=data)
-    assert not serializer.is_valid()
-    assert "data_publicacao" in serializer.errors
-
-
-def test_envio_email_envio_serializer_data_publicacao_invalida(processo_convocacao):
-    """Testa formato de data_publicacao inválido."""
-    data = {
-        "processo_uuid": str(processo_convocacao.uuid),
-        "processo_nome": "Processo Teste",
-        "tipo": TIPO_CONVOCACAO,
-        "data_publicacao": "2024-12-25",
-    }
-    serializer = EnvioEmailEnvioSerializer(data=data)
-    assert not serializer.is_valid()
-    assert "data_publicacao" in serializer.errors

@@ -160,26 +160,12 @@ class EnvioEmailEnvioSerializer(serializers.Serializer):
     processo_uuid = serializers.UUIDField(help_text='UUID do processo de convocação')
     processo_nome = serializers.CharField(help_text='Nome do processo')
     tipo = serializers.ChoiceField(choices=ENVIO_EMAIL_TIPO_CHOICES, help_text='Tipo de envio')
-    data_publicacao = serializers.DateField(
-        required=False,
-        input_formats=['%d-%m-%Y'],
-        help_text='Data de publicação no formato dd-mm-YYYY',
-    )
 
     def validate_processo_uuid(self, value):
         """Garante que o processo existe."""
         if not ProcessoConvocacao.objects.filter(uuid=value).exists():
             raise serializers.ValidationError('Processo de convocação não encontrado.')
         return value
-
-    def validate(self, attrs):
-        tipo = attrs.get('tipo')
-        data_publicacao = attrs.get('data_publicacao')
-
-        if tipo == TIPO_CONVOCACAO and not data_publicacao:
-            raise serializers.ValidationError({'data_publicacao': 'Este campo é obrigatório.'})
-
-        return attrs
 
 
 class EnvioEmailSerializer(serializers.ModelSerializer):
