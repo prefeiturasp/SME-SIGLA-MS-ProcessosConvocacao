@@ -63,7 +63,9 @@ def _preencher_template(conteudo, dados):
         chave = match.group(1) # Pega o que está dentro de [[ ]]
         return str(dados.get(chave, f"[[ERRO: {chave} NÃO ENCONTRADO]]"))
 
-    return pattern.sub(replace_func, conteudo)
+    # `re.sub` exige string; templates vazios podem vir como None
+    print(conteudo)
+    return pattern.sub(replace_func, conteudo or "")
 
 def _renderizar_conteudo(*, tipo: str, context: dict) -> str:
     return render_to_string(TEMPLATE_DINAMICO, context)
@@ -94,6 +96,7 @@ def iniciar_processamento_envio(
     assunto = ASSUNTO_POR_TIPO.get(tipo, ASSUNTO_POR_TIPO[TIPO_CONVOCACAO])
     habilitados = CandidatosApiService().buscar_habilitados_por_processo(processo_uuid_str)
     quantidade = len(habilitados)
+    conteudo = conteudo or ""
 
     envio = EnvioEmail.objects.create(
         processo_uuid=processo_uuid,
