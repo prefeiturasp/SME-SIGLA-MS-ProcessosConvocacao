@@ -160,6 +160,7 @@ class EnvioEmailEnvioSerializer(serializers.Serializer):
     processo_uuid = serializers.UUIDField(help_text='UUID do processo de convocação')
     processo_nome = serializers.CharField(help_text='Nome do processo')
     tipo = serializers.ChoiceField(choices=ENVIO_EMAIL_TIPO_CHOICES, help_text='Tipo de envio')
+    conteudo = serializers.CharField(help_text='Conteúdo do e-mail (HTML)')
 
     def validate_processo_uuid(self, value):
         """Garante que o processo existe."""

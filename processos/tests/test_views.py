@@ -1049,7 +1049,7 @@ def test_envio_email_create(mock_iniciar, authenticated_client, processo_convoca
         'processo_uuid': str(processo_convocacao.uuid),
         'processo_nome': processo_convocacao.concurso_nome,
         'tipo': TIPO_CONVOCACAO,
-        'data_publicacao': '25-12-2024',
+        'conteudo': '<p>Conteúdo</p>',
     }
     response = authenticated_client.post(url, payload, format='json')
     assert response.status_code == status.HTTP_200_OK
@@ -1070,7 +1070,7 @@ def test_envio_email_create_invalid_payload(mock_iniciar, authenticated_client):
         'processo_uuid': str(uuid.uuid4()),
         'processo_nome': 'Inexistente',
         'tipo': TIPO_CONVOCACAO,
-        'data_publicacao': '25-12-2024',
+        'conteudo': '<p>Conteúdo</p>',
     }
     response = authenticated_client.post(url, payload, format='json')
     assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -1089,7 +1089,7 @@ def test_envio_email_create_quando_servico_levanta_excecao_retorna_500(
         'processo_uuid': str(processo_convocacao.uuid),
         'processo_nome': processo_convocacao.concurso_nome,
         'tipo': TIPO_CONVOCACAO,
-        'data_publicacao': '25-12-2024',
+        'conteudo': '<p>Conteúdo</p>',
     }
     response = authenticated_client.post(url, payload, format='json')
 

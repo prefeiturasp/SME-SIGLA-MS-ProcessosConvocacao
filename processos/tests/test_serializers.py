@@ -484,7 +484,7 @@ def test_envio_email_envio_serializer_valid(processo_convocacao):
         "processo_uuid": str(processo_convocacao.uuid),
         "processo_nome": "Processo Teste",
         "tipo": TIPO_CONVOCACAO,
-        "data_publicacao": "25-12-2024",
+        "conteudo": "<p>Conteúdo</p>",
     }
     serializer = EnvioEmailEnvioSerializer(data=data)
     assert serializer.is_valid()
@@ -498,7 +498,7 @@ def test_envio_email_envio_serializer_processo_nao_encontrado():
         "processo_uuid": str(uuid.uuid4()),
         "processo_nome": "Processo Inexistente",
         "tipo": TIPO_CONVOCACAO,
-        "data_publicacao": "25-12-2024",
+        "conteudo": "<p>Conteúdo</p>",
     }
     serializer = EnvioEmailEnvioSerializer(data=data)
     assert not serializer.is_valid()
