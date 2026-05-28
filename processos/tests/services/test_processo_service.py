@@ -14,7 +14,9 @@ from processos.services.exceptions import (
 from processos.services.processo_service import ProcessoConvocacaoService
 
 
-def _processo_mock(uuid_value: str = "11111111-1111-1111-1111-111111111111") -> Mock:
+def _processo_mock(
+    uuid_value: str = "11111111-1111-1111-1111-111111111111",
+) -> Mock:
     processo = Mock()
     processo.uuid = uuid_value
     processo.inativar = Mock()
@@ -35,19 +37,27 @@ def test_excluir_processo_e_dependencias_sucesso_chama_integracoes_e_inativa():
 
     service.excluir_processo_e_dependencias(processo=processo)
 
-    agenda.excluir_agendas_por_processo.assert_called_once_with("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
-    candidatos.desconvocar_por_processo.assert_called_once_with(processo_uuid="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
-    escolhas.excluir_lotes_vagas_por_processo.assert_called_once_with("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+    agenda.excluir_agendas_por_processo.assert_called_once_with(
+        "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    )
+    candidatos.desconvocar_por_processo.assert_called_once_with(
+        processo_uuid="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    )
+    escolhas.excluir_lotes_vagas_por_processo.assert_called_once_with(
+        "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    )
     processo.inativar.assert_called_once_with()
 
 
-def test_excluir_processo_e_dependencias_quando_agenda_falha_retorna_processo_service_error_e_nao_chama_outros():
+def test_excluir_processo_e_dependencias_quando_agenda_falha_retorna_processo_service_error_e_nao_chama_outros():  # noqa: E501
     agenda = Mock(spec=AgendaApiService)
     candidatos = Mock(spec=CandidatosApiService)
     escolhas = Mock(spec=EscolhasApiService)
     processo = _processo_mock()
 
-    agenda.excluir_agendas_por_processo.side_effect = AgendaServiceError("agenda caiu")
+    agenda.excluir_agendas_por_processo.side_effect = AgendaServiceError(
+        "agenda caiu"
+    )
 
     service = ProcessoConvocacaoService(
         agenda_api=agenda,
@@ -64,13 +74,15 @@ def test_excluir_processo_e_dependencias_quando_agenda_falha_retorna_processo_se
     processo.inativar.assert_not_called()
 
 
-def test_excluir_processo_e_dependencias_quando_candidatos_falha_retorna_processo_service_error_e_nao_chama_escolhas():
+def test_excluir_processo_e_dependencias_quando_candidatos_falha_retorna_processo_service_error_e_nao_chama_escolhas():  # noqa: E501
     agenda = Mock(spec=AgendaApiService)
     candidatos = Mock(spec=CandidatosApiService)
     escolhas = Mock(spec=EscolhasApiService)
     processo = _processo_mock()
 
-    candidatos.desconvocar_por_processo.side_effect = CandidatosServiceError("candidatos caiu")
+    candidatos.desconvocar_por_processo.side_effect = CandidatosServiceError(
+        "candidatos caiu"
+    )
 
     service = ProcessoConvocacaoService(
         agenda_api=agenda,
@@ -87,13 +99,15 @@ def test_excluir_processo_e_dependencias_quando_candidatos_falha_retorna_process
     processo.inativar.assert_not_called()
 
 
-def test_excluir_processo_e_dependencias_quando_escolhas_falha_retorna_processo_service_error_e_nao_inativa():
+def test_excluir_processo_e_dependencias_quando_escolhas_falha_retorna_processo_service_error_e_nao_inativa():  # noqa: E501
     agenda = Mock(spec=AgendaApiService)
     candidatos = Mock(spec=CandidatosApiService)
     escolhas = Mock(spec=EscolhasApiService)
     processo = _processo_mock()
 
-    escolhas.excluir_lotes_vagas_por_processo.side_effect = EscolhasServiceError("escolhas caiu")
+    escolhas.excluir_lotes_vagas_por_processo.side_effect = (
+        EscolhasServiceError("escolhas caiu")
+    )
 
     service = ProcessoConvocacaoService(
         agenda_api=agenda,
@@ -108,4 +122,3 @@ def test_excluir_processo_e_dependencias_quando_escolhas_falha_retorna_processo_
     agenda.excluir_agendas_por_processo.assert_called_once()
     candidatos.desconvocar_por_processo.assert_called_once()
     processo.inativar.assert_not_called()
-

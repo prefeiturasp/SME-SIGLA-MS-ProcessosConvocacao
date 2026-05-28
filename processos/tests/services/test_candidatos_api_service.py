@@ -1,6 +1,6 @@
-import pytest
 from unittest.mock import Mock, patch
 
+import pytest
 from django.test import override_settings
 
 from processos.services.candidatos_api_url import CandidatosApiService
@@ -22,7 +22,10 @@ def test_buscar_habilitados_por_processo_retorna_lista_quando_json_lista():
     response.raise_for_status.return_value = None
     response.json.return_value = [{"a": 1}]
 
-    with patch("processos.services.candidatos_api_url.http_client.get", return_value=response) as mock_get:
+    with patch(
+        "processos.services.candidatos_api_url.http_client.get",
+        return_value=response,
+    ) as mock_get:
         result = service.buscar_habilitados_por_processo(processo_uuid)
 
     assert result == [{"a": 1}]
@@ -37,26 +40,35 @@ def test_buscar_habilitados_por_processo_retorna_lista_quando_json_lista():
 
 
 @override_settings(CANDIDATOS_API_URL="http://ms-candidatos")
-def test_buscar_habilitados_por_processo_retorna_results_quando_json_dict_com_results():
+def test_buscar_habilitados_por_processo_retorna_results_quando_json_dict_com_results():  # noqa: E501
     service = CandidatosApiService()
 
     response = Mock()
     response.raise_for_status.return_value = None
     response.json.return_value = {"results": [{"x": 1}, {"x": 2}]}
 
-    with patch("processos.services.candidatos_api_url.http_client.get", return_value=response):
-        assert service.buscar_habilitados_por_processo("uuid") == [{"x": 1}, {"x": 2}]
+    with patch(
+        "processos.services.candidatos_api_url.http_client.get",
+        return_value=response,
+    ):
+        assert service.buscar_habilitados_por_processo("uuid") == [
+            {"x": 1},
+            {"x": 2},
+        ]
 
 
 @override_settings(CANDIDATOS_API_URL="http://ms-candidatos")
-def test_buscar_habilitados_por_processo_retorna_vazio_quando_json_dict_sem_results():
+def test_buscar_habilitados_por_processo_retorna_vazio_quando_json_dict_sem_results():  # noqa: E501
     service = CandidatosApiService()
 
     response = Mock()
     response.raise_for_status.return_value = None
     response.json.return_value = {"count": 0}
 
-    with patch("processos.services.candidatos_api_url.http_client.get", return_value=response):
+    with patch(
+        "processos.services.candidatos_api_url.http_client.get",
+        return_value=response,
+    ):
         assert service.buscar_habilitados_por_processo("uuid") == []
 
 
@@ -67,14 +79,17 @@ def test_buscar_habilitados_por_processo_propagada_erro_do_client():
     response = Mock()
     response.raise_for_status.side_effect = Exception("boom")
 
-    with patch("processos.services.candidatos_api_url.http_client.get", return_value=response):
-        with pytest.raises(Exception):
+    with patch(  # noqa: SIM117
+        "processos.services.candidatos_api_url.http_client.get",
+        return_value=response,
+    ):
+        with pytest.raises(Exception):  # noqa: B017
             service.buscar_habilitados_por_processo("uuid")
 
 
 def test_desconvocar_por_processo_sem_config_gera_value_error():
     service = CandidatosApiService()
-    with override_settings(CANDIDATOS_API_URL=""):
+    with override_settings(CANDIDATOS_API_URL=""):  # noqa: SIM117
         with pytest.raises(ValueError):
             service.desconvocar_por_processo("uuid")
 
@@ -90,7 +105,10 @@ def test_desconvocar_por_processo_sucesso_retorna_json():
     response.content = b'{"ok": true}'
     response.json.return_value = {"ok": True}
 
-    with patch("processos.services.candidatos_api_url.http_client.patch", return_value=response) as mock_patch:
+    with patch(
+        "processos.services.candidatos_api_url.http_client.patch",
+        return_value=response,
+    ) as mock_patch:
         result = service.desconvocar_por_processo(processo_uuid)
 
     assert result == {"ok": True}
@@ -99,7 +117,10 @@ def test_desconvocar_por_processo_sucesso_retorna_json():
     called_kwargs = mock_patch.call_args.kwargs
     assert called_url == "http://ms-candidatos/api/v1/habilitados/desconvocar/"
     assert called_kwargs["json"] == {"processo_uuid": processo_uuid}
-    assert called_kwargs["headers"] == {"Accept": "application/json", "Content-Type": "application/json"}
+    assert called_kwargs["headers"] == {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+    }
     assert called_kwargs["timeout"] == service.TIMEOUT_SEGUNDOS
 
 
@@ -113,7 +134,10 @@ def test_desconvocar_por_processo_sucesso_sem_body_retorna_dict_vazio():
     response.content = b""
     response.json.return_value = {"ignored": True}
 
-    with patch("processos.services.candidatos_api_url.http_client.patch", return_value=response):
+    with patch(
+        "processos.services.candidatos_api_url.http_client.patch",
+        return_value=response,
+    ):
         assert service.desconvocar_por_processo("uuid") == {}
 
 
@@ -126,7 +150,10 @@ def test_desconvocar_por_processo_status_diferente_200_gera_erro():
     response.text = "erro"
     response.content = b"erro"
 
-    with patch("processos.services.candidatos_api_url.http_client.patch", return_value=response):
+    with patch(  # noqa: SIM117
+        "processos.services.candidatos_api_url.http_client.patch",
+        return_value=response,
+    ):
         with pytest.raises(CandidatosServiceError) as exc:
             service.desconvocar_por_processo("uuid")
 
@@ -137,9 +164,11 @@ def test_desconvocar_por_processo_status_diferente_200_gera_erro():
 def test_desconvocar_por_processo_excecao_do_client_gera_erro():
     service = CandidatosApiService()
 
-    with patch("processos.services.candidatos_api_url.http_client.patch", side_effect=Exception("boom")):
+    with patch(  # noqa: SIM117
+        "processos.services.candidatos_api_url.http_client.patch",
+        side_effect=Exception("boom"),
+    ):
         with pytest.raises(CandidatosServiceError) as exc:
             service.desconvocar_por_processo("uuid")
 
     assert "Falha ao conectar no MS-Candidatos" in str(exc.value)
-

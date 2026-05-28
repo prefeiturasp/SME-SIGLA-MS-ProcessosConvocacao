@@ -1,29 +1,34 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List
+from typing import Any
 
 from django.db import transaction
 
 from processos.models import ProcessoConvocacao
-from processos.serializers import CargoProcessoCreateSerializer, CargoProcessoSerializer
+from processos.serializers import (
+    CargoProcessoCreateSerializer,
+    CargoProcessoSerializer,
+)
 
 
 @dataclass(frozen=True)
 class SubstituirCargosResult:
-    cargos_criados: List[Dict[str, Any]]
-    cargos_atualizados: List[Dict[str, Any]]
+    cargos_criados: list[dict[str, Any]]
+    cargos_atualizados: list[dict[str, Any]]
     cargos_removidos: int
-    erros: List[Dict[str, Any]]
-    cargos: List[Dict[str, Any]]
+    erros: list[dict[str, Any]]
+    cargos: list[dict[str, Any]]
 
 
 class CargosProcessoService:
     @staticmethod
-    def salvar_cargos(*, processo: ProcessoConvocacao, cargos_data: List[Dict[str, Any]]) -> SubstituirCargosResult:
-        cargos_criados: List[Dict[str, Any]] = []
-        cargos_atualizados: List[Dict[str, Any]] = []
-        erros: List[Dict[str, Any]] = []
+    def salvar_cargos(
+        *, processo: ProcessoConvocacao, cargos_data: list[dict[str, Any]]
+    ) -> SubstituirCargosResult:
+        cargos_criados: list[dict[str, Any]] = []
+        cargos_atualizados: list[dict[str, Any]] = []
+        erros: list[dict[str, Any]] = []
 
         existing_qs = processo.cargos_processo.all()
         existing_by_uuid = {str(obj.uuid): obj for obj in existing_qs}
@@ -41,25 +46,33 @@ class CargosProcessoService:
                         erros.append(
                             {
                                 "uuid": item_uuid_str,
-                                "erros": "Cargo não encontrado para este processo",
+                                "erros": "Cargo não encontrado para este processo",  # noqa: E501
                             }
                         )
                         continue
 
-                    serializer = CargoProcessoCreateSerializer(instance, data=cargo_data, partial=True)
+                    serializer = CargoProcessoCreateSerializer(
+                        instance, data=cargo_data, partial=True
+                    )
                     if serializer.is_valid():
                         cargo = serializer.save()
-                        cargos_atualizados.append(CargoProcessoSerializer(cargo).data)
+                        cargos_atualizados.append(
+                            CargoProcessoSerializer(cargo).data
+                        )
                         processed_uuid_strings.add(item_uuid_str)
                     else:
-                        erros.append({"uuid": item_uuid_str, "erros": serializer.errors})
+                        erros.append(
+                            {"uuid": item_uuid_str, "erros": serializer.errors}
+                        )
 
                 else:
                     # Criar quando não vier uuid
                     serializer = CargoProcessoCreateSerializer(data=cargo_data)
                     if serializer.is_valid():
                         cargo = serializer.save(processo=processo)
-                        cargos_criados.append(CargoProcessoSerializer(cargo).data)
+                        cargos_criados.append(
+                            CargoProcessoSerializer(cargo).data
+                        )
                         processed_uuid_strings.add(str(cargo.uuid))
                     else:
                         erros.append(
@@ -74,7 +87,9 @@ class CargosProcessoService:
             cargos_removidos = to_delete_qs.count()
             to_delete_qs.delete()
 
-        resultado_atual = CargoProcessoSerializer(processo.cargos_processo.all(), many=True).data
+        resultado_atual = CargoProcessoSerializer(
+            processo.cargos_processo.all(), many=True
+        ).data
         return SubstituirCargosResult(
             cargos_criados=cargos_criados,
             cargos_atualizados=cargos_atualizados,
@@ -82,4 +97,3 @@ class CargosProcessoService:
             erros=erros,
             cargos=resultado_atual,
         )
-

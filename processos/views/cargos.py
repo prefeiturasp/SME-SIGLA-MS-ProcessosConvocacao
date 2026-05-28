@@ -1,9 +1,7 @@
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets, status
+from rest_framework import status, viewsets
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
-from processos.services.cargos_service import CargosProcessoService
 
 from processos.models import CargoProcesso, ProcessoConvocacao
 from processos.models.constants import ERROR_PROCESSO_NAO_PODE_EDITAR
@@ -11,25 +9,30 @@ from processos.serializers import (
     CargoProcessoSerializer,
     ProcessoCargosPayloadSerializer,
 )
+from processos.services.cargos_service import CargosProcessoService
 
-STATUS_FINALIZADO = 'FINALIZADO'
+STATUS_FINALIZADO = "FINALIZADO"
 
 
 class CargoProcessoViewSet(viewsets.ModelViewSet):
     """
-    ViewSet dedicado para listar e substituir cargos de um processo de convocação.
+    ViewSet dedicado para listar e substituir cargos de um processo de
+    convocação.
 
-    - GET /processos-convocacao/{processo_pk}/cargos/ -> lista cargos do processo
-    - POST /processos-convocacao/{processo_pk}/cargos/ -> substitui todos os cargos do processo
+    - GET /processos-convocacao/{processo_pk}/cargos/ -> lista cargos do
+    processo
+    - POST /processos-convocacao/{processo_pk}/cargos/ -> substitui todos os
+    cargos
+    do processo
     """
 
     queryset = CargoProcesso.objects.all()
     serializer_class = CargoProcessoSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['cargo_uuid']
-    search_fields = ['cargo_nome']
-    ordering_fields = ['cargo_nome', 'cargo_codigo', 'vagas']
-    lookup_url_kwarg = 'cargo_uuid'
+    filterset_fields = ["cargo_uuid"]
+    search_fields = ["cargo_nome"]
+    ordering_fields = ["cargo_nome", "cargo_codigo", "vagas"]
+    lookup_url_kwarg = "cargo_uuid"
 
     def _get_processo(self, pk):
         try:
@@ -69,16 +72,24 @@ class CargoProcessoViewSet(viewsets.ModelViewSet):
 
         # Persistir porcentagens no processo (se vierem no payload)
         update_fields = []
-        if "porcentagem_nna" in payload and payload["porcentagem_nna"] != processo.porcentagem_nna:
+        if (
+            "porcentagem_nna" in payload
+            and payload["porcentagem_nna"] != processo.porcentagem_nna
+        ):
             processo.porcentagem_nna = payload["porcentagem_nna"]
             update_fields.append("porcentagem_nna")
-        if "porcentagem_pcd" in payload and payload["porcentagem_pcd"] != processo.porcentagem_pcd:
+        if (
+            "porcentagem_pcd" in payload
+            and payload["porcentagem_pcd"] != processo.porcentagem_pcd
+        ):
             processo.porcentagem_pcd = payload["porcentagem_pcd"]
             update_fields.append("porcentagem_pcd")
         if update_fields:
             processo.save(update_fields=update_fields)
 
-        result = CargosProcessoService.salvar_cargos(processo=processo, cargos_data=cargos_data)
+        result = CargosProcessoService.salvar_cargos(
+            processo=processo, cargos_data=cargos_data
+        )
 
         if result.erros:
             return Response(

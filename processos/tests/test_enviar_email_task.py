@@ -1,47 +1,50 @@
 """
 Testes unitários para processos.tasks.enviar_email_task.
 """
-import pytest
-from unittest.mock import patch, MagicMock
+
+from unittest.mock import MagicMock, patch
 from uuid import uuid4
+
+import pytest
 
 from processos.models import EnvioEmail, EnvioEmailCandidato
 from processos.models.envio_email import TIPO_CONVOCACAO
 from processos.models.envio_email_candidato import (
+    ENVIO_STATUS_ERRO,
     ENVIO_STATUS_PENDENTE,
     ENVIO_STATUS_SUCESSO,
-    ENVIO_STATUS_ERRO,
 )
 from processos.tasks.enviar_email_task import (
-    enviar_email_candidato_task,
-    LOGO_EMAIL_PATH,
     CID_LOGO_SIGLA,
+    LOGO_EMAIL_PATH,
+    enviar_email_candidato_task,
 )
 
-ASSUNTO_TESTE = 'Assunto de teste'
+ASSUNTO_TESTE = "Assunto de teste"
 
 pytestmark = pytest.mark.django_db
 
 
 def _task_kwargs(candidato):
     return {
-        'email': candidato.email,
-        'assunto': ASSUNTO_TESTE,
-        'conteudo': '<p>Olá</p>',
-        'envio_email_candidato_id': str(candidato.uuid),
-        'correlation_id': '1234567890',
+        "email": candidato.email,
+        "assunto": ASSUNTO_TESTE,
+        "conteudo": "<p>Olá</p>",
+        "envio_email_candidato_id": str(candidato.uuid),
+        "correlation_id": "1234567890",
     }
 
 
 @pytest.fixture
 def processo_convocacao(db):
     from processos.models import ProcessoConvocacao
+
     return ProcessoConvocacao.objects.create(
         concurso_uuid=uuid4(),
         concurso_nome="Concurso Teste",
         descricao="Descrição",
-        tipo_escolha='NOVA_AUTORIZACAO',
-        status='EM_ANDAMENTO',
+        tipo_escolha="NOVA_AUTORIZACAO",
+        status="EM_ANDAMENTO",
     )
 
 
@@ -69,16 +72,18 @@ def envio_candidato(envio_email):
 
 
 PNG_1X1_DATA_URI = (
-    'data:image/png;base64,'
-    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQ'
-    'DwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
+    "data:image/png;base64,"
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQ"
+    "DwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
 )
 
 
-@patch('processos.tasks.enviar_email_task.LOGO_EMAIL_PATH')
-@patch('processos.tasks.enviar_email_task.EmailMultiAlternatives')
+@patch("processos.tasks.enviar_email_task.LOGO_EMAIL_PATH")
+@patch("processos.tasks.enviar_email_task.EmailMultiAlternatives")
 def test_enviar_email_candidato_task_converte_base64_para_cid(
-    mock_email_cls, mock_logo_path, envio_candidato,
+    mock_email_cls,
+    mock_logo_path,
+    envio_candidato,
 ):
     mock_logo_path.is_file.return_value = False
     mock_msg = MagicMock()
@@ -86,46 +91,52 @@ def test_enviar_email_candidato_task_converte_base64_para_cid(
     html = f'<img src="{PNG_1X1_DATA_URI}">'
 
     enviar_email_candidato_task.apply(
-        kwargs={**_task_kwargs(envio_candidato), 'conteudo': html},
+        kwargs={**_task_kwargs(envio_candidato), "conteudo": html},
     ).get()
 
     html_enviado = mock_msg.attach_alternative.call_args[0][0]
-    assert 'cid:email_img_0' in html_enviado
+    assert "cid:email_img_0" in html_enviado
     assert PNG_1X1_DATA_URI not in html_enviado
-    assert mock_msg.mixed_subtype == 'related'
+    assert mock_msg.mixed_subtype == "related"
     assert mock_msg.attach.call_count == 1
 
 
-@patch('processos.tasks.enviar_email_task.LOGO_EMAIL_PATH')
-@patch('processos.tasks.enviar_email_task.EmailMultiAlternatives')
-def test_enviar_email_candidato_task_sucesso_com_logo(mock_email_cls, mock_logo_path, envio_candidato):
+@patch("processos.tasks.enviar_email_task.LOGO_EMAIL_PATH")
+@patch("processos.tasks.enviar_email_task.EmailMultiAlternatives")
+def test_enviar_email_candidato_task_sucesso_com_logo(
+    mock_email_cls, mock_logo_path, envio_candidato
+):
     mock_logo_path.is_file.return_value = True
-    mock_logo_path.read_bytes.return_value = b'\x89PNG\r\n\x1a\n'
+    mock_logo_path.read_bytes.return_value = b"\x89PNG\r\n\x1a\n"
     mock_msg = MagicMock()
     mock_email_cls.return_value = mock_msg
 
-    enviar_email_candidato_task.apply(kwargs=_task_kwargs(envio_candidato)).get()
+    enviar_email_candidato_task.apply(
+        kwargs=_task_kwargs(envio_candidato)
+    ).get()
 
     call_kw = mock_email_cls.call_args[1]
-    assert call_kw['subject'] == ASSUNTO_TESTE
-    assert call_kw['body'] == 'Olá'
-    assert call_kw['to'] == [envio_candidato.email]
+    assert call_kw["subject"] == ASSUNTO_TESTE
+    assert call_kw["body"] == "Olá"
+    assert call_kw["to"] == [envio_candidato.email]
     mock_msg.send.assert_called_once()
 
     envio_candidato.refresh_from_db()
     assert envio_candidato.status == ENVIO_STATUS_SUCESSO
-    assert envio_candidato.status_detalhe == ''
+    assert envio_candidato.status_detalhe == ""
 
 
-@patch('processos.tasks.enviar_email_task.LOGO_EMAIL_PATH')
-@patch('processos.tasks.enviar_email_task.EmailMultiAlternatives')
-def test_enviar_email_candidato_task_sucesso_sem_logo(mock_email_cls, mock_logo_path, envio_candidato):
+@patch("processos.tasks.enviar_email_task.LOGO_EMAIL_PATH")
+@patch("processos.tasks.enviar_email_task.EmailMultiAlternatives")
+def test_enviar_email_candidato_task_sucesso_sem_logo(
+    mock_email_cls, mock_logo_path, envio_candidato
+):
     mock_logo_path.is_file.return_value = False
     mock_msg = MagicMock()
     mock_email_cls.return_value = mock_msg
 
     enviar_email_candidato_task.apply(
-        kwargs={**_task_kwargs(envio_candidato), 'conteudo': '<p>Conteúdo</p>'}
+        kwargs={**_task_kwargs(envio_candidato), "conteudo": "<p>Conteúdo</p>"}
     ).get()
 
     mock_msg.attach.assert_not_called()
@@ -133,21 +144,27 @@ def test_enviar_email_candidato_task_sucesso_sem_logo(mock_email_cls, mock_logo_
     assert envio_candidato.status == ENVIO_STATUS_SUCESSO
 
 
-@patch('processos.tasks.enviar_email_task.LOGO_EMAIL_PATH')
-@patch('processos.tasks.enviar_email_task.EmailMultiAlternatives')
-def test_enviar_email_candidato_task_erro_no_send(mock_email_cls, mock_logo_path, envio_candidato):
+@patch("processos.tasks.enviar_email_task.LOGO_EMAIL_PATH")
+@patch("processos.tasks.enviar_email_task.EmailMultiAlternatives")
+def test_enviar_email_candidato_task_erro_no_send(
+    mock_email_cls, mock_logo_path, envio_candidato
+):
     mock_logo_path.is_file.return_value = False
     mock_msg = MagicMock()
-    mock_msg.send.side_effect = Exception('Connection refused')
+    mock_msg.send.side_effect = Exception("Connection refused")
     mock_email_cls.return_value = mock_msg
 
-    enviar_email_candidato_task.apply(kwargs=_task_kwargs(envio_candidato)).get()
+    enviar_email_candidato_task.apply(
+        kwargs=_task_kwargs(envio_candidato)
+    ).get()
 
     envio_candidato.refresh_from_db()
     assert envio_candidato.status == ENVIO_STATUS_ERRO
-    assert 'Connection refused' in envio_candidato.status_detalhe
+    assert "Connection refused" in envio_candidato.status_detalhe
 
 
 def test_constantes_task():
-    assert CID_LOGO_SIGLA == 'logo_sigla'
-    assert 'templates' in str(LOGO_EMAIL_PATH) and 'assets' in str(LOGO_EMAIL_PATH)
+    assert CID_LOGO_SIGLA == "logo_sigla"
+    assert "templates" in str(LOGO_EMAIL_PATH) and "assets" in str(
+        LOGO_EMAIL_PATH
+    )
