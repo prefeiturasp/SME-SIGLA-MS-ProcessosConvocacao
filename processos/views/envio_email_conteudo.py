@@ -1,9 +1,10 @@
-"""
-View para templates de conteúdo de e-mail por tipo (somente leitura e edição).
-"""
+"""View para templates de conteúdo de e-mail por tipo."""
+
+from __future__ import annotations
 
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import mixins, viewsets
+from rest_framework.serializers import BaseSerializer
 
 from processos.models import EnvioEmailConteudo
 from processos.serializers import (
@@ -19,14 +20,8 @@ class EnvioEmailConteudoViewSet(
     viewsets.GenericViewSet,
 ):
     """
-    GET   /api/v1/envio-email-conteudo/?tipo=CONVOCACAO -> lista (filtro
-    opcional
-    por tipo)
-    GET   /api/v1/envio-email-conteudo/<uuid>/            -> detalhe
-    PATCH /api/v1/envio-email-conteudo/<uuid>/            -> atualiza apenas o
-    conteudo HTML
-
-    Valores de tipo: CONVOCACAO, VAGAS, RESULTADO
+    CRUD parcial de templates HTML por tipo
+    (CONVOCACAO, VAGAS, RESULTADOS).
     """
 
     queryset = EnvioEmailConteudo.objects.all().order_by("tipo")
@@ -37,7 +32,8 @@ class EnvioEmailConteudoViewSet(
     http_method_names = ["get", "patch", "head", "options"]
     pagination_class = None
 
-    def get_serializer_class(self):
+    def get_serializer_class(self) -> type[BaseSerializer]:
+        """Usa serializer de update apenas em PATCH."""
         if self.action in ("update", "partial_update"):
             return EnvioEmailConteudoUpdateSerializer
         return EnvioEmailConteudoSerializer

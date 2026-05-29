@@ -3,9 +3,9 @@ Django settings for convocacao_processes project.
 """
 
 import os
+from datetime import timedelta
 from pathlib import Path
 
-import django.core.mail
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -252,8 +252,6 @@ AGENDA_API_URL = os.environ.get("AGENDAS_API_URL", "").rstrip("/")
 ESCOLHAS_API_URL = os.environ.get("ESCOLHAS_API_URL", "").rstrip("/")
 
 MS_URL = os.environ.get("MS_URL", "").rstrip("/")
-
-from datetime import timedelta
 
 JWT_SIGNING_KEY = os.environ.get(
     "JWT_SIGNING_KEY",

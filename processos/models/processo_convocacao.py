@@ -58,14 +58,17 @@ class ProcessoConvocacao(BaseModel):
         ordering = ["-criado_em"]
         db_table = "processos_convocacao"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.concurso_nome} - {self.tipo_escolha}"
 
-    def pode_deletar(self):
+    def pode_deletar(self) -> bool:
+        """Indica se o processo pode ser excluído
+        (não finalizado nem em andamento).
+        """
         return self.status not in ("FINALIZADO", "EM_ANDAMENTO")
 
-    def inativar(self):
-        # Remove cargos associados (não faz sentido manter cargos em processo inativo)  # noqa: E501
+    def inativar(self) -> None:
+        """Inativa o processo e remove cargos vinculados."""
         self.cargos_processo.all().delete()
         self.esta_ativo = False
         self.save(update_fields=["esta_ativo"])

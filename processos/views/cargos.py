@@ -1,6 +1,14 @@
+"""ViewSet de cargos vinculados a um processo de convocação."""
+
+from __future__ import annotations
+
+from typing import Any
+from uuid import UUID
+
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework.request import Request
 from rest_framework.response import Response
 
 from processos.models import CargoProcesso, ProcessoConvocacao
@@ -15,16 +23,7 @@ STATUS_FINALIZADO = "FINALIZADO"
 
 
 class CargoProcessoViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet dedicado para listar e substituir cargos de um processo de
-    convocação.
-
-    - GET /processos-convocacao/{processo_pk}/cargos/ -> lista cargos do
-    processo
-    - POST /processos-convocacao/{processo_pk}/cargos/ -> substitui todos os
-    cargos
-    do processo
-    """
+    """Lista, substitui e remove cargos de um processo de convocação."""
 
     queryset = CargoProcesso.objects.all()
     serializer_class = CargoProcessoSerializer
@@ -34,13 +33,21 @@ class CargoProcessoViewSet(viewsets.ModelViewSet):
     ordering_fields = ["cargo_nome", "cargo_codigo", "vagas"]
     lookup_url_kwarg = "cargo_uuid"
 
-    def _get_processo(self, pk):
+    def _get_processo(
+        self, pk: str | UUID | None
+    ) -> ProcessoConvocacao | None:
+        """Busca processo pelo UUID da URL ou retorna None."""
         try:
             return ProcessoConvocacao.objects.get(pk=pk)
         except ProcessoConvocacao.DoesNotExist:
             return None
 
-    def list(self, request, processo_pk=None):
+    def list(
+        self,
+        request: Request,
+        processo_pk: str | None = None,
+    ) -> Response:
+        """Lista cargos do processo."""
         processo = self._get_processo(processo_pk)
         if not processo:
             return Response(
@@ -52,7 +59,12 @@ class CargoProcessoViewSet(viewsets.ModelViewSet):
         serializer = CargoProcessoSerializer(cargos, many=True)
         return Response(serializer.data)
 
-    def create(self, request, processo_pk=None):
+    def create(
+        self,
+        request: Request,
+        processo_pk: str | None = None,
+    ) -> Response:
+        """Substitui todos os cargos e porcentagens do processo."""
         processo = self._get_processo(processo_pk)
         if not processo:
             return Response(
@@ -70,8 +82,7 @@ class CargoProcessoViewSet(viewsets.ModelViewSet):
         payload = payload_serializer.validated_data
         cargos_data = payload["cargos"]
 
-        # Persistir porcentagens no processo (se vierem no payload)
-        update_fields = []
+        update_fields: list[str] = []
         if (
             "porcentagem_nna" in payload
             and payload["porcentagem_nna"] != processo.porcentagem_nna
@@ -91,31 +102,26 @@ class CargoProcessoViewSet(viewsets.ModelViewSet):
             processo=processo, cargos_data=cargos_data
         )
 
+        body: dict[str, Any] = {
+            "success": True,
+            "cargos_criados": len(result.cargos_criados),
+            "cargos_atualizados": len(result.cargos_atualizados),
+            "cargos_removidos": result.cargos_removidos,
+            "cargos": result.cargos,
+        }
         if result.erros:
-            return Response(
-                {
-                    "success": True,
-                    "cargos_criados": len(result.cargos_criados),
-                    "cargos_atualizados": len(result.cargos_atualizados),
-                    "cargos_removidos": result.cargos_removidos,
-                    "erros": result.erros,
-                    "cargos": result.cargos,
-                },
-                status=status.HTTP_207_MULTI_STATUS,
-            )
+            body["erros"] = result.erros
+            return Response(body, status=status.HTTP_207_MULTI_STATUS)
 
-        return Response(
-            {
-                "success": True,
-                "cargos_criados": len(result.cargos_criados),
-                "cargos_atualizados": len(result.cargos_atualizados),
-                "cargos_removidos": result.cargos_removidos,
-                "cargos": result.cargos,
-            },
-            status=status.HTTP_200_OK,
-        )
+        return Response(body, status=status.HTTP_200_OK)
 
-    def destroy(self, request, processo_pk=None, cargo_uuid=None):
+    def destroy(
+        self,
+        request: Request,
+        processo_pk: str | None = None,
+        cargo_uuid: str | None = None,
+    ) -> Response:
+        """Remove um cargo do processo."""
         processo = self._get_processo(processo_pk)
         if not processo:
             return Response(

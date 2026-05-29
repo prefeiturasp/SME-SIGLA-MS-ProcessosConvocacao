@@ -63,7 +63,7 @@ class CargoProcesso(BaseModel):
         ordering = ["cargo_nome"]
         db_table = "processos_cargos"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.processo.concurso_nome} - {self.cargo_nome}"
 
 

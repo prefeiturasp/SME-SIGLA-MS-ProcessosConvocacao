@@ -1,8 +1,10 @@
-"""
-Django admin configuration for the processes module.
-"""
+"""Configuração do Django Admin para processos."""
+
+from __future__ import annotations
 
 from django.contrib import admin
+from django.db.models import QuerySet
+from django.http import HttpRequest
 
 from .models import (
     CargoProcesso,
@@ -63,8 +65,11 @@ class ProcessoConvocacaoAdmin(admin.ModelAdmin):
         ),
     )
 
-    def get_queryset(self, request):
-        """Optimize queryset with related data."""
+    def get_queryset(
+        self,
+        request: HttpRequest,
+    ) -> QuerySet[ProcessoConvocacao]:
+        """Otimiza queryset com cargos relacionados."""
         return (
             super().get_queryset(request).prefetch_related("cargos_processo")
         )
@@ -107,8 +112,8 @@ class CargoProcessoAdmin(admin.ModelAdmin):
         ),
     )
 
-    def get_queryset(self, request):
-        """Optimize queryset with related data."""
+    def get_queryset(self, request: HttpRequest) -> QuerySet[CargoProcesso]:
+        """Otimiza queryset com processo relacionado."""
         return super().get_queryset(request).select_related("processo")
 
 
@@ -167,8 +172,12 @@ class EnvioEmailConteudoAdmin(admin.ModelAdmin):
     fields = ("tipo", "conteudo", "uuid", "criado_em", "atualizado_em")
     ordering = ("tipo",)
 
-    def has_add_permission(self, request):
+    def has_add_permission(self, request: HttpRequest) -> bool:
         return False
 
-    def has_delete_permission(self, request, obj=None):
+    def has_delete_permission(
+        self,
+        request: HttpRequest,
+        obj: EnvioEmailConteudo | None = None,
+    ) -> bool:
         return False

@@ -22,7 +22,8 @@ class EnvioEmailConteudo(BaseModel):
         verbose_name="Corpo do e-mail (HTML)",
         help_text=(
             "Fragmento HTML do corpo (sem cabeçalho PMSP). "
-            "Variáveis Django: {{ cargo }}, {{ classificacao }}, {{ data_publicacao }}, etc. "  # noqa: E501
+            "Variáveis Django: {{ cargo }}, {{ classificacao }}, "
+            "{{ data_publicacao }}, etc. "
             "O layout base vem de templates/email/envio_email.html."
         ),
     )
@@ -33,7 +34,7 @@ class EnvioEmailConteudo(BaseModel):
         ordering = ["tipo"]
         db_table = "processos_envio_email_conteudo"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.get_tipo_display()}"
 
 
