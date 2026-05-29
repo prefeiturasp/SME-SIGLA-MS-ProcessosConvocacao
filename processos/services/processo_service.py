@@ -1,12 +1,14 @@
-"""
-Regras de negócio do ProcessoConvocacao.
+"""Regras de negócio do ProcessoConvocacao."""
 
-Centraliza operações que envolvem múltiplos microsserviços.
-"""
+from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
 from sigla_sdk.context import get_correlation_id
+
+if TYPE_CHECKING:
+    from processos.models import ProcessoConvocacao
 
 from processos.services.agenda_api_service import AgendaApiService
 from processos.services.candidatos_api_url import CandidatosApiService
@@ -37,7 +39,11 @@ class ProcessoConvocacaoService:
         self._candidatos = candidatos_api or CandidatosApiService()
         self._escolhas = escolhas_api or EscolhasApiService()
 
-    def excluir_processo_e_dependencias(self, *, processo) -> None:
+    def excluir_processo_e_dependencias(
+        self,
+        *,
+        processo: "ProcessoConvocacao",
+    ) -> None:
         """
         Executa a limpeza nos MS dependentes e faz a deleção lógica do
         processo.

@@ -1,11 +1,13 @@
-"""
-View para envio genérico de e-mails e listagem/detalhe do histórico.
-"""
+"""View para envio genérico de e-mails e histórico."""
+
+from __future__ import annotations
 
 import logging
 
 from rest_framework import mixins, status, viewsets
+from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework.serializers import BaseSerializer
 from sigla_sdk.context import get_correlation_id
 
 from processos.models import EnvioEmail
@@ -24,11 +26,7 @@ class EnvioEmailViewSet(
     mixins.RetrieveModelMixin,
     viewsets.GenericViewSet,
 ):
-    """
-    GET  /api/v1/envio-email/         -> listagem do histórico
-    GET  /api/v1/envio-email/<uuid>/  -> detalhe com candidatos
-    POST /api/v1/envio-email/         -> inicia processamento de envio
-    """
+    """Listagem, detalhe e disparo de envio de e-mails por processo."""
 
     queryset = EnvioEmail.objects.prefetch_related("candidatos").order_by(
         "-criado_em"
@@ -37,12 +35,32 @@ class EnvioEmailViewSet(
     lookup_field = "uuid"
     lookup_url_kwarg = "uuid"
 
-    def get_serializer_class(self):
+    def get_serializer_class(self) -> type[BaseSerializer]:
+        """Retorna serializer de listagem ou detalhe com candidatos."""
         if self.action == "retrieve":
             return EnvioEmailDetalheSerializer
         return EnvioEmailSerializer
 
-    def create(self, request):
+    def create(self, request: Request) -> Response:
+        """Inicia processamento assíncrono de envio de e-mails.
+
+        Args:
+            request: body com ``processo_uuid``, ``processo_nome``, ``tipo``,
+                ``conteudo``.
+
+        Returns:
+            200 com UUID do envio ou 400/500 em caso de erro.
+
+        Examples:
+            POST body::
+
+                {
+                  "processo_uuid": "uuid",
+                  "processo_nome": "Processo X",
+                  "tipo": "CONVOCACAO",
+                  "conteudo": "<p>Olá [[cargo]]</p>"
+                }
+        """
         logger.info(
             "Iniciando processamento de envio de e-mail",
             extra={

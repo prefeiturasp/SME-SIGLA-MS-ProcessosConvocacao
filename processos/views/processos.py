@@ -1,16 +1,20 @@
-"""
-DRF views for the processes module.
-"""
+"""Views de processos de convocação."""
+
+from __future__ import annotations
 
 import logging
 import uuid
 from datetime import datetime
+from typing import Any
 
+from django.db.models import QuerySet
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework.serializers import BaseSerializer
 from sigla_sdk.context import get_correlation_id
 
 from processos.models import CargoProcesso, ProcessoConvocacao
@@ -59,8 +63,8 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
     ordering = ["-criado_em"]
     pagination_class = CustomPagination
 
-    def get_queryset(self):
-        """Sobrescreve o queryset para aplicar filtros customizados."""
+    def get_queryset(self) -> QuerySet[ProcessoConvocacao]:
+        """Aplica filtros por data de convocação e cargo."""
         queryset = super().get_queryset()
 
         data_inicio = self.request.query_params.get("data_convocacao_inicio")
@@ -94,7 +98,7 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
 
         return queryset
 
-    def get_serializer_class(self):
+    def get_serializer_class(self) -> type[BaseSerializer]:
         if self.action == "create":
             return ProcessoConvocacaoCreateSerializer
         elif self.action == "list":
@@ -105,11 +109,8 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
             return ProcessoConvocacaoUpdateSerializer
         return ProcessoConvocacaoSerializer
 
-    def list(self, request, *args, **kwargs):
-        """
-        Lista todos os processos de convocação.
-        Se formato=select, retorna sem paginação.
-        """
+    def list(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        """Lista processos paginados ou em formato select."""
         logger.info(
             "Iniciando lista de processos de convocação",
             extra={
@@ -134,11 +135,8 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @action(detail=False, methods=["get"], url_path="filtros")
-    def filtros(self, request):
-        """
-        Retorna concursos únicos, cargos únicos e tipos de processo em chaves
-        separadas.
-        """
+    def filtros(self, request: Request) -> Response:
+        """Retorna opções de filtro (concursos, cargos, tipos de escolha)."""
         todos_processos = ProcessoConvocacao.objects.values(
             "concurso_uuid", "concurso_nome"
         )
@@ -176,16 +174,8 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
         return Response(resultado)
 
     @action(detail=True, methods=["post"], url_path="finalizar")
-    def finalizar(self, request, pk=None):
-        """
-        Finaliza o processo de convocação.
-        - Só permite se status for EM_ANDAMENTO.
-        - Valida se todos os candidatos do processo (candidatos_uuids dos
-        cargos)
-        fizeram
-          escolha, reconvocação ou não escolha (via MS-Escolha).
-        - Atualiza status para FINALIZADO.
-        """
+    def finalizar(self, request: Request, pk: str | None = None) -> Response:
+        """Finaliza processo após validar escolhas no MS-Escolhas."""
         processo = self.get_object()
         logger.info(
             "Iniciando finalização de processo de convocação",
@@ -262,7 +252,7 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
         serializer = ProcessoConvocacaoSerializer(processo)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def update(self, request, *args, **kwargs):
+    def update(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         """Bloqueia alteração quando processo está finalizado."""
         instance = self.get_object()
         if instance.status == STATUS_FINALIZADO:
@@ -272,8 +262,10 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
             )
         return super().update(request, *args, **kwargs)
 
-    def partial_update(self, request, *args, **kwargs):
-        """Bloqueia alteração quando processo está finalizado."""
+    def partial_update(
+        self, request: Request, *args: Any, **kwargs: Any
+    ) -> Response:
+        """Bloqueia alteração parcial quando processo está finalizado."""
         instance = self.get_object()
         if instance.status == STATUS_FINALIZADO:
             return Response(
@@ -283,7 +275,9 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
         return super().partial_update(request, *args, **kwargs)
 
     @action(detail=True, methods=["patch"], url_path="passo")
-    def atualizar_passo(self, request, pk=None):
+    def atualizar_passo(
+        self, request: Request, pk: str | None = None
+    ) -> Response:
         processo = self.get_object()
         serializer = ProcessoConvocacaoPassoSerializer(
             processo,
@@ -297,13 +291,8 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK,
         )
 
-    def destroy(self, request, *args, **kwargs):
-        """
-        Exclui o processo e executa limpeza nos MS dependentes:
-        - MS-Agenda: excluir agendas do processo
-        - MS-Candidatos: desconvocar candidatos por cargo do processo
-        - MS-Escolha: excluir lotes de vagas-escolas do processo
-        """
+    def destroy(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        """Exclui processo e limpa dependências nos microsserviços."""
         processo = self.get_object()
         str(processo.uuid)
 

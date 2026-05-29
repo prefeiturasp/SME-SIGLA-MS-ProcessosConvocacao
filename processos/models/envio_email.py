@@ -39,7 +39,7 @@ class EnvioEmail(BaseModel):
         ordering = ["-criado_em"]
         db_table = "processos_envio_email"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
             f"{self.processo_nome} - {self.get_tipo_display()} "
             f"({self.quantidade_candidatos} candidatos)"

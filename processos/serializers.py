@@ -1,3 +1,8 @@
+from __future__ import annotations
+
+from typing import Any
+from uuid import UUID
+
 from rest_framework import serializers
 
 from processos.utils.conteudo_html import normalizar_conteudo_html
@@ -9,7 +14,7 @@ from .models import (
     EnvioEmailConteudo,
     ProcessoConvocacao,
 )
-from .models.envio_email import ENVIO_EMAIL_TIPO_CHOICES, TIPO_CONVOCACAO
+from .models.envio_email import ENVIO_EMAIL_TIPO_CHOICES
 
 
 class CargoProcessoSerializer(serializers.ModelSerializer):
@@ -131,15 +136,13 @@ class ProcessoConvocacaoCreateSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["uuid"]
 
-    def validate_concurso_uuid(self, value):
+    def validate_concurso_uuid(self, value: UUID | str) -> UUID | str:
         """Valida se o concurso_uuid é um UUID válido."""
-        import uuid
-
         try:
-            uuid.UUID(str(value))
+            UUID(str(value))
             return value
         except ValueError:
-            raise serializers.ValidationError("UUID do concurso inválido.")  # noqa: B904
+            raise serializers.ValidationError("UUID do concurso inválido.")
 
 
 class ProcessoConvocacaoListSerializer(serializers.ModelSerializer):
@@ -165,10 +168,10 @@ class ProcessoConvocacaoListSerializer(serializers.ModelSerializer):
             "criado_em",
         ]
 
-    def get_quantidade_cargos(self, obj):
+    def get_quantidade_cargos(self, obj: ProcessoConvocacao) -> int:
         return obj.cargos_processo.count()
 
-    def get_pode_deletar(self, obj):
+    def get_pode_deletar(self, obj: ProcessoConvocacao) -> bool:
         return bool(obj.pode_deletar())
 
 
@@ -215,12 +218,14 @@ class ProcessoConvocacaoSelectSerializer(serializers.ModelSerializer):
 class EnvioEmailEnvioSerializer(serializers.Serializer):
     """Serializer para validar o payload do endpoint de envio de e-mail."""
 
-    processo_uuid = serializers.UUIDField(help_text='UUID do processo de convocação')
+    processo_uuid = serializers.UUIDField(
+        help_text='UUID do processo de convocação')
     processo_nome = serializers.CharField(help_text='Nome do processo')
-    tipo = serializers.ChoiceField(choices=ENVIO_EMAIL_TIPO_CHOICES, help_text='Tipo de envio')
+    tipo = serializers.ChoiceField(
+        choices=ENVIO_EMAIL_TIPO_CHOICES, help_text='Tipo de envio')
     conteudo = serializers.CharField(help_text='Conteúdo do e-mail (HTML)')
 
-    def validate_processo_uuid(self, value):
+    def validate_processo_uuid(self, value: UUID) -> UUID:
         """Garante que o processo existe."""
         if not ProcessoConvocacao.objects.filter(uuid=value).exists():
             raise serializers.ValidationError(
@@ -282,12 +287,12 @@ class ConteudoHtmlField(serializers.CharField):
     """Retorna e persiste HTML sem escape JSON duplicado (ex.:
     \\\"ql-align-center\\\")."""
 
-    def to_representation(self, value):
+    def to_representation(self, value: str | None) -> str | None:
         if value is None:
             return value
         return normalizar_conteudo_html(value)
 
-    def to_internal_value(self, data):
+    def to_internal_value(self, data: Any) -> str:
         return normalizar_conteudo_html(super().to_internal_value(data))
 
 

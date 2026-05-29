@@ -1,13 +1,13 @@
-"""
-Serviço genérico de envio de e-mails por processo (convocação, vagas,
-resultado).
-"""
+"""Serviço genérico de envio de e-mails por processo."""
+
+from __future__ import annotations
 
 import logging
 import re
+from re import Match
+from typing import Any
 from uuid import UUID
 
-from django.conf import settings
 from django.template.loader import render_to_string
 from sigla_sdk.context import get_correlation_id
 
@@ -45,45 +45,76 @@ TEMPLATE_POR_TIPO = {
 
 TEMPLATE_DINAMICO = "email/envio_email_dinamico.html"
 
-def dados_template(candidato: dict) -> dict:
-    cargo_nome = candidato.get('descricao_cargo') or '—'
-    cat = (candidato.get('categoria_efetiva') or '').strip().upper()
-    if cat == 'PCD' and candidato.get('classificacao_pcd') is not None:
-        classificacao = str(candidato.get('classificacao_pcd'))
-    elif cat == 'NNA' and candidato.get('classificacao_nna') is not None:
-        classificacao = str(candidato.get('classificacao_nna'))
+
+def dados_template(candidato: dict[str, Any]) -> dict[str, str]:
+    """Extrai placeholders de cargo e classificação do habilitado.
+
+    Args:
+        candidato: item retornado pelo MS-Candidatos.
+
+    Returns:
+        Dict com chaves ``cargo`` e ``classificacao`` para o template.
+    """
+    cargo_nome = candidato.get("descricao_cargo") or "—"
+    cat = (candidato.get("categoria_efetiva") or "").strip().upper()
+    if cat == "PCD" and candidato.get("classificacao_pcd") is not None:
+        classificacao = str(candidato.get("classificacao_pcd"))
+    elif cat == "NNA" and candidato.get("classificacao_nna") is not None:
+        classificacao = str(candidato.get("classificacao_nna"))
     else:
-        classificacao = str(candidato.get('classificacao') or '').strip() or '—'
+        classificacao = (
+            str(candidato.get("classificacao") or "").strip() or "—"
+        )
     return {
-        'cargo': cargo_nome,
-        'classificacao': classificacao,
+        "cargo": cargo_nome,
+        "classificacao": classificacao,
     }
 
 
-def _preencher_template(conteudo, dados):
-    # Regex para encontrar qualquer coisa entre [[ ]]
+def _preencher_template(
+    conteudo: str | None,
+    dados: dict[str, str],
+) -> str:
+    """Substitui placeholders ``[[chave]]`` no HTML pelo dict ``dados``.
+
+    Args:
+        conteudo: HTML do template; ``None`` é tratado como string vazia.
+        dados: mapa chave → valor para substituição.
+
+    Returns:
+        HTML com placeholders preenchidos.
+    """
     pattern = re.compile(r"\[\[(.*?)\]\]")
 
-    def replace_func(match):
-        chave = match.group(1)  # Pega o que está dentro de [[ ]]
+    def replace_func(match: Match[str]) -> str:
+        chave = match.group(1)
         return str(dados.get(chave, f"[[ERRO: {chave} NÃO ENCONTRADO]]"))
 
-    # `re.sub` exige string; templates vazios podem vir como None
-    print(conteudo)
     return pattern.sub(replace_func, conteudo or "")
 
 
-def _renderizar_conteudo(*, tipo: str, context: dict) -> str:
+def _renderizar_conteudo(*, tipo: str, context: dict[str, Any]) -> str:
+    """Renderiza corpo do e-mail no template dinâmico."""
     return render_to_string(TEMPLATE_DINAMICO, context)
 
 
 def iniciar_processamento_envio(
-    *, processo_uuid: UUID | str, processo_nome: str, tipo: str, conteudo: str
+    *,
+    processo_uuid: UUID | str,
+    processo_nome: str,
+    tipo: str,
+    conteudo: str | None,
 ) -> EnvioEmail:
-    """
-    Inicia o processamento de envio de e-mails para habilitados do processo.
+    """Inicia envio assíncrono de e-mails para habilitados convocados.
 
-    ``conteudo`` é o conteúdo HTML do e-mail.
+    Args:
+        processo_uuid: UUID do processo de convocação.
+        processo_nome: nome exibido no histórico de envio.
+        tipo: ``CONVOCACAO``, ``VAGAS`` ou ``RESULTADOS``.
+        conteudo: HTML com placeholders ``[[cargo]]``, etc.
+
+    Returns:
+        Registro ``EnvioEmail`` com candidatos enfileirados no Celery.
     """
     logger.info(
         "Iniciando processamento de envio de e-mail",
@@ -120,7 +151,8 @@ def iniciar_processamento_envio(
             ignorados_sem_email += 1
             continue
 
-        conteudo_preenchido = _preencher_template(conteudo, dados_template(item))
+        conteudo_preenchido = _preencher_template(
+            conteudo, dados_template(item))
         context = {
             "email_body": conteudo_preenchido,
             "email_title": TITULO_POR_TIPO.get(

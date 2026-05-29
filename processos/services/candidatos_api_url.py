@@ -18,9 +18,10 @@ logger = logging.getLogger(__name__)
 class CandidatosApiService:
     PATH_HABILITADOS = "/api/v1/habilitados/"
     FIELDS_HABILITADOS = (
-        "candidato__nome,candidato__registro_funcional,candidato__email,candidato__uuid,"
-        "descricao_cargo,codigo_cargo,classificacao,classificacao_pcd,classificacao_nna,categoria_efetiva",
-        "candidato",
+        "candidato__nome,candidato__registro_funcional,"
+        "candidato__email,candidato__uuid,"
+        "descricao_cargo,codigo_cargo,classificacao,classificacao_pcd,"
+        "classificacao_nna,categoria_efetiva,candidato",
     )
     TIMEOUT_SEGUNDOS = 30
 
@@ -33,7 +34,6 @@ class CandidatosApiService:
         params = {
             "processo_uuid": processo_uuid,
             "foi_convocado": "true",
-            #'fields': self.FIELDS_HABILITADOS,
         }
         base = self._candidatos_api_url or ""
         path = self.PATH_HABILITADOS.rstrip("/")
