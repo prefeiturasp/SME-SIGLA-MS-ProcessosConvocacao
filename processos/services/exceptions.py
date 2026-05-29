@@ -12,4 +12,3 @@ class EscolhasServiceError(Exception):
 
 class ProcessoServiceError(Exception):
     """Erro ao executar operações do processo envolvendo integrações."""
-

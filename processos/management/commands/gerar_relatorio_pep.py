@@ -1,6 +1,7 @@
 """
 Gera relatório de conformidade PEP 8, 257, 484 e 440 para o app processos.
 """
+
 from __future__ import annotations
 
 import ast
@@ -9,9 +10,9 @@ import subprocess
 import sys
 from collections import Counter
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
@@ -38,14 +39,16 @@ class FileMetrics:
     lines_over_max: int = 0
     lines_length_eligible: int = 0
     module_has_docstring: bool = False
-    symbols: List[SymbolMetrics] = field(default_factory=list)
+    symbols: list[SymbolMetrics] = field(default_factory=list)
 
     @property
-    def functions_and_methods(self) -> List[SymbolMetrics]:
-        return [s for s in self.symbols if s.kind in ("function", "async_function")]
+    def functions_and_methods(self) -> list[SymbolMetrics]:
+        return [
+            s for s in self.symbols if s.kind in ("function", "async_function")
+        ]
 
     @property
-    def classes(self) -> List[SymbolMetrics]:
+    def classes(self) -> list[SymbolMetrics]:
         return [s for s in self.symbols if s.kind == "class"]
 
 
@@ -57,8 +60,8 @@ def _processos_app_dir() -> Path:
     return _repo_root() / "processos"
 
 
-def discover_app_python_files(app_dir: Path) -> List[Path]:
-    files: List[Path] = []
+def discover_app_python_files(app_dir: Path) -> list[Path]:
+    files: list[Path] = []
     for path in sorted(app_dir.rglob("*.py")):
         parts = set(path.relative_to(app_dir).parts)
         if parts & EXCLUDE_DIRS:
@@ -70,13 +73,9 @@ def discover_app_python_files(app_dir: Path) -> List[Path]:
 
 
 def _hint_level(node: ast.AST) -> str:
-    if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+    if not isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
         return "sem"
-    args = [
-        a
-        for a in node.args.args
-        if a.arg not in ("self", "cls")
-    ]
+    args = [a for a in node.args.args if a.arg not in ("self", "cls")]
     kwonly = list(node.args.kwonlyargs)
     posonly = list(getattr(node.args, "posonlyargs", []))
     all_args = posonly + args + kwonly
@@ -93,8 +92,8 @@ def _hint_level(node: ast.AST) -> str:
     return "sem"
 
 
-def _walk_symbols(tree: ast.AST, filepath: Path) -> List[SymbolMetrics]:
-    symbols: List[SymbolMetrics] = []
+def _walk_symbols(tree: ast.AST, filepath: Path) -> list[SymbolMetrics]:
+    symbols: list[SymbolMetrics] = []
 
     class Visitor(ast.NodeVisitor):
         def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
@@ -132,7 +131,7 @@ def _walk_symbols(tree: ast.AST, filepath: Path) -> List[SymbolMetrics]:
                 )
             )
             for item in node.body:
-                if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                if isinstance(item, ast.FunctionDef | ast.AsyncFunctionDef):
                     kind = (
                         "function"
                         if isinstance(item, ast.FunctionDef)
@@ -152,7 +151,9 @@ def _walk_symbols(tree: ast.AST, filepath: Path) -> List[SymbolMetrics]:
     return symbols
 
 
-def analyze_file(path: Path, app_dir: Path, max_line_length: int) -> FileMetrics:
+def analyze_file(
+    path: Path, app_dir: Path, max_line_length: int
+) -> FileMetrics:
     rel = str(path.relative_to(app_dir))
     text = path.read_text(encoding="utf-8")
     lines = text.splitlines()
@@ -176,7 +177,7 @@ def analyze_file(path: Path, app_dir: Path, max_line_length: int) -> FileMetrics
     return metrics
 
 
-def run_flake8(app_dir: Path, repo_root: Path) -> Tuple[Counter, List[str]]:
+def run_flake8(app_dir: Path, repo_root: Path) -> tuple[Counter, list[str]]:
     paths = [
         "processos/views",
         "processos/services",
@@ -213,7 +214,7 @@ def run_flake8(app_dir: Path, repo_root: Path) -> Tuple[Counter, List[str]]:
         return Counter(), ["flake8 não disponível no ambiente"]
 
     codes: Counter = Counter()
-    raw_lines: List[str] = []
+    raw_lines: list[str] = []
     for line in result.stdout.splitlines():
         raw_lines.append(line)
         msg = line.rsplit(":", 1)[-1].strip() if ":" in line else ""
@@ -224,12 +225,12 @@ def run_flake8(app_dir: Path, repo_root: Path) -> Tuple[Counter, List[str]]:
     return codes, raw_lines
 
 
-def analyze_pep440(requirements_dir: Path) -> Dict[str, Any]:
+def analyze_pep440(requirements_dir: Path) -> dict[str, Any]:
     from packaging.requirements import InvalidRequirement, Requirement
 
     files = sorted(requirements_dir.glob("*.txt"))
-    entries: List[Dict[str, Any]] = []
-    invalid: List[str] = []
+    entries: list[dict[str, Any]] = []
+    invalid: list[str] = []
     git_pins = 0
     pinned_eq = 0
     total = 0
@@ -278,14 +279,15 @@ def _pct_float(part: int, whole: int) -> float:
 
 
 def render_simplified_markdown(
-    summary: Dict[str, Any],
+    summary: dict[str, Any],
     flake8_total: int,
-    pep440: Dict[str, Any],
-    meta: Dict[str, str],
+    pep440: dict[str, Any],
+    meta: dict[str, str],
     max_line_length: int,
 ) -> str:
     """
-    Quatro seções (PEP 8, 257, 484, 440) com % de aderência e critério explícito.
+    Quatro seções (PEP 8, 257, 484, 440) com % de aderência e critério
+    explícito.
     """
     agg = summary
     elig = agg["lines_length_eligible"]
@@ -309,7 +311,7 @@ def render_simplified_markdown(
     lines = [
         "# Resumo PEP — app `processos`",
         "",
-        f"Gerado em: **{meta['generated_at']}** · Commit: `{meta.get('git_commit', 'N/A')}`  ",
+        f"Gerado em: **{meta['generated_at']}** · Commit: `{meta.get('git_commit', 'N/A')}`  ",  # noqa: E501
         f"Comando: `{meta['command']}`",
         "",
         "---",
@@ -320,8 +322,8 @@ def render_simplified_markdown(
         f"_(linhas não vazias e não só comentário com até {max_line_length} "
         f"caracteres; {within} de {elig} linhas elegíveis.)_",
         "",
-        f"**Obs.:** o flake8 encontrou **{flake8_total}** avisos/erros de estilo "
-        f"no escopo analisado (E501, imports não usados, espaços em branco, etc.); "
+        f"**Obs.:** o flake8 encontrou **{flake8_total}** avisos/erros de estilo "  # noqa: E501
+        f"no escopo analisado (E501, imports não usados, espaços em branco, etc.); "  # noqa: E501
         f"isso não entra no % acima, que é só largura de linha.",
         "",
         "---",
@@ -336,23 +338,23 @@ def render_simplified_markdown(
         "",
         "## PEP 484 — Type Hints",
         "",
-        f"**Aderência (anotações completas em args + retorno):** **{pep484_full:.1f}%**  ",
+        f"**Aderência (anotações completas em args + retorno):** **{pep484_full:.1f}%**  ",  # noqa: E501
         f"_{agg['hints_completo']} de {ft} funções/métodos._",
         "",
         f"**Aderência (completo ou parcial):** **{pep484_partial:.1f}%**  ",
-        f"_{agg['hints_completo'] + agg['hints_parcial']} de {ft} funções/métodos._",
+        f"_{agg['hints_completo'] + agg['hints_parcial']} de {ft} funções/métodos._",  # noqa: E501
         "",
         "---",
         "",
         "## PEP 440 — Version Identification",
         "",
-        f"**Aderência (linhas de dependência parseáveis):** **{pep440_pct:.1f}%**  ",
+        f"**Aderência (linhas de dependência parseáveis):** **{pep440_pct:.1f}%**  ",  # noqa: E501
         f"_{dep_lines - inv_n} de {dep_lines} linhas em `requirements/*.txt` "
         f"(excl. `-r` e comentários); linhas inválidas: {inv_n}._",
         "",
         "---",
         "",
-        f"*Versão detalhada: ver o arquivo `RELATORIO_PEP.md` na mesma pasta.*",
+        "*Versão detalhada: ver o arquivo `RELATORIO_PEP.md` na mesma pasta.*",
         "",
     ]
     return "\n".join(lines) + "\n"
@@ -366,7 +368,7 @@ def _status_palavra(pct: float) -> str:
     return "Precisa melhorar"
 
 
-def _estimar_horas_ajuste(summary: Dict[str, Any], flake8_total: int) -> int:
+def _estimar_horas_ajuste(summary: dict[str, Any], flake8_total: int) -> int:
     """Estimativa grossa para leigos (não é compromisso de prazo)."""
     horas = (
         flake8_total * 0.005
@@ -378,10 +380,10 @@ def _estimar_horas_ajuste(summary: Dict[str, Any], flake8_total: int) -> int:
 
 
 def render_simplified_txt(
-    summary: Dict[str, Any],
+    summary: dict[str, Any],
     flake8_total: int,
-    pep440: Dict[str, Any],
-    meta: Dict[str, str],
+    pep440: dict[str, Any],
+    meta: dict[str, str],
     max_line_length: int,
     *,
     service_name: str = "MS-ProcessoConvocacao",
@@ -415,62 +417,62 @@ def render_simplified_txt(
         "\n"
         "O que é este relatório?\n"
         "---------------------\n"
-        "PEP significa \"Python Enhancement Proposal\" — são recomendações oficiais\n"
-        "de como escrever código Python de forma clara, uniforme e fácil de manter.\n"
-        "Este arquivo resume o quanto o módulo de processos de convocação segue\n"
+        "PEP significa \"Python Enhancement Proposal\" — são recomendações oficiais\n"  # noqa: E501
+        "de como escrever código Python de forma clara, uniforme e fácil de manter.\n"  # noqa: E501
+        "Este arquivo resume o quanto o módulo de processos de convocação segue\n"  # noqa: E501
         "essas recomendações. Quanto maior o percentual, melhor.\n"
         "\n"
         f"Data da análise: {meta['generated_at']}\n"
-        f"Versão do código (commit): {meta.get('git_commit', 'não informado')}\n"
+        f"Versão do código (commit): {meta.get('git_commit', 'não informado')}\n"  # noqa: E501
         "\n"
         "----------------------------------------------------------------\n"
         "PEP 8 — Organização e leitura do código\n"
         "----------------------------------------------------------------\n"
-        "Significado: regras de formatação — tamanho de linha, espaços, nomes\n"
-        "e estrutura — para o código ficar parecido em todo o projeto e mais fácil\n"
+        "Significado: regras de formatação — tamanho de linha, espaços, nomes\n"  # noqa: E501
+        "e estrutura — para o código ficar parecido em todo o projeto e mais fácil\n"  # noqa: E501
         "de ler na tela e em revisões.\n"
         "\n"
-        f"  Resultado: {pep8_lines:.1f}% das linhas respeitam até {max_line_length} caracteres\n"
+        f"  Resultado: {pep8_lines:.1f}% das linhas respeitam até {max_line_length} caracteres\n"  # noqa: E501
         f"  Situação: {_status_palavra(pep8_lines)}\n"
-        f"  Detalhe: {over} linha(s) ainda passam desse limite (de {elig} linhas analisadas).\n"
+        f"  Detalhe: {over} linha(s) ainda passam desse limite (de {elig} linhas analisadas).\n"  # noqa: E501
         "\n"
         "----------------------------------------------------------------\n"
         "PEP 257 — Documentação dentro do código (docstrings)\n"
         "----------------------------------------------------------------\n"
         "Significado: cada função, método e classe deve ter um texto curto\n"
-        "explicando o que faz — ajuda quem mantém o sistema sem precisar adivinhar.\n"
+        "explicando o que faz — ajuda quem mantém o sistema sem precisar adivinhar.\n"  # noqa: E501
         "\n"
-        f"  Resultado: {pep257:.1f}% dos trechos importantes têm essa explicação\n"
+        f"  Resultado: {pep257:.1f}% dos trechos importantes têm essa explicação\n"  # noqa: E501
         f"  Situação: {_status_palavra(pep257)}\n"
-        f"  Detalhe: {agg['symbols_with_docstring']} de {sym_total} funções, métodos e classes documentados.\n"
+        f"  Detalhe: {agg['symbols_with_docstring']} de {sym_total} funções, métodos e classes documentados.\n"  # noqa: E501
         "\n"
         "----------------------------------------------------------------\n"
         "PEP 484 — Indicação de tipos de dados (type hints)\n"
         "----------------------------------------------------------------\n"
-        "Significado: informar se um dado é texto, número, lista etc. reduz erros\n"
+        "Significado: informar se um dado é texto, número, lista etc. reduz erros\n"  # noqa: E501
         "e facilita ferramentas de apoio ao desenvolvimento.\n"
         "\n"
         f"  Resultado (anotação completa): {pep484_full:.1f}%\n"
         f"  Resultado (completa ou parcial): {pep484_partial:.1f}%\n"
         f"  Situação: {_status_palavra(pep484_partial)}\n"
-        f"  Detalhe: {agg['hints_completo']} de {ft} funções/métodos com tipagem completa.\n"
+        f"  Detalhe: {agg['hints_completo']} de {ft} funções/métodos com tipagem completa.\n"  # noqa: E501
         "\n"
         "----------------------------------------------------------------\n"
         "PEP 440 — Versões das bibliotecas usadas pelo sistema\n"
         "----------------------------------------------------------------\n"
         "Significado: o arquivo de dependências (requirements) deve declarar\n"
-        "versões de forma padronizada, para instalar sempre o mesmo ambiente.\n"
+        "versões de forma padronizada, para instalar sempre o mesmo ambiente.\n"  # noqa: E501
         "\n"
-        f"  Resultado: {pep440_pct:.1f}% das dependências com versão bem definida\n"
+        f"  Resultado: {pep440_pct:.1f}% das dependências com versão bem definida\n"  # noqa: E501
         f"  Situação: {_status_palavra(pep440_pct)}\n"
-        f"  Detalhe: {dep_lines - inv_n} de {dep_lines} linhas em requirements/; "
+        f"  Detalhe: {dep_lines - inv_n} de {dep_lines} linhas em requirements/; "  # noqa: E501
         f"problemas encontrados: {inv_n}.\n"
         "\n"
         "----------------------------------------------------------------\n"
         "Próximos passos\n"
         "----------------------------------------------------------------\n"
         f"Estimativa grosseira para alinhar o código às PEPs: ~{horas}h\n"
-        "(valor orientativo; o relatório técnico completo está em RELATORIO_PEP.md)\n"
+        "(valor orientativo; o relatório técnico completo está em RELATORIO_PEP.md)\n"  # noqa: E501
         "\n"
     )
 
@@ -481,14 +483,14 @@ def _pct(part: int, whole: int) -> str:
     return f"{100 * part / whole:.1f}%"
 
 
-def aggregate(file_metrics: List[FileMetrics]) -> Dict[str, Any]:
-    funcs: List[SymbolMetrics] = []
-    classes: List[SymbolMetrics] = []
+def aggregate(file_metrics: list[FileMetrics]) -> dict[str, Any]:
+    funcs: list[SymbolMetrics] = []
+    classes: list[SymbolMetrics] = []
     modules_with_doc = 0
     modules_without_doc = 0
     lines_over = 0
     loc_total = 0
-    missing_docstrings: List[Tuple[str, SymbolMetrics]] = []
+    missing_docstrings: list[tuple[str, SymbolMetrics]] = []
 
     for fm in file_metrics:
         loc_total += fm.loc
@@ -500,9 +502,12 @@ def aggregate(file_metrics: List[FileMetrics]) -> Dict[str, Any]:
         funcs.extend(fm.functions_and_methods)
         classes.extend(fm.classes)
         for s in fm.symbols:
-            if not s.has_docstring and s.kind != "class":
-                missing_docstrings.append((fm.path, s))
-            elif not s.has_docstring and s.kind == "class":
+            if (
+                not s.has_docstring
+                and s.kind != "class"
+                or not s.has_docstring
+                and s.kind == "class"
+            ):
                 missing_docstrings.append((fm.path, s))
 
     all_callables = funcs
@@ -516,15 +521,21 @@ def aggregate(file_metrics: List[FileMetrics]) -> Dict[str, Any]:
         "files_count": len(file_metrics),
         "loc_total": loc_total,
         "lines_over_79": lines_over,
-        "lines_length_eligible": sum(fm.lines_length_eligible for fm in file_metrics),
+        "lines_length_eligible": sum(
+            fm.lines_length_eligible for fm in file_metrics
+        ),
         "modules_with_docstring": modules_with_doc,
         "modules_without_docstring": modules_without_doc,
         "functions_methods_total": len(all_callables),
-        "functions_methods_with_docstring": sum(1 for s in all_callables if s.has_docstring),
+        "functions_methods_with_docstring": sum(
+            1 for s in all_callables if s.has_docstring
+        ),
         "functions_methods_without_docstring": len(all_callables)
         - sum(1 for s in all_callables if s.has_docstring),
         "classes_total": len(all_classes),
-        "classes_with_docstring": sum(1 for s in all_classes if s.has_docstring),
+        "classes_with_docstring": sum(
+            1 for s in all_classes if s.has_docstring
+        ),
         "classes_without_docstring": len(all_classes)
         - sum(1 for s in all_classes if s.has_docstring),
         "symbols_with_docstring": doc_with,
@@ -547,12 +558,12 @@ def aggregate(file_metrics: List[FileMetrics]) -> Dict[str, Any]:
 
 
 def render_markdown(
-    summary: Dict[str, Any],
-    file_metrics: List[FileMetrics],
+    summary: dict[str, Any],
+    file_metrics: list[FileMetrics],
     flake8_codes: Counter,
-    flake8_lines: List[str],
-    pep440: Dict[str, Any],
-    meta: Dict[str, str],
+    flake8_lines: list[str],
+    pep440: dict[str, Any],
+    meta: dict[str, str],
     max_line_length: int,
 ) -> str:
     agg = summary
@@ -562,7 +573,7 @@ def render_markdown(
         f"Gerado em: **{meta['generated_at']}**  ",
         f"Comando: `{meta['command']}`  ",
         f"Commit: `{meta.get('git_commit', 'N/A')}`  ",
-        f"Escopo: código de aplicação (sem `tests/` e `migrations/`)  ",
+        "Escopo: código de aplicação (sem `tests/` e `migrations/`)  ",
         f"Limite de linha (PEP 8): **{max_line_length}** caracteres",
         "",
         "## Resumo executivo",
@@ -571,15 +582,15 @@ def render_markdown(
         "| --- | ---: | ---: |",
         f"| Arquivos analisados | {agg['files_count']} | — |",
         f"| Linhas de código (LOC) | {agg['loc_total']} | — |",
-        f"| Linhas com mais de {max_line_length} caracteres | {agg['lines_over_79']} | "
+        f"| Linhas com mais de {max_line_length} caracteres | {agg['lines_over_79']} | "  # noqa: E501
         f"{_pct(agg['lines_over_79'], agg['loc_total'])} |",
         f"| Funções/métodos | {agg['functions_methods_total']} | — |",
         f"| Funções/métodos com docstring (PEP 257) | "
         f"{agg['functions_methods_with_docstring']} | "
-        f"{_pct(agg['functions_methods_with_docstring'], agg['functions_methods_total'])} |",
+        f"{_pct(agg['functions_methods_with_docstring'], agg['functions_methods_total'])} |",  # noqa: E501
         f"| Funções/métodos sem docstring | "
         f"{agg['functions_methods_without_docstring']} | "
-        f"{_pct(agg['functions_methods_without_docstring'], agg['functions_methods_total'])} |",
+        f"{_pct(agg['functions_methods_without_docstring'], agg['functions_methods_total'])} |",  # noqa: E501
         f"| Classes | {agg['classes_total']} | — |",
         f"| Classes com docstring | {agg['classes_with_docstring']} | "
         f"{_pct(agg['classes_with_docstring'], agg['classes_total'])} |",
@@ -595,7 +606,7 @@ def render_markdown(
         "",
         "## PEP 8 — Style Guide",
         "",
-        f"- **Linhas acima de {max_line_length} chars** (código/comentários, exceto linha vazia): "
+        f"- **Linhas acima de {max_line_length} chars** (código/comentários, exceto linha vazia): "  # noqa: E501
         f"**{agg['lines_over_79']}**",
         f"- **Total flake8** (views, services, models, tasks, etc.): "
         f"**{sum(flake8_codes.values())}**",
@@ -622,11 +633,11 @@ def render_markdown(
         [
             "## PEP 257 — Docstring Conventions",
             "",
-            f"- Funções/métodos **com** docstring: **{agg['functions_methods_with_docstring']}**",
-            f"- Funções/métodos **sem** docstring: **{agg['functions_methods_without_docstring']}**",
-            f"- Classes **com** docstring: **{agg['classes_with_docstring']}** / "
+            f"- Funções/métodos **com** docstring: **{agg['functions_methods_with_docstring']}**",  # noqa: E501
+            f"- Funções/métodos **sem** docstring: **{agg['functions_methods_without_docstring']}**",  # noqa: E501
+            f"- Classes **com** docstring: **{agg['classes_with_docstring']}** / "  # noqa: E501
             f"{agg['classes_total']}",
-            f"- Módulos **sem** docstring no topo: **{agg['modules_without_docstring']}**",
+            f"- Módulos **sem** docstring no topo: **{agg['modules_without_docstring']}**",  # noqa: E501
             "",
             "### Principais símbolos sem docstring",
             "",
@@ -636,7 +647,7 @@ def render_markdown(
     )
     for item in agg["missing_docstrings_top"]:
         lines.append(
-            f"| `{item['path']}` | {item['lineno']} | `{item['name']}` | {item['kind']} |"
+            f"| `{item['path']}` | {item['lineno']} | `{item['name']}` | {item['kind']} |"  # noqa: E501
         )
     lines.extend(["", "## PEP 484 — Type Hints", ""])
     lines.append(
@@ -659,7 +670,7 @@ def render_markdown(
             "_Aplica-se a `requirements/`, não ao código do app._",
             "",
             f"- Arquivos: {', '.join(pep440.get('files_analyzed', []))}",
-            f"- Linhas de dependência: **{pep440.get('total_dependency_lines', 0)}**",
+            f"- Linhas de dependência: **{pep440.get('total_dependency_lines', 0)}**",  # noqa: E501
             f"- PyPI válidas (packaging): **{pep440.get('pypi_valid', 0)}**",
             f"- Pins `git+...`: **{pep440.get('git_pins', 0)}**",
             f"- Com especificador `==`: **{pep440.get('pinned_with_eq', 0)}**",
@@ -675,16 +686,22 @@ def render_markdown(
 
     lines.extend(["## Métricas por arquivo", ""])
     lines.append(
-        "| Arquivo | LOC | Linhas >79 | Funções | Docstring % | Hints completos % |"
+        "| Arquivo | LOC | Linhas >79 | Funções | Docstring % | Hints completos % |"  # noqa: E501
     )
     lines.append("| --- | ---: | ---: | ---: | ---: | ---: |")
     for fm in sorted(file_metrics, key=lambda x: x.path):
         funcs = fm.functions_and_methods
         n = len(funcs)
-        doc_pct = _pct(sum(1 for s in funcs if s.has_docstring), n) if n else "—"
-        hint_pct = _pct(sum(1 for s in funcs if s.hint_level == "completo"), n) if n else "—"
+        doc_pct = (
+            _pct(sum(1 for s in funcs if s.has_docstring), n) if n else "—"
+        )
+        hint_pct = (
+            _pct(sum(1 for s in funcs if s.hint_level == "completo"), n)
+            if n
+            else "—"
+        )
         lines.append(
-            f"| `{fm.path}` | {fm.loc} | {fm.lines_over_max} | {n} | {doc_pct} | {hint_pct} |"
+            f"| `{fm.path}` | {fm.loc} | {fm.lines_over_max} | {n} | {doc_pct} | {hint_pct} |"  # noqa: E501
         )
 
     lines.extend(
@@ -692,9 +709,9 @@ def render_markdown(
             "",
             "## Recomendações",
             "",
-            "1. Priorizar docstrings em `views/` e `services/` nos endpoints públicos.",
+            "1. Priorizar docstrings em `views/` e `services/` nos endpoints públicos.",  # noqa: E501
             "2. Reduzir linhas >79 ou quebrar strings/imports longos (E501).",
-            "3. Estender type hints nos services que ainda estão em nível `sem` ou `parcial`.",
+            "3. Estender type hints nos services que ainda estão em nível `sem` ou `parcial`.",  # noqa: E501
             "4. Rodar `flake8` e `black` no CI com `max-line-length=79`.",
             "5. Manter pins PEP 440 explícitos em `requirements/base.txt`.",
             "",
@@ -707,11 +724,11 @@ def render_markdown(
 
 
 def build_simple_summary(
-    summary: Dict[str, Any],
+    summary: dict[str, Any],
     flake8_total: int,
-    pep440: Dict[str, Any],
+    pep440: dict[str, Any],
     max_line_length: int,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     agg = summary
     elig = agg["lines_length_eligible"]
     over = agg["lines_over_79"]
@@ -729,7 +746,9 @@ def build_simple_summary(
             _pct_float(agg["symbols_with_docstring"], sym_total), 2
         ),
         "pep257_symbols_total": sym_total,
-        "pep484_full_hints_pct": round(_pct_float(agg["hints_completo"], ft), 2),
+        "pep484_full_hints_pct": round(
+            _pct_float(agg["hints_completo"], ft), 2
+        ),
         "pep484_full_or_partial_pct": round(
             _pct_float(agg["hints_completo"] + agg["hints_parcial"], ft), 2
         ),
@@ -744,13 +763,13 @@ def build_simple_summary(
 
 
 def build_json_payload(
-    summary: Dict[str, Any],
-    file_metrics: List[FileMetrics],
+    summary: dict[str, Any],
+    file_metrics: list[FileMetrics],
     flake8_codes: Counter,
-    pep440: Dict[str, Any],
-    meta: Dict[str, str],
+    pep440: dict[str, Any],
+    meta: dict[str, str],
     max_line_length: int,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     by_file = []
     for fm in file_metrics:
         funcs = fm.functions_and_methods
@@ -761,13 +780,21 @@ def build_json_payload(
                 "lines_over_max": fm.lines_over_max,
                 "module_has_docstring": fm.module_has_docstring,
                 "functions_count": len(funcs),
-                "functions_with_docstring": sum(1 for s in funcs if s.has_docstring),
-                "hints_completo": sum(1 for s in funcs if s.hint_level == "completo"),
-                "hints_parcial": sum(1 for s in funcs if s.hint_level == "parcial"),
+                "functions_with_docstring": sum(
+                    1 for s in funcs if s.has_docstring
+                ),
+                "hints_completo": sum(
+                    1 for s in funcs if s.hint_level == "completo"
+                ),
+                "hints_parcial": sum(
+                    1 for s in funcs if s.hint_level == "parcial"
+                ),
                 "hints_sem": sum(1 for s in funcs if s.hint_level == "sem"),
             }
         )
-    simple = build_simple_summary(summary, sum(flake8_codes.values()), pep440, max_line_length)
+    simple = build_simple_summary(
+        summary, sum(flake8_codes.values()), pep440, max_line_length
+    )
     return {
         "generated_at": meta["generated_at"],
         "command": meta["command"],
@@ -827,7 +854,9 @@ class Command(BaseCommand):
             pass
 
         meta = {
-            "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+            "generated_at": datetime.now(UTC).strftime(
+                "%Y-%m-%d %H:%M:%S UTC"
+            ),
             "command": f"python manage.py {COMMAND_NAME}",
             "git_commit": git_commit,
         }
@@ -838,7 +867,13 @@ class Command(BaseCommand):
         json_path = output_dir / "relatorio_pep.json"
 
         md_content = render_markdown(
-            summary, file_metrics, flake8_codes, flake8_lines, pep440, meta, max_len
+            summary,
+            file_metrics,
+            flake8_codes,
+            flake8_lines,
+            pep440,
+            meta,
+            max_len,
         )
         md_simple_content = render_simplified_markdown(
             summary, flake8_total, pep440, meta, max_len
@@ -865,7 +900,7 @@ class Command(BaseCommand):
         self.stdout.write(
             f"Arquivos: {summary['files_count']} | "
             f"Funções/métodos: {summary['functions_methods_total']} | "
-            f"Sem docstring: {summary['functions_methods_without_docstring']} | "
+            f"Sem docstring: {summary['functions_methods_without_docstring']} | "  # noqa: E501
             f"Linhas >{max_len}: {summary['lines_over_79']} | "
             f"flake8: {flake8_total}"
         )

@@ -1,6 +1,6 @@
-import pytest
 from unittest.mock import Mock, patch
 
+import pytest
 from django.test import override_settings
 
 from processos.services.agenda_api_service import AgendaApiService
@@ -18,7 +18,10 @@ def test_excluir_agendas_por_processo_sucesso_retorna_json():
     response.content = b'{"ok": true}'
     response.json.return_value = {"ok": True}
 
-    with patch("processos.services.agenda_api_service.http_client.delete", return_value=response) as mock_delete:
+    with patch(
+        "processos.services.agenda_api_service.http_client.delete",
+        return_value=response,
+    ) as mock_delete:
         result = service.excluir_agendas_por_processo(processo_uuid)
 
     assert result == {"ok": True}
@@ -42,7 +45,10 @@ def test_excluir_agendas_por_processo_sucesso_sem_body_retorna_dict_vazio():
     response.content = b""
     response.json.return_value = {"ignored": True}
 
-    with patch("processos.services.agenda_api_service.http_client.delete", return_value=response):
+    with patch(
+        "processos.services.agenda_api_service.http_client.delete",
+        return_value=response,
+    ):
         result = service.excluir_agendas_por_processo(processo_uuid)
 
     assert result == {}
@@ -59,7 +65,10 @@ def test_excluir_agendas_por_processo_status_diferente_200_gera_erro():
     response.content = b"erro"
     response.json.return_value = {"detail": "erro"}
 
-    with patch("processos.services.agenda_api_service.http_client.delete", return_value=response):
+    with patch(  # noqa: SIM117
+        "processos.services.agenda_api_service.http_client.delete",
+        return_value=response,
+    ):
         with pytest.raises(AgendaServiceError) as exc:
             service.excluir_agendas_por_processo(processo_uuid)
 
@@ -71,9 +80,11 @@ def test_excluir_agendas_por_processo_excecao_do_client_gera_erro():
     service = AgendaApiService()
     processo_uuid = "44444444-4444-4444-4444-444444444444"
 
-    with patch("processos.services.agenda_api_service.http_client.delete", side_effect=Exception("boom")):
+    with patch(  # noqa: SIM117
+        "processos.services.agenda_api_service.http_client.delete",
+        side_effect=Exception("boom"),
+    ):
         with pytest.raises(AgendaServiceError) as exc:
             service.excluir_agendas_por_processo(processo_uuid)
 
     assert "Falha ao conectar no MS-Agenda" in str(exc.value)
-

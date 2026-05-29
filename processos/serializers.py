@@ -1,12 +1,13 @@
 from rest_framework import serializers
 
 from processos.utils.conteudo_html import normalizar_conteudo_html
+
 from .models import (
-    ProcessoConvocacao,
     CargoProcesso,
     EnvioEmail,
     EnvioEmailCandidato,
     EnvioEmailConteudo,
+    ProcessoConvocacao,
 )
 from .models.envio_email import ENVIO_EMAIL_TIPO_CHOICES, TIPO_CONVOCACAO
 
@@ -17,12 +18,21 @@ class CargoProcessoSerializer(serializers.ModelSerializer):
     class Meta:
         model = CargoProcesso
         fields = [
-            'uuid', 'cargo_nome', 'cargo_uuid', 'cargo_codigo', 'processo', 
-            'vagas', 'candidatos_geral', 'candidatos_pcd', 'candidatos_nna', 'total_candidatos',
-            'candidatos_uuids',
-            'criado_em', 'atualizado_em'
+            "uuid",
+            "cargo_nome",
+            "cargo_uuid",
+            "cargo_codigo",
+            "processo",
+            "vagas",
+            "candidatos_geral",
+            "candidatos_pcd",
+            "candidatos_nna",
+            "total_candidatos",
+            "candidatos_uuids",
+            "criado_em",
+            "atualizado_em",
         ]
-        read_only_fields = ['uuid', 'criado_em', 'atualizado_em']
+        read_only_fields = ["uuid", "criado_em", "atualizado_em"]
 
 
 class CargoProcessoCreateSerializer(serializers.ModelSerializer):
@@ -31,11 +41,17 @@ class CargoProcessoCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = CargoProcesso
         fields = [
-            'cargo_nome', 'cargo_uuid', 'cargo_codigo',
-            'candidatos_geral', 'candidatos_pcd', 'candidatos_nna', 'total_candidatos', 'vagas',
-            'candidatos_uuids'
+            "cargo_nome",
+            "cargo_uuid",
+            "cargo_codigo",
+            "candidatos_geral",
+            "candidatos_pcd",
+            "candidatos_nna",
+            "total_candidatos",
+            "vagas",
+            "candidatos_uuids",
         ]
-        read_only_fields = ['uuid', 'criado_em', 'atualizado_em']
+        read_only_fields = ["uuid", "criado_em", "atualizado_em"]
 
 
 class CargoProcessoUpsertSerializer(CargoProcessoCreateSerializer):
@@ -49,7 +65,7 @@ class CargoProcessoUpsertSerializer(CargoProcessoCreateSerializer):
     uuid = serializers.UUIDField(required=False, allow_null=True)
 
     class Meta(CargoProcessoCreateSerializer.Meta):
-        fields = ['uuid'] + list(CargoProcessoCreateSerializer.Meta.fields)
+        fields = ["uuid"] + list(CargoProcessoCreateSerializer.Meta.fields)
 
 
 class ProcessoCargosPayloadSerializer(serializers.Serializer):
@@ -64,23 +80,37 @@ class ProcessoCargosPayloadSerializer(serializers.Serializer):
     }
     """
 
-    porcentagem_nna = serializers.FloatField(min_value=0.0, max_value=1.0, required=False)
-    porcentagem_pcd = serializers.FloatField(min_value=0.0, max_value=1.0, required=False)
+    porcentagem_nna = serializers.FloatField(
+        min_value=0.0, max_value=1.0, required=False
+    )
+    porcentagem_pcd = serializers.FloatField(
+        min_value=0.0, max_value=1.0, required=False
+    )
     cargos = CargoProcessoUpsertSerializer(many=True)
 
 
 class ProcessoConvocacaoSerializer(serializers.ModelSerializer):
     """Serializer para o modelo ProcessoConvocacao."""
+
     cargos_processo = CargoProcessoSerializer(many=True, read_only=True)
 
     class Meta:
         model = ProcessoConvocacao
         fields = [
-            'uuid', 'concurso_uuid', 'concurso_nome', 'descricao', 
-            'tipo_escolha', 'status', 'data_convocacao',
-            'data_corte_vagas','passo', 'cargos_processo', 'criado_em', 'atualizado_em'
+            "uuid",
+            "concurso_uuid",
+            "concurso_nome",
+            "descricao",
+            "tipo_escolha",
+            "status",
+            "data_convocacao",
+            "data_corte_vagas",
+            "passo",
+            "cargos_processo",
+            "criado_em",
+            "atualizado_em",
         ]
-        read_only_fields = ['uuid', 'criado_em', 'atualizado_em']
+        read_only_fields = ["uuid", "criado_em", "atualizado_em"]
 
 
 class ProcessoConvocacaoCreateSerializer(serializers.ModelSerializer):
@@ -89,32 +119,50 @@ class ProcessoConvocacaoCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProcessoConvocacao
         fields = [
-            'uuid', 'concurso_uuid', 'concurso_nome', 'descricao', 'tipo_escolha',
-            'status', 'data_convocacao', 'data_corte_vagas', 'passo'
+            "uuid",
+            "concurso_uuid",
+            "concurso_nome",
+            "descricao",
+            "tipo_escolha",
+            "status",
+            "data_convocacao",
+            "data_corte_vagas",
+            "passo",
         ]
-        read_only_fields = ['uuid']
+        read_only_fields = ["uuid"]
 
     def validate_concurso_uuid(self, value):
         """Valida se o concurso_uuid é um UUID válido."""
         import uuid
+
         try:
             uuid.UUID(str(value))
             return value
         except ValueError:
-            raise serializers.ValidationError("UUID do concurso inválido.")
+            raise serializers.ValidationError("UUID do concurso inválido.")  # noqa: B904
 
 
 class ProcessoConvocacaoListSerializer(serializers.ModelSerializer):
     """Serializer simplificado para listagem de processos de convocação."""
+
     quantidade_cargos = serializers.SerializerMethodField()
     pode_deletar = serializers.SerializerMethodField()
 
     class Meta:
         model = ProcessoConvocacao
         fields = [
-            'uuid', 'concurso_nome', 'concurso_uuid', 'descricao', 'tipo_escolha',
-            'status', 'passo', 'data_convocacao', 'data_corte_vagas',
-            'quantidade_cargos', 'pode_deletar', 'criado_em'
+            "uuid",
+            "concurso_nome",
+            "concurso_uuid",
+            "descricao",
+            "tipo_escolha",
+            "status",
+            "passo",
+            "data_convocacao",
+            "data_corte_vagas",
+            "quantidade_cargos",
+            "pode_deletar",
+            "criado_em",
         ]
 
     def get_quantidade_cargos(self, obj):
@@ -130,28 +178,38 @@ class ProcessoConvocacaoUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProcessoConvocacao
         fields = [
-            'concurso_nome', 'concurso_uuid', 'descricao', 'tipo_escolha', 'status',
-            'data_convocacao', 'data_corte_vagas'
+            "concurso_nome",
+            "concurso_uuid",
+            "descricao",
+            "tipo_escolha",
+            "status",
+            "data_convocacao",
+            "data_corte_vagas",
         ]
 
 
 class ProcessoConvocacaoPassoSerializer(serializers.ModelSerializer):
     """Serializer para atualização de passo do processo de convocação."""
+
     class Meta:
         model = ProcessoConvocacao
-        fields = ['passo']
+        fields = ["passo"]
+
 
 class ProcessoConvocacaoSelectSerializer(serializers.ModelSerializer):
     """
     Serializer para selects/dropdowns no frontend.
-    Inclui status para que o front possa filtrar (ex.: não exibir finalizados na Escolha de Candidato).
+    Inclui status para que o front possa filtrar (ex.: não exibir finalizados
+    na
+    Escolha de Candidato).
     """
-    value = serializers.UUIDField(source='uuid')
-    label = serializers.CharField(source='descricao')
+
+    value = serializers.UUIDField(source="uuid")
+    label = serializers.CharField(source="descricao")
 
     class Meta:
         model = ProcessoConvocacao
-        fields = ['value', 'label', 'concurso_uuid', 'status']
+        fields = ["value", "label", "concurso_uuid", "status"]
 
 
 class EnvioEmailEnvioSerializer(serializers.Serializer):
@@ -165,7 +223,9 @@ class EnvioEmailEnvioSerializer(serializers.Serializer):
     def validate_processo_uuid(self, value):
         """Garante que o processo existe."""
         if not ProcessoConvocacao.objects.filter(uuid=value).exists():
-            raise serializers.ValidationError('Processo de convocação não encontrado.')
+            raise serializers.ValidationError(
+                "Processo de convocação não encontrado."
+            )
         return value
 
 
@@ -175,8 +235,12 @@ class EnvioEmailSerializer(serializers.ModelSerializer):
     class Meta:
         model = EnvioEmail
         fields = [
-            'uuid', 'processo_nome', 'processo_uuid', 'tipo',
-            'criado_em', 'quantidade_candidatos',
+            "uuid",
+            "processo_nome",
+            "processo_uuid",
+            "tipo",
+            "criado_em",
+            "quantidade_candidatos",
         ]
 
 
@@ -185,24 +249,38 @@ class EnvioEmailCandidatoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = EnvioEmailCandidato
-        fields = ['nome', 'rf', 'email', 'status', 'status_detalhe', 'conteudo']
+        fields = [
+            "nome",
+            "rf",
+            "email",
+            "status",
+            "status_detalhe",
+            "conteudo",
+        ]
 
 
 class EnvioEmailDetalheSerializer(serializers.ModelSerializer):
-    """Serializer para GET /api/v1/envio-email/<uuid>/ (detalhe com candidatos)."""
+    """Serializer para GET /api/v1/envio-email/<uuid>/ (detalhe com
+    candidatos)."""
 
     candidatos = EnvioEmailCandidatoSerializer(many=True, read_only=True)
 
     class Meta:
         model = EnvioEmail
         fields = [
-            'uuid', 'processo_nome', 'processo_uuid', 'tipo',
-            'criado_em', 'quantidade_candidatos', 'candidatos',
+            "uuid",
+            "processo_nome",
+            "processo_uuid",
+            "tipo",
+            "criado_em",
+            "quantidade_candidatos",
+            "candidatos",
         ]
 
 
 class ConteudoHtmlField(serializers.CharField):
-    """Retorna e persiste HTML sem escape JSON duplicado (ex.: \\\"ql-align-center\\\")."""
+    """Retorna e persiste HTML sem escape JSON duplicado (ex.:
+    \\\"ql-align-center\\\")."""
 
     def to_representation(self, value):
         if value is None:
@@ -216,14 +294,27 @@ class ConteudoHtmlField(serializers.CharField):
 class EnvioEmailConteudoSerializer(serializers.ModelSerializer):
     """Serializer para GET dos templates de e-mail por tipo."""
 
-    tipo_display = serializers.CharField(source='get_tipo_display', read_only=True)
+    tipo_display = serializers.CharField(
+        source="get_tipo_display", read_only=True
+    )
     conteudo = ConteudoHtmlField()
 
     class Meta:
         model = EnvioEmailConteudo
-        fields = ['uuid', 'tipo', 'tipo_display', 'conteudo', 'criado_em', 'atualizado_em']
+        fields = [
+            "uuid",
+            "tipo",
+            "tipo_display",
+            "conteudo",
+            "criado_em",
+            "atualizado_em",
+        ]
         read_only_fields = [
-            'uuid', 'tipo', 'tipo_display', 'criado_em', 'atualizado_em',
+            "uuid",
+            "tipo",
+            "tipo_display",
+            "criado_em",
+            "atualizado_em",
         ]
 
 
@@ -234,4 +325,4 @@ class EnvioEmailConteudoUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = EnvioEmailConteudo
-        fields = ['conteudo']
+        fields = ["conteudo"]

@@ -1,15 +1,17 @@
 """
 Normalização de HTML armazenado em EnvioEmailConteudo.conteudo.
 
-Editores (ex.: Quill) ou clientes podem enviar o texto com escape JSON duplicado,
+Editores (ex.: Quill) ou clientes podem enviar o texto com escape JSON
+duplicado,
 gravando no banco sequências literais como \\" em vez de aspas normais.
 """
+
 import json
 
 
 def normalizar_conteudo_html(valor: str | None) -> str:
     if not valor:
-        return valor or ''
+        return valor or ""
 
     texto = str(valor).strip()
 
