@@ -1,0 +1,7 @@
+{% extends "email/envio_email.html" %}
+
+{% block email_title %}{{ email_title }}{% endblock %}
+
+{% block email_content %}
+{{ email_body|safe }}
+{% endblock %}

@@ -13,7 +13,8 @@ import uuid
 
 from unittest.mock import patch
 
-from ..models import ProcessoConvocacao, CargoProcesso, CartaConvocacaoHistorico, CartaConvocacaoCandidato
+from ..models import ProcessoConvocacao, CargoProcesso, EnvioEmail, EnvioEmailCandidato
+from ..models.envio_email import TIPO_CONVOCACAO
 from ..models.constants import (
     ERROR_PROCESSO_JA_FINALIZADO,
     ERROR_PROCESSO_JA_CANCELADO,
@@ -40,14 +41,6 @@ def user():
         username='testuser',
         password='testpass123'
     )
-
-
-@pytest.fixture
-def authenticated_client(user):
-    """Fixture para cliente API autenticado."""
-    client = APIClient()
-    client.force_authenticate(user=user)
-    return client
 
 
 @pytest.fixture
@@ -970,72 +963,62 @@ def test_processo_convocacao_search(authenticated_client, processo_convocacao):
     assert len(response.data['results']) == 1
 
 
-# --- Testes Carta Convocação (Histórico: list, retrieve, create) ---
+# --- Testes Envio Email (list, retrieve, create) ---
 
 
 @pytest.fixture
-def carta_convocacao_historico(processo_convocacao):
-    """Fixture para CartaConvocacaoHistorico."""
-    return CartaConvocacaoHistorico.objects.create(
+def envio_email(processo_convocacao):
+    """Fixture para EnvioEmail."""
+    return EnvioEmail.objects.create(
         processo_uuid=processo_convocacao.uuid,
         processo_nome=processo_convocacao.concurso_nome,
-        data=timezone.now().date(),
+        tipo=TIPO_CONVOCACAO,
         quantidade_candidatos=2,
     )
 
 
 @pytest.fixture
-def carta_convocacao_candidatos(carta_convocacao_historico):
-    """Fixture para CartaConvocacaoCandidato vinculados ao histórico."""
-    from processos.models.carta_convocacao_candidato import ENVIO_STATUS_SUCESSO, ENVIO_STATUS_ERRO
-    CartaConvocacaoCandidato.objects.create(
-        carta_convocacao_historico=carta_convocacao_historico,
+def envio_email_candidatos(envio_email):
+    """Fixture para EnvioEmailCandidato vinculados ao envio."""
+    from processos.models.envio_email_candidato import ENVIO_STATUS_SUCESSO, ENVIO_STATUS_ERRO
+    EnvioEmailCandidato.objects.create(
+        envio_email=envio_email,
         nome="Fulano",
         rf="1234567",
         email="fulano@test.com",
         status=ENVIO_STATUS_SUCESSO,
         conteudo="<p>Conteúdo 1</p>",
     )
-    CartaConvocacaoCandidato.objects.create(
-        carta_convocacao_historico=carta_convocacao_historico,
+    EnvioEmailCandidato.objects.create(
+        envio_email=envio_email,
         nome="Ciclano",
         rf="7654321",
         email="ciclano@test.com",
         status=ENVIO_STATUS_ERRO,
         conteudo="<p>Conteúdo 2</p>",
     )
-    return list(carta_convocacao_historico.candidatos.all())
+    return list(envio_email.candidatos.all())
 
 
-def test_carta_convocacao_list(authenticated_client, carta_convocacao_historico):
-    """Testa GET /api/v1/carta-convocacao/ (listagem do histórico)."""
-    url = reverse('carta-convocacao-list')
+def test_envio_email_list(authenticated_client, envio_email):
+    """Testa GET /api/v1/envio-email/ (listagem do histórico)."""
+    url = reverse('envio-email-list')
     response = authenticated_client.get(url)
     assert response.status_code == status.HTTP_200_OK
-    assert 'results' in response.data
-    assert response.data['count'] >= 1
-    item = next((r for r in response.data['results'] if r['uuid'] == str(carta_convocacao_historico.uuid)), None)
-    assert item is not None
-    assert item['processo_nome'] == carta_convocacao_historico.processo_nome
-    assert item['quantidade_convocados'] == carta_convocacao_historico.quantidade_candidatos
+    assert len(response.data) >= 1
+    assert response.data[0]['uuid'] == str(envio_email.uuid)
+    assert response.data[0]['processo_nome'] == envio_email.processo_nome
+    assert response.data[0]['quantidade_candidatos'] == envio_email.quantidade_candidatos
+    assert response.data[0]['tipo'] == TIPO_CONVOCACAO
 
 
-def test_carta_convocacao_list_pagination(authenticated_client, carta_convocacao_historico):
-    """Testa paginação na listagem do histórico."""
-    url = reverse('carta-convocacao-list')
-    response = authenticated_client.get(url, {'page': 1, 'page_size': 10})
-    assert response.status_code == status.HTTP_200_OK
-    assert 'results' in response.data
-    assert 'count' in response.data
-
-
-def test_carta_convocacao_retrieve(authenticated_client, carta_convocacao_historico, carta_convocacao_candidatos):
-    """Testa GET /api/v1/carta-convocacao/<uuid>/ (detalhe com candidatos)."""
-    url = reverse('carta-convocacao-detail', args=[carta_convocacao_historico.uuid])
+def test_envio_email_retrieve(authenticated_client, envio_email, envio_email_candidatos):
+    """Testa GET /api/v1/envio-email/<uuid>/ (detalhe com candidatos)."""
+    url = reverse('envio-email-detail', args=[envio_email.uuid])
     response = authenticated_client.get(url)
     assert response.status_code == status.HTTP_200_OK
-    assert response.data['uuid'] == str(carta_convocacao_historico.uuid)
-    assert response.data['processo_nome'] == carta_convocacao_historico.processo_nome
+    assert response.data['uuid'] == str(envio_email.uuid)
+    assert response.data['processo_nome'] == envio_email.processo_nome
     assert 'candidatos' in response.data
     assert len(response.data['candidatos']) == 2
     nomes = [c['nome'] for c in response.data['candidatos']]
@@ -1043,66 +1026,70 @@ def test_carta_convocacao_retrieve(authenticated_client, carta_convocacao_histor
     assert 'Ciclano' in nomes
 
 
-def test_carta_convocacao_retrieve_not_found(authenticated_client):
+def test_envio_email_retrieve_not_found(authenticated_client):
     """Testa GET detalhe com UUID inexistente."""
-    url = reverse('carta-convocacao-detail', args=[uuid.uuid4()])
+    url = reverse('envio-email-detail', args=[uuid.uuid4()])
     response = authenticated_client.get(url)
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
-@patch('processos.views.carta_convocacao.iniciar_processamento_envio')
-def test_carta_convocacao_create(mock_iniciar, authenticated_client, processo_convocacao):
-    """Testa POST /api/v1/carta-convocacao/ (inicia processamento de envio)."""
-    mock_historico = CartaConvocacaoHistorico.objects.create(
+@patch('processos.views.envio_email.iniciar_processamento_envio')
+def test_envio_email_create(mock_iniciar, authenticated_client, processo_convocacao):
+    """Testa POST /api/v1/envio-email/ (inicia processamento de envio)."""
+    mock_envio = EnvioEmail.objects.create(
         processo_uuid=processo_convocacao.uuid,
         processo_nome=processo_convocacao.concurso_nome,
-        data=timezone.now().date(),
+        tipo=TIPO_CONVOCACAO,
         quantidade_candidatos=0,
     )
-    mock_iniciar.return_value = mock_historico
+    mock_iniciar.return_value = mock_envio
 
-    url = reverse('carta-convocacao-list')
+    url = reverse('envio-email-list')
     payload = {
         'processo_uuid': str(processo_convocacao.uuid),
         'processo_nome': processo_convocacao.concurso_nome,
-        'data': '25-12-2024',
+        'tipo': TIPO_CONVOCACAO,
+        'conteudo': '<p>Conteúdo</p>',
     }
     response = authenticated_client.post(url, payload, format='json')
     assert response.status_code == status.HTTP_200_OK
     assert 'detail' in response.data
-    assert 'historico_uuid' in response.data
-    assert response.data['historico_uuid'] == str(mock_historico.uuid)
+    assert 'envio_email_uuid' in response.data
+    assert response.data['envio_email_uuid'] == str(mock_envio.uuid)
     mock_iniciar.assert_called_once()
     call_kwargs = mock_iniciar.call_args[1]
     assert call_kwargs['processo_nome'] == processo_convocacao.concurso_nome
+    assert call_kwargs['tipo'] == TIPO_CONVOCACAO
 
 
-@patch('processos.views.carta_convocacao.iniciar_processamento_envio')
-def test_carta_convocacao_create_invalid_payload(mock_iniciar, authenticated_client):
+@patch('processos.views.envio_email.iniciar_processamento_envio')
+def test_envio_email_create_invalid_payload(mock_iniciar, authenticated_client):
     """Testa POST com payload inválido (processo não encontrado)."""
-    url = reverse('carta-convocacao-list')
+    url = reverse('envio-email-list')
     payload = {
         'processo_uuid': str(uuid.uuid4()),
         'processo_nome': 'Inexistente',
-        'data': '25-12-2024',
+        'tipo': TIPO_CONVOCACAO,
+        'conteudo': '<p>Conteúdo</p>',
     }
     response = authenticated_client.post(url, payload, format='json')
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     mock_iniciar.assert_not_called()
 
 
-@patch('processos.views.carta_convocacao.iniciar_processamento_envio')
-def test_carta_convocacao_create_quando_servico_levanta_excecao_retorna_500(
+@patch('processos.views.envio_email.iniciar_processamento_envio')
+def test_envio_email_create_quando_servico_levanta_excecao_retorna_500(
     mock_iniciar, authenticated_client, processo_convocacao
 ):
     """Quando iniciar_processamento_envio levanta exceção, a view retorna 500 com detail."""
     mock_iniciar.side_effect = Exception('Email duplicado entre candidatos: duplicado@test.com')
 
-    url = reverse('carta-convocacao-list')
+    url = reverse('envio-email-list')
     payload = {
         'processo_uuid': str(processo_convocacao.uuid),
         'processo_nome': processo_convocacao.concurso_nome,
-        'data': '25-12-2024',
+        'tipo': TIPO_CONVOCACAO,
+        'conteudo': '<p>Conteúdo</p>',
     }
     response = authenticated_client.post(url, payload, format='json')
 

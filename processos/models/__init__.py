@@ -2,16 +2,18 @@
 from .base import BaseModel
 from .processo_convocacao import ProcessoConvocacao
 from .cargo_processo import CargoProcesso
-from .carta_convocacao_historico import CartaConvocacaoHistorico
-from .carta_convocacao_candidato import CartaConvocacaoCandidato
+from .envio_email import EnvioEmail
+from .envio_email_candidato import EnvioEmailCandidato
+from .envio_email_conteudo import EnvioEmailConteudo
 from .constants import *
 
 __all__ = [
     'BaseModel',
     'ProcessoConvocacao',
     'CargoProcesso',
-    'CartaConvocacaoHistorico',
-    'CartaConvocacaoCandidato',
+    'EnvioEmail',
+    'EnvioEmailCandidato',
+    'EnvioEmailConteudo',
     # Constants
     'PROCESSO_STATUS_CHOICES',
     'TIPO_ESCOLHA_CHOICES',
@@ -19,4 +21,4 @@ __all__ = [
     'MAX_PRIORIDADE',
     'MIN_VAGAS',
     'MAX_VAGAS',
-] 
+]

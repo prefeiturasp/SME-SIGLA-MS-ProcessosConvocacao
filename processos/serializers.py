@@ -1,5 +1,14 @@
 from rest_framework import serializers
-from .models import ProcessoConvocacao, CargoProcesso, CartaConvocacaoHistorico, CartaConvocacaoCandidato
+
+from processos.utils.conteudo_html import normalizar_conteudo_html
+from .models import (
+    ProcessoConvocacao,
+    CargoProcesso,
+    EnvioEmail,
+    EnvioEmailCandidato,
+    EnvioEmailConteudo,
+)
+from .models.envio_email import ENVIO_EMAIL_TIPO_CHOICES, TIPO_CONVOCACAO
 
 
 class CargoProcessoSerializer(serializers.ModelSerializer):
@@ -145,16 +154,13 @@ class ProcessoConvocacaoSelectSerializer(serializers.ModelSerializer):
         fields = ['value', 'label', 'concurso_uuid', 'status']
 
 
-class CartaConvocacaoEnvioSerializer(serializers.Serializer):
-    """Serializer para validar o payload do endpoint de carta de convocação."""
+class EnvioEmailEnvioSerializer(serializers.Serializer):
+    """Serializer para validar o payload do endpoint de envio de e-mail."""
 
     processo_uuid = serializers.UUIDField(help_text='UUID do processo de convocação')
     processo_nome = serializers.CharField(help_text='Nome do processo')
-    data = serializers.DateField(
-        format='%d-%m-%Y',
-        input_formats=['%d-%m-%Y'],
-        help_text='Data no formato dd-mm-yyyy',
-    )
+    tipo = serializers.ChoiceField(choices=ENVIO_EMAIL_TIPO_CHOICES, help_text='Tipo de envio')
+    conteudo = serializers.CharField(help_text='Conteúdo do e-mail (HTML)')
 
     def validate_processo_uuid(self, value):
         """Garante que o processo existe."""
@@ -163,28 +169,69 @@ class CartaConvocacaoEnvioSerializer(serializers.Serializer):
         return value
 
 
-class CartaConvocacaoHistoricoSerializer(serializers.ModelSerializer):
-    """Serializer para GET /api/v1/carta-convocacao/ (listagem do histórico)."""
-    quantidade_convocados = serializers.IntegerField(source='quantidade_candidatos', read_only=True)
+class EnvioEmailSerializer(serializers.ModelSerializer):
+    """Serializer para GET /api/v1/envio-email/ (listagem do histórico)."""
 
     class Meta:
-        model = CartaConvocacaoHistorico
-        fields = ['uuid', 'processo_nome', 'processo_uuid', 'data', 'criado_em', 'quantidade_convocados']
+        model = EnvioEmail
+        fields = [
+            'uuid', 'processo_nome', 'processo_uuid', 'tipo',
+            'criado_em', 'quantidade_candidatos',
+        ]
 
 
-class CartaConvocacaoCandidatoSerializer(serializers.ModelSerializer):
-    """Serializer para candidatos no GET /api/v1/carta-convocacao/<uuid>/ (detalhe do histórico)."""
+class EnvioEmailCandidatoSerializer(serializers.ModelSerializer):
+    """Serializer para candidatos no detalhe do envio."""
 
     class Meta:
-        model = CartaConvocacaoCandidato
+        model = EnvioEmailCandidato
         fields = ['nome', 'rf', 'email', 'status', 'status_detalhe', 'conteudo']
 
 
-class CartaConvocacaoHistoricoDetalheSerializer(serializers.ModelSerializer):
-    """Serializer para GET /api/v1/carta-convocacao/<uuid>/ (detalhe do histórico com candidatos)."""
-    quantidade_convocados = serializers.IntegerField(source='quantidade_candidatos', read_only=True)
-    candidatos = CartaConvocacaoCandidatoSerializer(many=True, read_only=True)
+class EnvioEmailDetalheSerializer(serializers.ModelSerializer):
+    """Serializer para GET /api/v1/envio-email/<uuid>/ (detalhe com candidatos)."""
+
+    candidatos = EnvioEmailCandidatoSerializer(many=True, read_only=True)
 
     class Meta:
-        model = CartaConvocacaoHistorico
-        fields = ['uuid', 'processo_nome', 'processo_uuid', 'data', 'criado_em', 'quantidade_convocados', 'candidatos']
+        model = EnvioEmail
+        fields = [
+            'uuid', 'processo_nome', 'processo_uuid', 'tipo',
+            'criado_em', 'quantidade_candidatos', 'candidatos',
+        ]
+
+
+class ConteudoHtmlField(serializers.CharField):
+    """Retorna e persiste HTML sem escape JSON duplicado (ex.: \\\"ql-align-center\\\")."""
+
+    def to_representation(self, value):
+        if value is None:
+            return value
+        return normalizar_conteudo_html(value)
+
+    def to_internal_value(self, data):
+        return normalizar_conteudo_html(super().to_internal_value(data))
+
+
+class EnvioEmailConteudoSerializer(serializers.ModelSerializer):
+    """Serializer para GET dos templates de e-mail por tipo."""
+
+    tipo_display = serializers.CharField(source='get_tipo_display', read_only=True)
+    conteudo = ConteudoHtmlField()
+
+    class Meta:
+        model = EnvioEmailConteudo
+        fields = ['uuid', 'tipo', 'tipo_display', 'conteudo', 'criado_em', 'atualizado_em']
+        read_only_fields = [
+            'uuid', 'tipo', 'tipo_display', 'criado_em', 'atualizado_em',
+        ]
+
+
+class EnvioEmailConteudoUpdateSerializer(serializers.ModelSerializer):
+    """Serializer para PATCH — apenas o HTML do template."""
+
+    conteudo = ConteudoHtmlField()
+
+    class Meta:
+        model = EnvioEmailConteudo
+        fields = ['conteudo']

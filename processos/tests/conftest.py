@@ -2,9 +2,11 @@
 Configuração para testes do app processos.
 """
 import pytest
+import uuid
+
 from django.contrib.auth.models import User
 from django.utils import timezone
-import uuid
+from rest_framework.test import APIClient
 
 from ..models import ProcessoConvocacao, CargoProcesso
 
@@ -154,3 +156,12 @@ def processo_avaliacao(user):
         data_convocacao=timezone.now(),
         data_corte_vagas=timezone.now()
     )
+
+
+
+@pytest.fixture
+def authenticated_client(user):
+    """Fixture para cliente API autenticado."""
+    client = APIClient()
+    client.force_authenticate(user=user)
+    return client

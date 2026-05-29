@@ -7,8 +7,9 @@ from auditlog.models import LogEntry
 from .models import (
     ProcessoConvocacao,
     CargoProcesso,
-    CartaConvocacaoHistorico,
-    CartaConvocacaoCandidato,
+    EnvioEmail,
+    EnvioEmailCandidato,
+    EnvioEmailConteudo,
 )
 
 
@@ -81,35 +82,51 @@ class CargoProcessoAdmin(admin.ModelAdmin):
         return super().get_queryset(request).select_related('processo')
 
 
-class CartaConvocacaoCandidatoInline(admin.TabularInline):
-    """Inline para candidatos do histórico de carta de convocação."""
-    model = CartaConvocacaoCandidato
+class EnvioEmailCandidatoInline(admin.TabularInline):
+    """Inline para candidatos do envio de e-mail."""
+    model = EnvioEmailCandidato
     extra = 0
     readonly_fields = ('uuid', 'criado_em', 'atualizado_em')
     fields = ('nome', 'rf', 'email', 'status', 'status_detalhe', 'conteudo')
 
 
-@admin.register(CartaConvocacaoHistorico)
-class CartaConvocacaoHistoricoAdmin(admin.ModelAdmin):
-    """Admin para histórico de envio de carta de convocação."""
+@admin.register(EnvioEmail)
+class EnvioEmailAdmin(admin.ModelAdmin):
+    """Admin para histórico de envio de e-mail."""
 
-    list_display = ('processo_nome', 'processo_uuid', 'data', 'quantidade_candidatos', 'criado_em')
-    list_filter = ('data', 'criado_em')
+    list_display = (
+        'processo_nome', 'processo_uuid', 'tipo', 'quantidade_candidatos', 'criado_em',
+    )
+    list_filter = ('tipo', 'criado_em')
     search_fields = ('processo_nome',)
     readonly_fields = ('uuid', 'criado_em', 'atualizado_em')
     ordering = ('-criado_em',)
-    inlines = (CartaConvocacaoCandidatoInline,)
+    inlines = (EnvioEmailCandidatoInline,)
 
 
-@admin.register(CartaConvocacaoCandidato)
-class CartaConvocacaoCandidatoAdmin(admin.ModelAdmin):
-    """Admin para envio de carta por candidato."""
+@admin.register(EnvioEmailCandidato)
+class EnvioEmailCandidatoAdmin(admin.ModelAdmin):
+    """Admin para envio de e-mail por candidato."""
 
-    list_display = (
-        'nome', 'rf', 'email', 'status', 'carta_convocacao_historico', 'criado_em',
-    )
-    list_filter = ('status', 'carta_convocacao_historico')
+    list_display = ('nome', 'rf', 'email', 'status', 'envio_email', 'criado_em')
+    list_filter = ('status', 'envio_email')
     search_fields = ('nome', 'email', 'rf')
     readonly_fields = ('uuid', 'criado_em', 'atualizado_em')
     ordering = ('-criado_em',)
-    raw_id_fields = ('carta_convocacao_historico',)
+    raw_id_fields = ('envio_email',)
+
+
+@admin.register(EnvioEmailConteudo)
+class EnvioEmailConteudoAdmin(admin.ModelAdmin):
+    """Admin para templates de conteúdo de e-mail por tipo."""
+
+    list_display = ('tipo', 'atualizado_em', 'criado_em')
+    readonly_fields = ('uuid', 'tipo', 'criado_em', 'atualizado_em')
+    fields = ('tipo', 'conteudo', 'uuid', 'criado_em', 'atualizado_em')
+    ordering = ('tipo',)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
