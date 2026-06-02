@@ -1,6 +1,6 @@
-import pytest
 from unittest.mock import Mock, patch
 
+import pytest
 from django.test import override_settings
 
 from processos.services.escolhas_service import EscolhasApiService
@@ -27,7 +27,10 @@ def test_buscar_candidatos_com_escolha_json_lista_mapeia_candidato_uuid():
         {},
     ]
 
-    with patch("processos.services.escolhas_service.http_client.get", return_value=response) as mock_get:
+    with patch(
+        "processos.services.escolhas_service.http_client.get",
+        return_value=response,
+    ) as mock_get:
         result = service.buscar_candidatos_com_escolha(concurso_uuid)
 
     assert result == ["1", "2"]
@@ -43,26 +46,32 @@ def test_buscar_candidatos_com_escolha_json_lista_mapeia_candidato_uuid():
 
 
 @override_settings(ESCOLHAS_API_URL="http://ms-escolha")
-def test_buscar_candidatos_com_escolha_json_dict_results_mapeia_candidato_uuid():
+def test_buscar_candidatos_com_escolha_json_dict_results_mapeia_candidato_uuid():  # noqa: E501
     service = EscolhasApiService()
 
     response = Mock()
     response.raise_for_status.return_value = None
     response.json.return_value = {"results": [{"candidato_uuid": "x"}]}
 
-    with patch("processos.services.escolhas_service.http_client.get", return_value=response):
+    with patch(
+        "processos.services.escolhas_service.http_client.get",
+        return_value=response,
+    ):
         assert service.buscar_candidatos_com_escolha("concurso") == ["x"]
 
 
 @override_settings(ESCOLHAS_API_URL="http://ms-escolha")
-def test_buscar_candidatos_com_escolha_json_dict_sem_results_retorna_lista_vazia():
+def test_buscar_candidatos_com_escolha_json_dict_sem_results_retorna_lista_vazia():  # noqa: E501
     service = EscolhasApiService()
 
     response = Mock()
     response.raise_for_status.return_value = None
     response.json.return_value = {"count": 0}
 
-    with patch("processos.services.escolhas_service.http_client.get", return_value=response):
+    with patch(
+        "processos.services.escolhas_service.http_client.get",
+        return_value=response,
+    ):
         assert service.buscar_candidatos_com_escolha("concurso") == []
 
 
@@ -73,16 +82,18 @@ def test_buscar_candidatos_com_escolha_erro_do_client_e_propagado():
     response = Mock()
     response.raise_for_status.side_effect = Exception("boom")
 
-    with patch("processos.services.escolhas_service.http_client.get", return_value=response):
-        with pytest.raises(Exception):
+    with patch(  # noqa: SIM117
+        "processos.services.escolhas_service.http_client.get",
+        return_value=response,
+    ):
+        with pytest.raises(Exception):  # noqa: B017
             service.buscar_candidatos_com_escolha("concurso")
 
 
 def test_excluir_lotes_vagas_por_processo_sem_config_gera_value_error():
     service = EscolhasApiService()
-    with override_settings(ESCOLHAS_API_URL=""):
-        with pytest.raises(ValueError):
-            service.excluir_lotes_vagas_por_processo("processo")
+    with override_settings(ESCOLHAS_API_URL=""), pytest.raises(ValueError):
+        service.excluir_lotes_vagas_por_processo("processo")
 
 
 @override_settings(ESCOLHAS_API_URL="http://ms-escolha")
@@ -96,7 +107,10 @@ def test_excluir_lotes_vagas_por_processo_sucesso_retorna_json():
     response.content = b'{"ok": true}'
     response.json.return_value = {"ok": True}
 
-    with patch("processos.services.escolhas_service.http_client.delete", return_value=response) as mock_delete:
+    with patch(
+        "processos.services.escolhas_service.http_client.delete",
+        return_value=response,
+    ) as mock_delete:
         result = service.excluir_lotes_vagas_por_processo(processo_uuid)
 
     assert result == {"ok": True}
@@ -110,7 +124,7 @@ def test_excluir_lotes_vagas_por_processo_sucesso_retorna_json():
 
 
 @override_settings(ESCOLHAS_API_URL="http://ms-escolha")
-def test_excluir_lotes_vagas_por_processo_sucesso_sem_body_retorna_dict_vazio():
+def test_excluir_lotes_vagas_por_processo_sucesso_sem_body_retorna_dict_vazio():  # noqa: E501
     service = EscolhasApiService()
 
     response = Mock()
@@ -119,7 +133,10 @@ def test_excluir_lotes_vagas_por_processo_sucesso_sem_body_retorna_dict_vazio():
     response.content = b""
     response.json.return_value = {"ignored": True}
 
-    with patch("processos.services.escolhas_service.http_client.delete", return_value=response):
+    with patch(
+        "processos.services.escolhas_service.http_client.delete",
+        return_value=response,
+    ):
         assert service.excluir_lotes_vagas_por_processo("processo") == {}
 
 
@@ -132,7 +149,10 @@ def test_excluir_lotes_vagas_por_processo_status_diferente_200_gera_erro():
     response.text = "erro"
     response.content = b"erro"
 
-    with patch("processos.services.escolhas_service.http_client.delete", return_value=response):
+    with patch(  # noqa: SIM117
+        "processos.services.escolhas_service.http_client.delete",
+        return_value=response,
+    ):
         with pytest.raises(EscolhasServiceError) as exc:
             service.excluir_lotes_vagas_por_processo("processo")
 
@@ -143,9 +163,11 @@ def test_excluir_lotes_vagas_por_processo_status_diferente_200_gera_erro():
 def test_excluir_lotes_vagas_por_processo_excecao_do_client_gera_erro():
     service = EscolhasApiService()
 
-    with patch("processos.services.escolhas_service.http_client.delete", side_effect=Exception("boom")):
+    with patch(  # noqa: SIM117
+        "processos.services.escolhas_service.http_client.delete",
+        side_effect=Exception("boom"),
+    ):
         with pytest.raises(EscolhasServiceError) as exc:
             service.excluir_lotes_vagas_por_processo("processo")
 
     assert "Falha ao conectar no MS-Escolha" in str(exc.value)
-

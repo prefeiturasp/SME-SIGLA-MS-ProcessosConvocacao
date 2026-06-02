@@ -1,4 +1,4 @@
-from .processos import ProcessoConvocacaoViewSet
 from .envio_email import EnvioEmailViewSet
+from .processos import ProcessoConvocacaoViewSet
 
-__all__ = ['ProcessoConvocacaoViewSet', 'EnvioEmailViewSet']
+__all__ = ["ProcessoConvocacaoViewSet", "EnvioEmailViewSet"]
