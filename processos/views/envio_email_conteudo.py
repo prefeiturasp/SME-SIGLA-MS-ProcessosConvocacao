@@ -30,17 +30,7 @@ class EnvioEmailConteudoViewSet(
     pagination_class = None
 
     def get_serializer_class(self) -> type[BaseSerializer]:
-        """Usa serializer de update apenas em PATCH.
-
-        Args:
-            self: Instância do objeto.
-
-        Returns:
-            Tipo retornado conforme a operação.
-
-        Raises:
-            Nenhuma exceção específica documentada.
-        """
+        """Retorna serializer de acordo com a ação."""
         if self.action in ("update", "partial_update"):
             return EnvioEmailConteudoUpdateSerializer
         return EnvioEmailConteudoSerializer

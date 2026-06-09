@@ -69,18 +69,7 @@ class ProcessoConvocacaoAdmin(admin.ModelAdmin):
         self,
         request: HttpRequest,
     ) -> QuerySet[ProcessoConvocacao]:
-        """Otimiza queryset com cargos relacionados.
-
-        Args:
-            self: Instância do objeto.
-            request: Requisição HTTP recebida.
-
-        Returns:
-            QuerySet filtrado conforme os parâmetros.
-
-        Raises:
-            Nenhuma exceção específica documentada.
-        """
+        """Otimiza queryset com prefetch_related."""
         return (
             super().get_queryset(request).prefetch_related("cargos_processo")
         )
@@ -124,18 +113,7 @@ class CargoProcessoAdmin(admin.ModelAdmin):
     )
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[CargoProcesso]:
-        """Otimiza queryset com processo relacionado.
-
-        Args:
-            self: Instância do objeto.
-            request: Requisição HTTP recebida.
-
-        Returns:
-            QuerySet filtrado conforme os parâmetros.
-
-        Raises:
-            Nenhuma exceção específica documentada.
-        """
+        """Otimiza queryset com select_related."""
         return super().get_queryset(request).select_related("processo")
 
 
@@ -195,18 +173,7 @@ class EnvioEmailConteudoAdmin(admin.ModelAdmin):
     ordering = ("tipo",)
 
     def has_add_permission(self, request: HttpRequest) -> bool:
-        """Executa has add permission.
-
-        Args:
-            self: Instância do objeto.
-            request: Requisição HTTP recebida.
-
-        Returns:
-            Verdadeiro se a condição for satisfeita.
-
-        Raises:
-            Nenhuma exceção específica documentada.
-        """
+        """Verifica se tem permissão para adicionar."""
         return False
 
     def has_delete_permission(
@@ -214,17 +181,5 @@ class EnvioEmailConteudoAdmin(admin.ModelAdmin):
         request: HttpRequest,
         obj: EnvioEmailConteudo | None = None,
     ) -> bool:
-        """Executa has delete permission.
-
-        Args:
-            self: Instância do objeto.
-            request: Requisição HTTP recebida.
-            obj: Instância do objeto processado.
-
-        Returns:
-            Verdadeiro se a condição for satisfeita.
-
-        Raises:
-            Nenhuma exceção específica documentada.
-        """
+        """Verifica se tem permissão para deletar."""
         return False
