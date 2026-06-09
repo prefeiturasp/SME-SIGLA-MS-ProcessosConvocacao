@@ -1,6 +1,4 @@
-"""
-Testes unitários para as views do app processos usando pytest.
-"""
+"""Testes unitários para as views do app processos usando pytest."""
 
 import uuid
 from datetime import timedelta
@@ -209,6 +207,7 @@ def test_processo_convocacao_delete(
     processo_convocacao.save(update_fields=["status"])
 
     def _excluir_e_inativar(*, processo, auth_header=None):
+        """Executa  excluir e inativar."""
         processo.inativar()
 
     mock_excluir_dependencias.side_effect = _excluir_e_inativar
@@ -459,8 +458,7 @@ def test_cargos_create_processo_finalizado(
 def test_cargos_create_payload_nao_e_lista(
     authenticated_client, processo_convocacao
 ):
-    """POST retorna 400 quando payload é lista (espera dict com chave
-    cargos)."""
+    """POST retorna 400 quando payload é lista (espera dict com chave."""
     url = reverse(
         "processo-cargos-list",
         kwargs={"processo_pk": processo_convocacao.uuid},
@@ -705,8 +703,7 @@ def test_endpoint_filtros_concurso_duplicado(authenticated_client, user):
 
 
 def test_endpoint_filtros_cargo_duplicado(authenticated_client, user):
-    """Testa que cargos com nomes duplicados são removidos no endpoint
-    /filtros/."""
+    """Testa que cargos com nomes duplicados são removidos no endpoint."""
     # Criar dois processos
     processo1 = ProcessoConvocacao.objects.create(
         concurso_uuid=uuid.uuid4(),
@@ -884,8 +881,7 @@ def test_finalizar_ja_cancelado(authenticated_client, processo_convocacao):
 def test_finalizar_status_nao_em_andamento(
     authenticated_client, processo_convocacao
 ):
-    """Retorna 400 quando processo não está em andamento (status diferente de
-    EM_ANDAMENTO)."""
+    """Retorna 400 se o processo não estiver em andamento."""
     # Usa um status fora dos 3 principais para acionar a mensagem genérica
     processo_convocacao.status = "PENDENTE"
     processo_convocacao.save(update_fields=["status"])
@@ -1095,9 +1091,7 @@ def test_atualizar_passo_invalido(authenticated_client, processo_convocacao):
 def test_atualizar_passo_processo_finalizado(
     authenticated_client, processo_convocacao
 ):
-    """Permite atualização de passo mesmo com processo finalizado no
-    comportamento
-    atual da API."""
+    """Permite atualização de passo mesmo com processo finalizado no."""
     processo_convocacao.status = "FINALIZADO"
     processo_convocacao.save(update_fields=["status"])
 
@@ -1221,10 +1215,10 @@ def test_envio_email_create(
 
     url = reverse("envio-email-list")
     payload = {
-        'processo_uuid': str(processo_convocacao.uuid),
-        'processo_nome': processo_convocacao.concurso_nome,
-        'tipo': TIPO_CONVOCACAO,
-        'conteudo': '<p>Conteúdo</p>',
+        "processo_uuid": str(processo_convocacao.uuid),
+        "processo_nome": processo_convocacao.concurso_nome,
+        "tipo": TIPO_CONVOCACAO,
+        "conteudo": "<p>Conteúdo</p>",
     }
     response = authenticated_client.post(url, payload, format="json")
     assert response.status_code == status.HTTP_200_OK
@@ -1244,10 +1238,10 @@ def test_envio_email_create_invalid_payload(
     """Testa POST com payload inválido (processo não encontrado)."""
     url = reverse("envio-email-list")
     payload = {
-        'processo_uuid': str(uuid.uuid4()),
-        'processo_nome': 'Inexistente',
-        'tipo': TIPO_CONVOCACAO,
-        'conteudo': '<p>Conteúdo</p>',
+        "processo_uuid": str(uuid.uuid4()),
+        "processo_nome": "Inexistente",
+        "tipo": TIPO_CONVOCACAO,
+        "conteudo": "<p>Conteúdo</p>",
     }
     response = authenticated_client.post(url, payload, format="json")
     assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -1258,19 +1252,17 @@ def test_envio_email_create_invalid_payload(
 def test_envio_email_create_quando_servico_levanta_excecao_retorna_500(
     mock_iniciar, authenticated_client, processo_convocacao
 ):
-    """Quando iniciar_processamento_envio levanta exceção, a view retorna 500
-    com
-    detail."""
+    """Exceção em iniciar_processamento_envio retorna 500 na view."""
     mock_iniciar.side_effect = Exception(
         "Email duplicado entre candidatos: duplicado@test.com"
     )
 
     url = reverse("envio-email-list")
     payload = {
-        'processo_uuid': str(processo_convocacao.uuid),
-        'processo_nome': processo_convocacao.concurso_nome,
-        'tipo': TIPO_CONVOCACAO,
-        'conteudo': '<p>Conteúdo</p>',
+        "processo_uuid": str(processo_convocacao.uuid),
+        "processo_nome": processo_convocacao.concurso_nome,
+        "tipo": TIPO_CONVOCACAO,
+        "conteudo": "<p>Conteúdo</p>",
     }
     response = authenticated_client.post(url, payload, format="json")
 

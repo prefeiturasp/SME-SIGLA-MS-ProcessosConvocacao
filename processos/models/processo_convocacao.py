@@ -1,3 +1,5 @@
+"""Módulo models/processo_convocacao."""
+
 from auditlog.registry import auditlog
 from django.db import models
 from django.utils import timezone
@@ -7,9 +9,7 @@ from .constants import PROCESSO_STATUS_CHOICES, TIPO_ESCOLHA_CHOICES
 
 
 class ProcessoConvocacao(BaseModel):
-    """
-    Modelo para representar processos de convocação.
-    """
+    """Modelo para representar processos de convocação."""
 
     concurso_uuid = models.UUIDField(verbose_name="UUID do Concurso")
     concurso_nome = models.CharField(
@@ -53,22 +53,53 @@ class ProcessoConvocacao(BaseModel):
     )
 
     class Meta:
+        """Configuração do serializer."""
+
         verbose_name = "Processo de Convocação"
         verbose_name_plural = "Processos de Convocação"
         ordering = ["-criado_em"]
         db_table = "processos_convocacao"
 
     def __str__(self) -> str:
+        """Executa   str  .
+
+        Args:
+            self: Instância do objeto.
+
+        Returns:
+            Texto resultante da operação.
+
+        Raises:
+            Nenhuma exceção específica documentada.
+        """
         return f"{self.concurso_nome} - {self.tipo_escolha}"
 
     def pode_deletar(self) -> bool:
-        """Indica se o processo pode ser excluído
-        (não finalizado nem em andamento).
+        """Indica se o processo pode ser excluído.
+
+        Args:
+            self: Instância do objeto.
+
+        Returns:
+            Verdadeiro se a condição for satisfeita.
+
+        Raises:
+            Nenhuma exceção específica documentada.
         """
         return self.status not in ("FINALIZADO", "EM_ANDAMENTO")
 
     def inativar(self) -> None:
-        """Inativa o processo e remove cargos vinculados."""
+        """Inativa o processo e remove cargos vinculados.
+
+        Args:
+            self: Instância do objeto.
+
+        Returns:
+            Não retorna valor.
+
+        Raises:
+            Nenhuma exceção específica documentada.
+        """
         self.cargos_processo.all().delete()
         self.esta_ativo = False
         self.save(update_fields=["esta_ativo"])

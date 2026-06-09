@@ -24,9 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 class ProcessoConvocacaoService:
-    """
-    Orquestra chamadas aos MS dependentes na exclusão lógica do processo.
-    """
+    """Orquestra chamadas aos MS dependentes na exclusão lógica do processo."""
 
     def __init__(
         self,
@@ -35,6 +33,17 @@ class ProcessoConvocacaoService:
         candidatos_api: CandidatosApiService | None = None,
         escolhas_api: EscolhasApiService | None = None,
     ) -> None:
+        """Inicializa a instância com dependências configuráveis.
+
+        Args:
+            self: Instância do objeto.
+            agenda_api: Cliente do MS-Agenda (opcional).
+            candidatos_api: Cliente do MS-Candidatos (opcional).
+            escolhas_api: Cliente do MS-Escolhas (opcional).
+
+        Raises:
+            Nenhuma exceção específica documentada.
+        """
         self._agenda = agenda_api or AgendaApiService()
         self._candidatos = candidatos_api or CandidatosApiService()
         self._escolhas = escolhas_api or EscolhasApiService()
@@ -42,16 +51,19 @@ class ProcessoConvocacaoService:
     def excluir_processo_e_dependencias(
         self,
         *,
-        processo: "ProcessoConvocacao",
+        processo: ProcessoConvocacao,
     ) -> None:
-        """
-        Executa a limpeza nos MS dependentes e faz a deleção lógica do
-        processo.
+        """Limpa dependências nos MS e inativa o processo localmente.
 
-        - MS-Agenda: excluir agendas do processo
-        - MS-Candidatos: desconvocar candidatos do processo
-        - MS-Escolha: excluir lotes de vagas-escolas do processo
-        - Local: processo.inativar() (marca esta_ativo=False e remove cargos)
+        Args:
+            self: Instância do objeto.
+            processo: Processo de convocação a ser inativado.
+
+        Returns:
+            Não retorna valor.
+
+        Raises:
+            ProcessoServiceError: Se a operação no processo falhar.
         """
         processo_uuid = str(processo.uuid)
 

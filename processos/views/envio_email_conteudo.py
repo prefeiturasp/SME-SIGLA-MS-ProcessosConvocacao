@@ -19,10 +19,7 @@ class EnvioEmailConteudoViewSet(
     mixins.UpdateModelMixin,
     viewsets.GenericViewSet,
 ):
-    """
-    CRUD parcial de templates HTML por tipo
-    (CONVOCACAO, VAGAS, RESULTADOS).
-    """
+    """CRUD parcial de templates HTML por tipo."""
 
     queryset = EnvioEmailConteudo.objects.all().order_by("tipo")
     filter_backends = [DjangoFilterBackend]
@@ -33,7 +30,17 @@ class EnvioEmailConteudoViewSet(
     pagination_class = None
 
     def get_serializer_class(self) -> type[BaseSerializer]:
-        """Usa serializer de update apenas em PATCH."""
+        """Usa serializer de update apenas em PATCH.
+
+        Args:
+            self: Instância do objeto.
+
+        Returns:
+            Tipo retornado conforme a operação.
+
+        Raises:
+            Nenhuma exceção específica documentada.
+        """
         if self.action in ("update", "partial_update"):
             return EnvioEmailConteudoUpdateSerializer
         return EnvioEmailConteudoSerializer

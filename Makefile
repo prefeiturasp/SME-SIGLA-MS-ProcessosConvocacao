@@ -1,11 +1,14 @@
 # Makefile para o projeto SME-SIGLA-MS-Convocacao
 # Comandos úteis para desenvolvimento Django
 
-.PHONY: help makemigrations migrate runserver coverage test clean install format lint check
+.PHONY: help pep257 makemigrations migrate runserver coverage test clean install format lint check
+
+PEP_APP_DIRS = processos
 
 # Comando padrão - mostra ajuda
 help:
 	@echo "Comandos disponíveis:"
+	@echo "  make pep257          - Verifica PEP 257 (docstrings / Ruff D)"
 	@echo "  make makemigrations  - Cria migrações do Django"
 	@echo "  make migrate         - Aplica migrações do Django"
 	@echo "  make runserver       - Inicia o servidor de desenvolvimento"
@@ -68,3 +71,8 @@ lint:
 
 # Lint + testes
 check: lint test
+
+# PEP 257 — docstrings (Ruff, regras D / pydocstyle Google)
+pep257:
+	@echo "Verificando PEP 257 (docstrings)..."
+	python -m ruff check $(PEP_APP_DIRS) --select D

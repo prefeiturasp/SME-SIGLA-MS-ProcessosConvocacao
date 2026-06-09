@@ -1,3 +1,5 @@
+"""Módulo models/envio_email_conteudo."""
+
 from auditlog.registry import auditlog
 from django.db import models
 
@@ -6,11 +8,7 @@ from .envio_email import ENVIO_EMAIL_TIPO_CHOICES
 
 
 class EnvioEmailConteudo(BaseModel):
-    """
-    Template de conteúdo HTML por tipo de envio de e-mail.
-    Registros criados via migration; edição apenas do campo conteudo (API
-    PATCH).
-    """
+    """Template de conteúdo HTML por tipo de envio de e-mail."""
 
     tipo = models.CharField(
         max_length=20,
@@ -29,12 +27,25 @@ class EnvioEmailConteudo(BaseModel):
     )
 
     class Meta:
+        """Configuração do serializer."""
+
         verbose_name = "Conteúdo de e-mail por tipo"
         verbose_name_plural = "Conteúdos de e-mail por tipo"
         ordering = ["tipo"]
         db_table = "processos_envio_email_conteudo"
 
     def __str__(self) -> str:
+        """Executa   str  .
+
+        Args:
+            self: Instância do objeto.
+
+        Returns:
+            Texto resultante da operação.
+
+        Raises:
+            Nenhuma exceção específica documentada.
+        """
         return f"{self.get_tipo_display()}"
 
 

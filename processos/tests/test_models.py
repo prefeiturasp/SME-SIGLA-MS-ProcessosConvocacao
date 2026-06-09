@@ -1,6 +1,4 @@
-"""
-Testes unitários para os models do app processos usando pytest.
-"""
+"""Testes unitários para os models do app processos usando pytest."""
 
 import uuid
 
