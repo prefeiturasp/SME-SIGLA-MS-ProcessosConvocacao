@@ -1,4 +1,5 @@
 """Serviços de gestão de cargos do processo de convocação."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -32,14 +33,14 @@ class CargosProcessoService:
         *, processo: ProcessoConvocacao, cargos_data: list[dict[str, Any]]
     ) -> SubstituirCargosResult:
         """Cria, atualiza e remove cargos conforme o payload recebido.
-        
+
         Args:
             processo: Processo de convocação relacionado.
             cargos_data: Lista de cargos enviada no payload.
-        
+
         Returns:
             Resultado da operação.
-        
+
         Raises:
             Nenhuma exceção específica documentada.
         """

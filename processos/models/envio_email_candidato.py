@@ -1,4 +1,5 @@
 """Módulo models/envio_email_candidato."""
+
 from auditlog.registry import auditlog
 from django.db import models
 
@@ -44,6 +45,7 @@ class EnvioEmailCandidato(BaseModel):
 
     class Meta:
         """Configuração do serializer."""
+
         verbose_name = "Envio de e-mail - Candidato"
         verbose_name_plural = "Envio de e-mail - Candidatos"
         ordering = ["-criado_em"]
@@ -51,13 +53,13 @@ class EnvioEmailCandidato(BaseModel):
 
     def __str__(self) -> str:
         """Executa   str  .
-        
+
         Args:
             self: Instância do objeto.
-        
+
         Returns:
             Texto resultante da operação.
-        
+
         Raises:
             Nenhuma exceção específica documentada.
         """

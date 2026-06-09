@@ -7,20 +7,21 @@ from processos.models import CargoProcesso, ProcessoConvocacao
 
 class Command(BaseCommand):
     """Define Command."""
+
     help = "Remove todos os registros das tabelas de processos e cargos"
 
     def handle(self, *args, **options):
         # Contar registros existentes
         """Executa a lógica principal do comando.
-        
+
         Args:
             self: Instância do objeto.
             *args: Argumentos posicionais variáveis.
             **options: Parâmetro options da operação.
-        
+
         Returns:
             Não retorna valor; executa a operação do comando.
-        
+
         Raises:
             Nenhuma exceção específica documentada.
         """

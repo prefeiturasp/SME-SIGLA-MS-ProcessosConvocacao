@@ -14,14 +14,7 @@ pytestmark = pytest.mark.django_db
 
 @pytest.fixture
 def user():
-    """Fixture para criar um usuário de teste.
-    
-    Returns:
-        Resultado da operação.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Fixture para criar um usuário de teste."""
     return User.objects.create_user(
         username="testuser", password="testpass123"
     )
@@ -29,45 +22,19 @@ def user():
 
 @pytest.fixture
 def concurso_uuid():
-    """Fixture para UUID do concurso.
-    
-    Returns:
-        Resultado da operação.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Fixture para UUID do concurso."""
     return uuid.uuid4()
 
 
 @pytest.fixture
 def concurso_nome():
-    """Fixture para nome do concurso.
-    
-    Returns:
-        Resultado da operação.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Fixture para nome do concurso."""
     return "Concurso Teste"
 
 
 @pytest.fixture
 def processo_convocacao(user, concurso_uuid, concurso_nome):
-    """Fixture para criar um ProcessoConvocacao.
-    
-    Args:
-        user: Parâmetro user da operação.
-        concurso_uuid: UUID do concurso.
-        concurso_nome: Parâmetro concurso nome da operação.
-    
-    Returns:
-        Resultado da operação.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Fixture para criar um ProcessoConvocacao."""
     return ProcessoConvocacao.objects.create(
         concurso_uuid=concurso_uuid,
         concurso_nome=concurso_nome,
@@ -81,17 +48,7 @@ def processo_convocacao(user, concurso_uuid, concurso_nome):
 
 @pytest.fixture
 def processo_cargo(user):
-    """Fixture para processo de teste para cargos.
-    
-    Args:
-        user: Parâmetro user da operação.
-    
-    Returns:
-        Resultado da operação.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Fixture para processo de teste para cargos."""
     return ProcessoConvocacao.objects.create(
         concurso_uuid=uuid.uuid4(),
         concurso_nome="Concurso Teste",
@@ -104,17 +61,7 @@ def processo_cargo(user):
 
 @pytest.fixture
 def cargo_processo(processo_cargo):
-    """Fixture para criar um CargoProcesso.
-    
-    Args:
-        processo_cargo: Parâmetro processo cargo da operação.
-    
-    Returns:
-        Resultado da operação.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Fixture para criar um CargoProcesso."""
     return CargoProcesso.objects.create(
         processo=processo_cargo,
         cargo_nome="Analista de Sistemas",
@@ -124,17 +71,7 @@ def cargo_processo(processo_cargo):
 
 @pytest.fixture
 def processo_integracao(user):
-    """Fixture para processo de teste de integração.
-    
-    Args:
-        user: Parâmetro user da operação.
-    
-    Returns:
-        Resultado da operação.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Fixture para processo de teste de integração."""
     return ProcessoConvocacao.objects.create(
         concurso_uuid=uuid.uuid4(),
         concurso_nome="Concurso Integração",
@@ -149,19 +86,7 @@ def processo_integracao(user):
 def test_processo_convocacao_creation(
     processo_convocacao, concurso_uuid, concurso_nome
 ):
-    """Testa a criação de um ProcessoConvocacao.
-    
-    Args:
-        processo_convocacao: Parâmetro processo convocacao da operação.
-        concurso_uuid: UUID do concurso.
-        concurso_nome: Parâmetro concurso nome da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Testa a criação de um ProcessoConvocacao."""
     assert processo_convocacao.concurso_uuid == concurso_uuid
     assert processo_convocacao.concurso_nome == concurso_nome
     assert processo_convocacao.descricao == "Descrição do processo teste"
@@ -175,31 +100,13 @@ def test_processo_convocacao_creation(
 def test_processo_convocacao_str_representation(
     processo_convocacao, concurso_nome
 ):
-    """Testa a representação string do ProcessoConvocacao.
-    
-    Args:
-        processo_convocacao: Parâmetro processo convocacao da operação.
-        concurso_nome: Parâmetro concurso nome da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Testa a representação string do ProcessoConvocacao."""
     expected_str = f"{concurso_nome} - NOVA_AUTORIZACAO"
     assert str(processo_convocacao) == expected_str
 
 
 def test_processo_convocacao_default_values():
-    """Testa os valores padrão do ProcessoConvocacao.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Testa os valores padrão do ProcessoConvocacao."""
     processo_default = ProcessoConvocacao.objects.create(
         concurso_uuid=uuid.uuid4(),
         concurso_nome="Concurso Default",
@@ -213,14 +120,7 @@ def test_processo_convocacao_default_values():
 
 
 def test_processo_convocacao_choices_validation():
-    """Testa a validação das choices.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Testa a validação das choices."""
     # Teste com tipo_escolha válido
     processo_valido = ProcessoConvocacao.objects.create(
         concurso_uuid=uuid.uuid4(),
@@ -241,17 +141,7 @@ def test_processo_convocacao_choices_validation():
 
 
 def test_processo_convocacao_meta_options(processo_convocacao):
-    """Testa as opções Meta do ProcessoConvocacao.
-    
-    Args:
-        processo_convocacao: Parâmetro processo convocacao da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Testa as opções Meta do ProcessoConvocacao."""
     assert processo_convocacao._meta.verbose_name == "Processo de Convocação"
     assert (
         processo_convocacao._meta.verbose_name_plural
@@ -262,17 +152,7 @@ def test_processo_convocacao_meta_options(processo_convocacao):
 
 
 def test_processo_convocacao_uuid_uniqueness(processo_convocacao):
-    """Testa a unicidade do UUID.
-    
-    Args:
-        processo_convocacao: Parâmetro processo convocacao da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Testa a unicidade do UUID."""
     # UUIDs devem ser únicos automaticamente
     processo2 = ProcessoConvocacao.objects.create(
         concurso_uuid=uuid.uuid4(),
@@ -284,14 +164,7 @@ def test_processo_convocacao_uuid_uniqueness(processo_convocacao):
 
 
 def test_processo_convocacao_timestamps():
-    """Testa os timestamps automáticos.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Testa os timestamps automáticos."""
     processo_novo = ProcessoConvocacao.objects.create(
         concurso_uuid=uuid.uuid4(),
         concurso_nome="Concurso Timestamp",
@@ -312,18 +185,7 @@ def test_processo_convocacao_timestamps():
 
 # Testes para CargoProcesso Model
 def test_cargo_processo_creation(cargo_processo, processo_cargo):
-    """Testa a criação de um CargoProcesso.
-    
-    Args:
-        cargo_processo: Parâmetro cargo processo da operação.
-        processo_cargo: Parâmetro processo cargo da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Testa a criação de um CargoProcesso."""
     assert cargo_processo.processo == processo_cargo
     assert cargo_processo.cargo_nome == "Analista de Sistemas"
     assert cargo_processo.cargo_uuid is not None
@@ -333,34 +195,13 @@ def test_cargo_processo_creation(cargo_processo, processo_cargo):
 
 
 def test_cargo_processo_str_representation(cargo_processo, processo_cargo):
-    """Testa a representação string do CargoProcesso.
-    
-    Args:
-        cargo_processo: Parâmetro cargo processo da operação.
-        processo_cargo: Parâmetro processo cargo da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Testa a representação string do CargoProcesso."""
     expected_str = f"{processo_cargo.concurso_nome} - Analista de Sistemas"
     assert str(cargo_processo) == expected_str
 
 
 def test_cargo_processo_meta_options(cargo_processo):
-    """Testa as opções Meta do CargoProcesso.
-    
-    Args:
-        cargo_processo: Parâmetro cargo processo da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Testa as opções Meta do CargoProcesso."""
     assert cargo_processo._meta.verbose_name == "Cargo do Processo"
     assert cargo_processo._meta.verbose_name_plural == "Cargos do Processo"
     assert cargo_processo._meta.db_table == "processos_cargos"
@@ -368,17 +209,7 @@ def test_cargo_processo_meta_options(cargo_processo):
 
 
 def test_cargo_processo_unique_together(processo_cargo):
-    """Testa a restrição unique_together.
-    
-    Args:
-        processo_cargo: Parâmetro processo cargo da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Testa a restrição unique_together."""
     # Deve permitir criar cargo com nome diferente
     cargo2 = CargoProcesso.objects.create(
         processo=processo_cargo,
@@ -402,18 +233,7 @@ def test_cargo_processo_unique_together(processo_cargo):
 
 
 def test_cargo_processo_relationship(cargo_processo, processo_cargo):
-    """Testa o relacionamento com ProcessoConvocacao.
-    
-    Args:
-        cargo_processo: Parâmetro cargo processo da operação.
-        processo_cargo: Parâmetro processo cargo da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Testa o relacionamento com ProcessoConvocacao."""
     # Testar related_name
     assert cargo_processo in processo_cargo.cargos_processo.all()
 
@@ -426,18 +246,7 @@ def test_cargo_processo_relationship(cargo_processo, processo_cargo):
 
 
 def test_cargo_processo_uuid_uniqueness(cargo_processo, processo_cargo):
-    """Testa a unicidade do UUID.
-    
-    Args:
-        cargo_processo: Parâmetro cargo processo da operação.
-        processo_cargo: Parâmetro processo cargo da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Testa a unicidade do UUID."""
     cargo2 = CargoProcesso.objects.create(
         processo=processo_cargo, cargo_nome="Cargo 2", cargo_uuid=uuid.uuid4()
     )
@@ -446,17 +255,7 @@ def test_cargo_processo_uuid_uniqueness(cargo_processo, processo_cargo):
 
 
 def test_cargo_processo_cargo_uuid_uniqueness(processo_cargo):
-    """Testa a unicidade do cargo_uuid.
-    
-    Args:
-        processo_cargo: Parâmetro processo cargo da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Testa a unicidade do cargo_uuid."""
     cargo1 = CargoProcesso.objects.create(
         processo=processo_cargo, cargo_nome="Cargo 1", cargo_uuid=uuid.uuid4()
     )
@@ -469,17 +268,7 @@ def test_cargo_processo_cargo_uuid_uniqueness(processo_cargo):
 
 
 def test_cargo_processo_timestamps(processo_cargo):
-    """Testa os timestamps automáticos.
-    
-    Args:
-        processo_cargo: Parâmetro processo cargo da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Testa os timestamps automáticos."""
     cargo_novo = CargoProcesso.objects.create(
         processo=processo_cargo,
         cargo_nome="Cargo Timestamp",
@@ -500,17 +289,7 @@ def test_cargo_processo_timestamps(processo_cargo):
 
 # Testes de Integração entre Models
 def test_processo_cargos_relationship(processo_integracao):
-    """Testa o relacionamento entre processo e cargos.
-    
-    Args:
-        processo_integracao: Parâmetro processo integracao da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Testa o relacionamento entre processo e cargos."""
     # Criar múltiplos cargos
     cargos_nomes = ["Analista", "Desenvolvedor", "Testador"]
 
@@ -533,17 +312,7 @@ def test_processo_cargos_relationship(processo_integracao):
 
 
 def test_processo_cascade_delete(processo_integracao):
-    """Testa que cargos são removidos quando processo é removido.
-    
-    Args:
-        processo_integracao: Parâmetro processo integracao da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Testa que cargos são removidos quando processo é removido."""
     # Criar cargos
     CargoProcesso.objects.create(
         processo=processo_integracao,
@@ -562,17 +331,7 @@ def test_processo_cascade_delete(processo_integracao):
 
 
 def test_processo_cargos_ordering(processo_integracao):
-    """Testa a ordenação dos cargos.
-    
-    Args:
-        processo_integracao: Parâmetro processo integracao da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Testa a ordenação dos cargos."""
     # Criar cargos em ordem aleatória (CargoProcesso.ordering = ['cargo_nome'])
     CargoProcesso.objects.create(
         processo=processo_integracao,

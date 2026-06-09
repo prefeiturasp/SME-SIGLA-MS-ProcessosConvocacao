@@ -1,4 +1,5 @@
 """Módulo models/base."""
+
 import uuid
 
 from django.db import models
@@ -19,5 +20,6 @@ class BaseModel(models.Model):
 
     class Meta:
         """Configuração do serializer."""
+
         abstract = True
         ordering = ["-criado_em"]

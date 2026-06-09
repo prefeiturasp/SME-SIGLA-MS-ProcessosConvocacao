@@ -48,13 +48,13 @@ TEMPLATE_DINAMICO = "email/envio_email_dinamico.html"
 
 def dados_template(candidato: dict[str, Any]) -> dict[str, str]:
     """Extrai placeholders de cargo e classificação do habilitado.
-    
+
     Args:
         candidato: item retornado pelo MS-Candidatos.
-    
+
     Returns:
         Dicionário com os dados processados.
-    
+
     Raises:
         Nenhuma exceção específica documentada.
     """
@@ -79,14 +79,14 @@ def _preencher_template(
     dados: dict[str, str],
 ) -> str:
     """Substitui placeholders ``[[chave]]`` no HTML pelo dict ``dados``.
-    
+
     Args:
         conteudo: HTML do template; ``None`` é tratado como string vazia.
         dados: mapa chave → valor para substituição.
-    
+
     Returns:
         Texto resultante da operação.
-    
+
     Raises:
         Nenhuma exceção específica documentada.
     """
@@ -94,13 +94,13 @@ def _preencher_template(
 
     def replace_func(match: Match[str]) -> str:
         """Executa replace func.
-        
+
         Args:
             match: Parâmetro match da operação.
-        
+
         Returns:
             Texto resultante da operação.
-        
+
         Raises:
             Nenhuma exceção específica documentada.
         """
@@ -112,14 +112,14 @@ def _preencher_template(
 
 def _renderizar_conteudo(*, tipo: str, context: dict[str, Any]) -> str:
     """Renderiza corpo do e-mail no template dinâmico.
-    
+
     Args:
         tipo: Parâmetro tipo da operação.
         context: Contexto de renderização ou serialização.
-    
+
     Returns:
         Texto resultante da operação.
-    
+
     Raises:
         Nenhuma exceção específica documentada.
     """
@@ -134,16 +134,16 @@ def iniciar_processamento_envio(
     conteudo: str | None,
 ) -> EnvioEmail:
     """Inicia envio assíncrono de e-mails para habilitados convocados.
-    
+
     Args:
         processo_uuid: UUID do processo de convocação.
         processo_nome: nome exibido no histórico de envio.
         tipo: ``CONVOCACAO``, ``VAGAS`` ou ``RESULTADOS``.
         conteudo: HTML com placeholders ``[[cargo]]``, etc.
-    
+
     Returns:
         Resultado da operação.
-    
+
     Raises:
         Nenhuma exceção específica documentada.
     """
@@ -183,7 +183,8 @@ def iniciar_processamento_envio(
             continue
 
         conteudo_preenchido = _preencher_template(
-            conteudo, dados_template(item))
+            conteudo, dados_template(item)
+        )
         context = {
             "email_body": conteudo_preenchido,
             "email_title": TITULO_POR_TIPO.get(

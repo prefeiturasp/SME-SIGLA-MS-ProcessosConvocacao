@@ -31,13 +31,13 @@ def converter_imagens_base64_para_cid(
     html: str,
 ) -> tuple[str, list[MIMEImage]]:
     """Substitui src data URI por cid: e retorna partes MIME para anexar ao.
-    
+
     Args:
         html: Conteúdo HTML a processar.
-    
+
     Returns:
         Resultado da operação.
-    
+
     Raises:
         Nenhuma exceção específica documentada.
     """
@@ -49,13 +49,13 @@ def converter_imagens_base64_para_cid(
 
     def substituir(match: re.Match[str]) -> str:
         """Executa substituir.
-        
+
         Args:
             match: Parâmetro match da operação.
-        
+
         Returns:
             Texto resultante da operação.
-        
+
         Raises:
             Nenhuma exceção específica documentada.
         """

@@ -31,13 +31,13 @@ class EnvioEmailConteudoViewSet(
 
     def get_serializer_class(self) -> type[BaseSerializer]:
         """Usa serializer de update apenas em PATCH.
-        
+
         Args:
             self: Instância do objeto.
-        
+
         Returns:
             Tipo retornado conforme a operação.
-        
+
         Raises:
             Nenhuma exceção específica documentada.
         """

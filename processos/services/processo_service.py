@@ -34,13 +34,13 @@ class ProcessoConvocacaoService:
         escolhas_api: EscolhasApiService | None = None,
     ) -> None:
         """Inicializa a instância com dependências configuráveis.
-        
+
         Args:
             self: Instância do objeto.
             agenda_api: Cliente do MS-Agenda (opcional).
             candidatos_api: Cliente do MS-Candidatos (opcional).
             escolhas_api: Cliente do MS-Escolhas (opcional).
-        
+
         Raises:
             Nenhuma exceção específica documentada.
         """
@@ -51,17 +51,17 @@ class ProcessoConvocacaoService:
     def excluir_processo_e_dependencias(
         self,
         *,
-        processo: "ProcessoConvocacao",
+        processo: ProcessoConvocacao,
     ) -> None:
-        """Executa a limpeza nos MS dependentes e faz a deleção lógica do processo.
-        
+        """Limpa dependências nos MS e inativa o processo localmente.
+
         Args:
             self: Instância do objeto.
             processo: Processo de convocação a ser inativado.
-        
+
         Returns:
             Não retorna valor.
-        
+
         Raises:
             ProcessoServiceError: Se a operação no processo falhar.
         """

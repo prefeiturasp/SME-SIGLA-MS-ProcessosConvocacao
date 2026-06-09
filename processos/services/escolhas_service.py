@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 class EscolhasApiService:
     """Define EscolhasApiService."""
+
     DEFAULT_TIMEOUT = 30
     TIMEOUT_SEGUNDOS = 30
     PATH_ESCOLHAS = "/api/v1/escolhas/"
@@ -27,13 +28,13 @@ class EscolhasApiService:
 
     def _get_base_url(self) -> str:
         """Obtém a URL base do MS-Escolha a partir das configurações.
-        
+
         Args:
             self: Instância do objeto.
-        
+
         Returns:
             Texto resultante da operação.
-        
+
         Raises:
             Nenhuma exceção específica documentada.
         """
@@ -46,15 +47,15 @@ class EscolhasApiService:
         return base_url.rstrip("/")
 
     def buscar_candidatos_com_escolha(self, concurso_uuid: str) -> list[str]:
-        """Busca no MS-Escolha os candidato_uuid que já têm registro de resposta.
-        
+        """Lista candidatos com escolha registrada no MS-Escolha.
+
         Args:
             self: Instância do objeto.
             concurso_uuid: UUID do concurso (o ProcessoConvocacao tem.
-        
+
         Returns:
             Lista com os registros resultantes.
-        
+
         Raises:
             Nenhuma exceção específica documentada.
         """
@@ -128,15 +129,15 @@ class EscolhasApiService:
         return candidato_uuids
 
     def excluir_lotes_vagas_por_processo(self, processo_uuid: str) -> dict:
-        """Remove lotes de vagas (e vagas em cascata) do processo no MS-Escolha.
-        
+        """Remove lotes de vagas do processo no MS-Escolha.
+
         Args:
             self: Instância do objeto.
             processo_uuid: UUID do processo de convocação.
-        
+
         Returns:
             Dicionário com os dados processados.
-        
+
         Raises:
             ValueError: Se o valor informado não for válido.
             EscolhasServiceError: Se a integração com o MS-Escolhas falhar.

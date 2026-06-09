@@ -1,4 +1,4 @@
-"""Configuração e requisições à API do MS-Candidatos (habilitados por processo)."""
+"""Cliente HTTP do MS-Candidatos (habilitados por processo)."""
 
 import logging
 from typing import Any
@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 class CandidatosApiService:
     """Define CandidatosApiService."""
+
     PATH_HABILITADOS = "/api/v1/habilitados/"
     FIELDS_HABILITADOS = (
         "candidato__nome,candidato__registro_funcional,"
@@ -27,13 +28,13 @@ class CandidatosApiService:
     @property
     def _candidatos_api_url(self) -> str:
         """Executa  candidatos api url.
-        
+
         Args:
             self: Instância do objeto.
-        
+
         Returns:
             Texto resultante da operação.
-        
+
         Raises:
             Nenhuma exceção específica documentada.
         """
@@ -41,14 +42,14 @@ class CandidatosApiService:
 
     def _url_habilitados_por_processo(self, processo_uuid: str) -> str:
         """Monta a URL para buscar habilitados do processo no MS-Candidatos.
-        
+
         Args:
             self: Instância do objeto.
             processo_uuid: UUID do processo de convocação.
-        
+
         Returns:
             Texto resultante da operação.
-        
+
         Raises:
             Nenhuma exceção específica documentada.
         """
@@ -64,15 +65,15 @@ class CandidatosApiService:
     def buscar_habilitados_por_processo(
         self, processo_uuid: str
     ) -> list[dict[str, Any]]:
-        """Busca no MS-Candidatos os habilitados do processo (foi_convocado=true).
-        
+        """Busca habilitados do processo no MS-Candidatos.
+
         Args:
             self: Instância do objeto.
             processo_uuid: UUID do processo de convocação.
-        
+
         Returns:
             Lista com os registros resultantes.
-        
+
         Raises:
             Nenhuma exceção específica documentada.
         """
@@ -130,14 +131,14 @@ class CandidatosApiService:
 
     def desconvocar_por_processo(self, processo_uuid: str) -> dict:
         """PATCH /api/v1/habilitados/desconvocar.
-        
+
         Args:
             self: Instância do objeto.
             processo_uuid: UUID do processo de convocação.
-        
+
         Returns:
             Dicionário com os dados processados.
-        
+
         Raises:
             ValueError: Se o valor informado não for válido.
             CandidatosServiceError: Se a integração com o MS-Candidatos falhar.

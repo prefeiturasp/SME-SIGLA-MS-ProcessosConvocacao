@@ -11,13 +11,13 @@ class ProcessosConfig(AppConfig):
 
     def ready(self) -> None:
         """Importa Celery na inicialização do Django.
-        
+
         Args:
             self: Instância do objeto.
-        
+
         Returns:
             Não retorna valor.
-        
+
         Raises:
             Nenhuma exceção específica documentada.
         """

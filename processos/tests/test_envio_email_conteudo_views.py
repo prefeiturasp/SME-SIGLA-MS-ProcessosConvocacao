@@ -12,30 +12,12 @@ pytestmark = pytest.mark.django_db
 
 @pytest.fixture
 def conteudo_convocacao():
-    """Executa conteudo convocacao.
-    
-    Returns:
-        Resultado da operação.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Executa conteudo convocacao."""
     return EnvioEmailConteudo.objects.get(tipo=TIPO_CONVOCACAO)
 
 
 def test_envio_email_conteudo_list(authenticated_client, conteudo_convocacao):
-    """Verifica envio email conteudo list.
-    
-    Args:
-        authenticated_client: Cliente autenticado para requisições de teste.
-        conteudo_convocacao: Parâmetro conteudo convocacao da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Verifica envio email conteudo list."""
     url = reverse("envio-email-conteudo-list")
     response = authenticated_client.get(url)
     assert response.status_code == status.HTTP_200_OK
@@ -52,18 +34,7 @@ def test_envio_email_conteudo_list(authenticated_client, conteudo_convocacao):
 def test_envio_email_conteudo_list_filtrar_por_tipo(
     authenticated_client, conteudo_convocacao
 ):
-    """Verifica envio email conteudo list filtrar por tipo.
-    
-    Args:
-        authenticated_client: Cliente autenticado para requisições de teste.
-        conteudo_convocacao: Parâmetro conteudo convocacao da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Verifica envio email conteudo list filtrar por tipo."""
     url = reverse("envio-email-conteudo-list")
     response = authenticated_client.get(url, {"tipo": TIPO_CONVOCACAO})
     assert response.status_code == status.HTTP_200_OK
@@ -80,17 +51,7 @@ def test_envio_email_conteudo_list_filtrar_por_tipo(
 def test_envio_email_conteudo_list_filtrar_tipo_inexistente_retorna_vazio(
     authenticated_client,
 ):
-    """Verifica envio email conteudo list filtrar tipo inexistente retorna vazio.
-    
-    Args:
-        authenticated_client: Cliente autenticado para requisições de teste.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Verifica listagem vazia para tipo de conteúdo inexistente."""
     url = reverse("envio-email-conteudo-list")
     response = authenticated_client.get(url, {"tipo": "INVALIDO"})
     assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -99,18 +60,7 @@ def test_envio_email_conteudo_list_filtrar_tipo_inexistente_retorna_vazio(
 def test_envio_email_conteudo_retrieve(
     authenticated_client, conteudo_convocacao
 ):
-    """Verifica envio email conteudo retrieve.
-    
-    Args:
-        authenticated_client: Cliente autenticado para requisições de teste.
-        conteudo_convocacao: Parâmetro conteudo convocacao da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Verifica envio email conteudo retrieve."""
     url = reverse(
         "envio-email-conteudo-detail", args=[conteudo_convocacao.uuid]
     )
@@ -122,18 +72,7 @@ def test_envio_email_conteudo_retrieve(
 
 
 def test_envio_email_conteudo_patch(authenticated_client, conteudo_convocacao):
-    """Verifica envio email conteudo patch.
-    
-    Args:
-        authenticated_client: Cliente autenticado para requisições de teste.
-        conteudo_convocacao: Parâmetro conteudo convocacao da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Verifica envio email conteudo patch."""
     url = reverse(
         "envio-email-conteudo-detail", args=[conteudo_convocacao.uuid]
     )
@@ -151,18 +90,7 @@ def test_envio_email_conteudo_retorna_html_sem_escape_duplicado(
     authenticated_client,
     conteudo_convocacao,
 ):
-    """GET não deve devolver aspas escapadas; retorna HTML como persistido no banco.
-    
-    Args:
-        authenticated_client: Cliente autenticado para requisições de teste.
-        conteudo_convocacao: Parâmetro conteudo convocacao da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Verifica HTML sem aspas escapadas na resposta GET."""
     html = '<p class="ql-align-center">Texto</p>'
     conteudo_convocacao.conteudo = '<p class=\\"ql-align-center\\">Texto</p>'
     conteudo_convocacao.save(update_fields=["conteudo", "atualizado_em"])
@@ -181,18 +109,7 @@ def test_envio_email_conteudo_patch_remove_escape_duplicado(
     authenticated_client,
     conteudo_convocacao,
 ):
-    """Verifica envio email conteudo patch remove escape duplicado.
-    
-    Args:
-        authenticated_client: Cliente autenticado para requisições de teste.
-        conteudo_convocacao: Parâmetro conteudo convocacao da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Verifica envio email conteudo patch remove escape duplicado."""
     url = reverse(
         "envio-email-conteudo-detail", args=[conteudo_convocacao.uuid]
     )
@@ -212,17 +129,7 @@ def test_envio_email_conteudo_patch_remove_escape_duplicado(
 
 
 def test_envio_email_conteudo_post_nao_permitido(authenticated_client):
-    """Verifica envio email conteudo post nao permitido.
-    
-    Args:
-        authenticated_client: Cliente autenticado para requisições de teste.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Verifica envio email conteudo post nao permitido."""
     url = reverse("envio-email-conteudo-list")
     response = authenticated_client.post(
         url,
@@ -235,18 +142,7 @@ def test_envio_email_conteudo_post_nao_permitido(authenticated_client):
 def test_envio_email_conteudo_delete_nao_permitido(
     authenticated_client, conteudo_convocacao
 ):
-    """Verifica envio email conteudo delete nao permitido.
-    
-    Args:
-        authenticated_client: Cliente autenticado para requisições de teste.
-        conteudo_convocacao: Parâmetro conteudo convocacao da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Verifica envio email conteudo delete nao permitido."""
     url = reverse(
         "envio-email-conteudo-detail", args=[conteudo_convocacao.uuid]
     )
@@ -257,18 +153,7 @@ def test_envio_email_conteudo_delete_nao_permitido(
 def test_envio_email_conteudo_put_nao_permitido(
     authenticated_client, conteudo_convocacao
 ):
-    """Verifica envio email conteudo put nao permitido.
-    
-    Args:
-        authenticated_client: Cliente autenticado para requisições de teste.
-        conteudo_convocacao: Parâmetro conteudo convocacao da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Verifica envio email conteudo put nao permitido."""
     url = reverse(
         "envio-email-conteudo-detail", args=[conteudo_convocacao.uuid]
     )

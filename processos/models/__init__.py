@@ -1,5 +1,6 @@
 # Models module for processos app
 """Módulo models/__init__."""
+
 from .base import BaseModel
 from .cargo_processo import CargoProcesso
 from .constants import *

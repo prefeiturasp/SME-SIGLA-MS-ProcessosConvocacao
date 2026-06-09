@@ -1,4 +1,5 @@
 """Módulo tests/test_admin."""
+
 import pytest
 from django.contrib.admin.sites import site
 
@@ -10,29 +11,12 @@ pytestmark = pytest.mark.django_db
 
 @pytest.fixture
 def processo_convocacao_admin():
-    """Executa processo convocacao admin.
-    
-    Returns:
-        Resultado da operação.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Executa processo convocacao admin."""
     return ProcessoConvocacaoAdmin(model=ProcessoConvocacao, admin_site=site)
 
 
 def test_list_display(processo_convocacao_admin):
-    """Verifica list display.
-    
-    Args:
-        processo_convocacao_admin: Parâmetro processo convocacao admin da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Verifica list display."""
     assert processo_convocacao_admin.list_display == (
         "concurso_nome",
         "descricao",
@@ -44,17 +28,7 @@ def test_list_display(processo_convocacao_admin):
 
 
 def test_search_fields(processo_convocacao_admin):
-    """Verifica search fields.
-    
-    Args:
-        processo_convocacao_admin: Parâmetro processo convocacao admin da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Verifica search fields."""
     assert processo_convocacao_admin.search_fields == (
         "concurso_nome",
         "descricao",
@@ -62,17 +36,7 @@ def test_search_fields(processo_convocacao_admin):
 
 
 def test_list_filter(processo_convocacao_admin):
-    """Verifica list filter.
-    
-    Args:
-        processo_convocacao_admin: Parâmetro processo convocacao admin da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Verifica list filter."""
     assert processo_convocacao_admin.list_filter == (
         "status",
         "tipo_escolha",
@@ -82,17 +46,7 @@ def test_list_filter(processo_convocacao_admin):
 
 
 def test_readonly_fields(processo_convocacao_admin):
-    """Verifica readonly fields.
-    
-    Args:
-        processo_convocacao_admin: Parâmetro processo convocacao admin da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Verifica readonly fields."""
     assert processo_convocacao_admin.readonly_fields == (
         "uuid",
         "criado_em",
@@ -101,32 +55,12 @@ def test_readonly_fields(processo_convocacao_admin):
 
 
 def test_inlines(processo_convocacao_admin):
-    """Verifica inlines.
-    
-    Args:
-        processo_convocacao_admin: Parâmetro processo convocacao admin da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Verifica inlines."""
     assert processo_convocacao_admin.inlines == (CargoProcessoInline,)
 
 
 def test_fieldsets(processo_convocacao_admin):
-    """Verifica fieldsets.
-    
-    Args:
-        processo_convocacao_admin: Parâmetro processo convocacao admin da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Verifica fieldsets."""
     assert processo_convocacao_admin.fieldsets == (
         (
             "Informações do Concurso",

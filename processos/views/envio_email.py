@@ -37,13 +37,13 @@ class EnvioEmailViewSet(
 
     def get_serializer_class(self) -> type[BaseSerializer]:
         """Retorna serializer de listagem ou detalhe com candidatos.
-        
+
         Args:
             self: Instância do objeto.
-        
+
         Returns:
             Tipo retornado conforme a operação.
-        
+
         Raises:
             Nenhuma exceção específica documentada.
         """
@@ -53,17 +53,17 @@ class EnvioEmailViewSet(
 
     def create(self, request: Request) -> Response:
         """Inicia processamento assíncrono de envio de e-mails.
-        
+
         Args:
             self: Instância do objeto.
             request: body com ``processo_uuid``, ``processo_nome``, ``tipo``,.
-        
+
         Returns:
             Resposta HTTP com o resultado da operação.
-        
+
         Raises:
             Nenhuma exceção específica documentada.
-        
+
         Examples:
             POST body::
             {

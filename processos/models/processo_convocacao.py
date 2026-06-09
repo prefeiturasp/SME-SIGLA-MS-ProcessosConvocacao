@@ -1,4 +1,5 @@
 """Módulo models/processo_convocacao."""
+
 from auditlog.registry import auditlog
 from django.db import models
 from django.utils import timezone
@@ -53,6 +54,7 @@ class ProcessoConvocacao(BaseModel):
 
     class Meta:
         """Configuração do serializer."""
+
         verbose_name = "Processo de Convocação"
         verbose_name_plural = "Processos de Convocação"
         ordering = ["-criado_em"]
@@ -60,13 +62,13 @@ class ProcessoConvocacao(BaseModel):
 
     def __str__(self) -> str:
         """Executa   str  .
-        
+
         Args:
             self: Instância do objeto.
-        
+
         Returns:
             Texto resultante da operação.
-        
+
         Raises:
             Nenhuma exceção específica documentada.
         """
@@ -74,13 +76,13 @@ class ProcessoConvocacao(BaseModel):
 
     def pode_deletar(self) -> bool:
         """Indica se o processo pode ser excluído.
-        
+
         Args:
             self: Instância do objeto.
-        
+
         Returns:
             Verdadeiro se a condição for satisfeita.
-        
+
         Raises:
             Nenhuma exceção específica documentada.
         """
@@ -88,13 +90,13 @@ class ProcessoConvocacao(BaseModel):
 
     def inativar(self) -> None:
         """Inativa o processo e remove cargos vinculados.
-        
+
         Args:
             self: Instância do objeto.
-        
+
         Returns:
             Não retorna valor.
-        
+
         Raises:
             Nenhuma exceção específica documentada.
         """

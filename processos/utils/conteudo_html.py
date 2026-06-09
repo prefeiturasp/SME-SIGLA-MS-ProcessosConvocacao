@@ -10,13 +10,13 @@ import json
 
 def normalizar_conteudo_html(valor: str | None) -> str:
     """Remove escape JSON duplicado de HTML armazenado no banco.
-    
+
     Args:
         valor: conteúdo HTML bruto ou None.
-    
+
     Returns:
         Texto resultante da operação.
-    
+
     Raises:
         Nenhuma exceção específica documentada.
     """

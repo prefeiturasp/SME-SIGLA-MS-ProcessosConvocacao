@@ -1,4 +1,5 @@
 """Módulo models/envio_email_conteudo."""
+
 from auditlog.registry import auditlog
 from django.db import models
 
@@ -27,6 +28,7 @@ class EnvioEmailConteudo(BaseModel):
 
     class Meta:
         """Configuração do serializer."""
+
         verbose_name = "Conteúdo de e-mail por tipo"
         verbose_name_plural = "Conteúdos de e-mail por tipo"
         ordering = ["tipo"]
@@ -34,13 +36,13 @@ class EnvioEmailConteudo(BaseModel):
 
     def __str__(self) -> str:
         """Executa   str  .
-        
+
         Args:
             self: Instância do objeto.
-        
+
         Returns:
             Texto resultante da operação.
-        
+
         Raises:
             Nenhuma exceção específica documentada.
         """

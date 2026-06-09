@@ -1,4 +1,5 @@
 """Módulo tasks/enviar_email_task."""
+
 import logging
 from pathlib import Path
 from uuid import UUID
@@ -38,17 +39,17 @@ def enviar_email_candidato_task(
     correlation_id: str,
 ) -> None:
     """Envia o e-mail com o conteúdo informado e atualiza EnvioEmailCandidato.
-    
+
     Args:
         email: Parâmetro email da operação.
         assunto: Parâmetro assunto da operação.
         conteudo: Parâmetro conteudo da operação.
-        envio_email_candidato_id: Parâmetro envio email candidato id da operação.
+        envio_email_candidato_id: ID do candidato no envio de e-mail.
         correlation_id: Parâmetro correlation id da operação.
-    
+
     Returns:
         Não retorna valor.
-    
+
     Raises:
         Nenhuma exceção específica documentada.
     """

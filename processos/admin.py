@@ -70,14 +70,14 @@ class ProcessoConvocacaoAdmin(admin.ModelAdmin):
         request: HttpRequest,
     ) -> QuerySet[ProcessoConvocacao]:
         """Otimiza queryset com cargos relacionados.
-        
+
         Args:
             self: Instância do objeto.
             request: Requisição HTTP recebida.
-        
+
         Returns:
             QuerySet filtrado conforme os parâmetros.
-        
+
         Raises:
             Nenhuma exceção específica documentada.
         """
@@ -125,14 +125,14 @@ class CargoProcessoAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[CargoProcesso]:
         """Otimiza queryset com processo relacionado.
-        
+
         Args:
             self: Instância do objeto.
             request: Requisição HTTP recebida.
-        
+
         Returns:
             QuerySet filtrado conforme os parâmetros.
-        
+
         Raises:
             Nenhuma exceção específica documentada.
         """
@@ -196,14 +196,14 @@ class EnvioEmailConteudoAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request: HttpRequest) -> bool:
         """Executa has add permission.
-        
+
         Args:
             self: Instância do objeto.
             request: Requisição HTTP recebida.
-        
+
         Returns:
             Verdadeiro se a condição for satisfeita.
-        
+
         Raises:
             Nenhuma exceção específica documentada.
         """
@@ -215,15 +215,15 @@ class EnvioEmailConteudoAdmin(admin.ModelAdmin):
         obj: EnvioEmailConteudo | None = None,
     ) -> bool:
         """Executa has delete permission.
-        
+
         Args:
             self: Instância do objeto.
             request: Requisição HTTP recebida.
             obj: Instância do objeto processado.
-        
+
         Returns:
             Verdadeiro se a condição for satisfeita.
-        
+
         Raises:
             Nenhuma exceção específica documentada.
         """

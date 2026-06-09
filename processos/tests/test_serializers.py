@@ -32,14 +32,7 @@ pytestmark = pytest.mark.django_db
 
 @pytest.fixture
 def user():
-    """Fixture para criar um usuário de teste.
-    
-    Returns:
-        Resultado da operação.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Fixture para criar um usuário de teste."""
     return User.objects.create_user(
         username="testuser", password="testpass123"
     )
@@ -47,45 +40,19 @@ def user():
 
 @pytest.fixture
 def concurso_uuid():
-    """Fixture para UUID do concurso.
-    
-    Returns:
-        Resultado da operação.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Fixture para UUID do concurso."""
     return uuid.uuid4()
 
 
 @pytest.fixture
 def concurso_nome():
-    """Fixture para nome do concurso.
-    
-    Returns:
-        Resultado da operação.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Fixture para nome do concurso."""
     return "Concurso Teste"
 
 
 @pytest.fixture
 def processo_convocacao(user, concurso_uuid, concurso_nome):
-    """Fixture para criar um ProcessoConvocacao.
-    
-    Args:
-        user: Parâmetro user da operação.
-        concurso_uuid: UUID do concurso.
-        concurso_nome: Parâmetro concurso nome da operação.
-    
-    Returns:
-        Resultado da operação.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Fixture para criar um ProcessoConvocacao."""
     return ProcessoConvocacao.objects.create(
         concurso_uuid=concurso_uuid,
         concurso_nome=concurso_nome,
@@ -99,17 +66,7 @@ def processo_convocacao(user, concurso_uuid, concurso_nome):
 
 @pytest.fixture
 def cargos_processo(processo_convocacao):
-    """Fixture para criar cargos para o processo.
-    
-    Args:
-        processo_convocacao: Parâmetro processo convocacao da operação.
-    
-    Returns:
-        Resultado da operação.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Fixture para criar cargos para o processo."""
     cargos = []
     nomes_cargos = ["Analista de Sistemas", "Desenvolvedor Backend"]
 
@@ -126,17 +83,7 @@ def cargos_processo(processo_convocacao):
 
 @pytest.fixture
 def processo_cargo(user):
-    """Fixture para processo de teste para cargos.
-    
-    Args:
-        user: Parâmetro user da operação.
-    
-    Returns:
-        Resultado da operação.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Fixture para processo de teste para cargos."""
     return ProcessoConvocacao.objects.create(
         concurso_uuid=uuid.uuid4(),
         concurso_nome="Concurso Teste",
@@ -149,17 +96,7 @@ def processo_cargo(user):
 
 @pytest.fixture
 def cargo_processo(processo_cargo):
-    """Fixture para criar um CargoProcesso.
-    
-    Args:
-        processo_cargo: Parâmetro processo cargo da operação.
-    
-    Returns:
-        Resultado da operação.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Fixture para criar um CargoProcesso."""
     return CargoProcesso.objects.create(
         processo=processo_cargo,
         cargo_nome="Analista de Sistemas",
@@ -169,17 +106,7 @@ def cargo_processo(processo_cargo):
 
 # Testes para CargoProcessoSerializer
 def test_cargo_processo_serializer_fields(cargo_processo):
-    """Testa os campos do CargoProcessoSerializer.
-    
-    Args:
-        cargo_processo: Parâmetro cargo processo da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Testa os campos do CargoProcessoSerializer."""
     serializer = CargoProcessoSerializer(cargo_processo)
     data = serializer.data
 
@@ -195,27 +122,13 @@ def test_cargo_processo_serializer_fields(cargo_processo):
 
 # Testes para CargoProcessoCreateSerializer
 def test_cargo_processo_create_serializer_fields():
-    """Testa os campos do CargoProcessoCreateSerializer.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Testa os campos do CargoProcessoCreateSerializer."""
     serializer = CargoProcessoCreateSerializer()
     assert "cargo_nome" in serializer.fields
 
 
 def test_cargo_processo_create_serializer_validation():
-    """Testa a validação do CargoProcessoCreateSerializer.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Testa a validação do CargoProcessoCreateSerializer."""
     data = {
         "cargo_nome": "Analista de Sistemas",
         "cargo_uuid": str(uuid.uuid4()),
@@ -225,14 +138,7 @@ def test_cargo_processo_create_serializer_validation():
 
 
 def test_cargo_processo_create_serializer_validation_empty():
-    """Testa validação com cargo_nome vazio.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Testa validação com cargo_nome vazio."""
     data = {"cargo_nome": "", "cargo_uuid": str(uuid.uuid4())}
     serializer = CargoProcessoCreateSerializer(data=data)
     assert not serializer.is_valid()
@@ -242,18 +148,7 @@ def test_cargo_processo_create_serializer_validation_empty():
 def test_processo_convocacao_serializer_fields(
     processo_convocacao, cargos_processo
 ):
-    """Testa os campos do ProcessoConvocacaoSerializer.
-    
-    Args:
-        processo_convocacao: Parâmetro processo convocacao da operação.
-        cargos_processo: Parâmetro cargos processo da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Testa os campos do ProcessoConvocacaoSerializer."""
     serializer = ProcessoConvocacaoSerializer(processo_convocacao)
     data = serializer.data
 
@@ -277,14 +172,7 @@ def test_processo_convocacao_serializer_fields(
 
 
 def test_processo_convocacao_serializer_read_only_fields():
-    """Testa que campos read_only não podem ser modificados.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Testa que campos read_only não podem ser modificados."""
     data = {
         "uuid": str(uuid.uuid4()),
         "concurso_uuid": str(uuid.uuid4()),
@@ -305,14 +193,7 @@ def test_processo_convocacao_serializer_read_only_fields():
 
 # Testes para ProcessoConvocacaoCreateSerializer
 def test_processo_convocacao_create_serializer_fields():
-    """Testa os campos do ProcessoConvocacaoCreateSerializer.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Testa os campos do ProcessoConvocacaoCreateSerializer."""
     serializer = ProcessoConvocacaoCreateSerializer()
     assert "concurso_uuid" in serializer.fields
     assert "concurso_nome" in serializer.fields
@@ -324,14 +205,7 @@ def test_processo_convocacao_create_serializer_fields():
 
 
 def test_processo_convocacao_create_serializer_validation():
-    """Testa a validação do ProcessoConvocacaoCreateSerializer.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Testa a validação do ProcessoConvocacaoCreateSerializer."""
     data = {
         "concurso_uuid": str(uuid.uuid4()),
         "concurso_nome": "Concurso Teste",
@@ -346,14 +220,7 @@ def test_processo_convocacao_create_serializer_validation():
 
 
 def test_processo_convocacao_create_serializer_uuid_validation():
-    """Testa a validação do UUID do concurso.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Testa a validação do UUID do concurso."""
     data = {
         "concurso_uuid": "uuid-invalido",
         "concurso_nome": "Concurso Teste",
@@ -366,17 +233,7 @@ def test_processo_convocacao_create_serializer_uuid_validation():
 
 
 def test_processo_convocacao_create_serializer_create(user):
-    """Testa a criação de processo de convocação.
-    
-    Args:
-        user: Parâmetro user da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Testa a criação de processo de convocação."""
     data = {
         "concurso_uuid": str(uuid.uuid4()),
         "concurso_nome": "Concurso Teste",
@@ -395,17 +252,7 @@ def test_processo_convocacao_create_serializer_create(user):
 
 # Testes para ProcessoConvocacaoListSerializer
 def test_processo_convocacao_list_serializer_fields(processo_convocacao):
-    """Testa os campos do ProcessoConvocacaoListSerializer.
-    
-    Args:
-        processo_convocacao: Parâmetro processo convocacao da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Testa os campos do ProcessoConvocacaoListSerializer."""
     # Criar cargos para o processo
     CargoProcesso.objects.create(
         processo=processo_convocacao,
@@ -439,17 +286,7 @@ def test_processo_convocacao_list_serializer_fields(processo_convocacao):
 def test_processo_convocacao_list_serializer_quantidade_cargos(
     processo_convocacao,
 ):
-    """Testa o campo calculado quantidade_cargos.
-    
-    Args:
-        processo_convocacao: Parâmetro processo convocacao da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Testa o campo calculado quantidade_cargos."""
     # Criar cargos para o processo
     CargoProcesso.objects.create(
         processo=processo_convocacao,
@@ -485,14 +322,7 @@ def test_processo_convocacao_list_serializer_quantidade_cargos(
 
 # Testes para ProcessoConvocacaoUpdateSerializer
 def test_processo_convocacao_update_serializer_fields():
-    """Testa os campos do ProcessoConvocacaoUpdateSerializer.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Testa os campos do ProcessoConvocacaoUpdateSerializer."""
     serializer = ProcessoConvocacaoUpdateSerializer()
     assert "concurso_nome" in serializer.fields
     assert "descricao" in serializer.fields
@@ -503,17 +333,7 @@ def test_processo_convocacao_update_serializer_fields():
 
 
 def test_processo_convocacao_update_serializer_validation(processo_convocacao):
-    """Testa a validação do ProcessoConvocacaoUpdateSerializer.
-    
-    Args:
-        processo_convocacao: Parâmetro processo convocacao da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Testa a validação do ProcessoConvocacaoUpdateSerializer."""
     # Dados válidos para atualização
     data = {
         "concurso_nome": "Concurso Atualizado",
@@ -536,17 +356,7 @@ def test_processo_convocacao_update_serializer_validation(processo_convocacao):
 def test_processo_convocacao_update_serializer_partial_update(
     processo_convocacao,
 ):
-    """Testa atualização parcial.
-    
-    Args:
-        processo_convocacao: Parâmetro processo convocacao da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Testa atualização parcial."""
     # Atualizar apenas o status
     data = {"status": "CANCELADO"}
 
@@ -565,17 +375,7 @@ def test_processo_convocacao_update_serializer_partial_update(
 
 # Testes de Integração
 def test_serializer_integration_processo_cargos(processo_convocacao):
-    """Testa integração entre serializers de processo e cargos.
-    
-    Args:
-        processo_convocacao: Parâmetro processo convocacao da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Testa integração entre serializers de processo e cargos."""
     # Criar cargos
     CargoProcesso.objects.create(
         processo=processo_convocacao,
@@ -599,14 +399,7 @@ def test_serializer_integration_processo_cargos(processo_convocacao):
 
 
 def test_serializer_error_handling():
-    """Testa o tratamento de erros nos serializers.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Testa o tratamento de erros nos serializers."""
     # Testar serializer com dados inválidos
     data = {
         "concurso_uuid": "uuid-invalido",
@@ -625,17 +418,7 @@ def test_serializer_error_handling():
 
 @pytest.fixture
 def envio_email(processo_convocacao):
-    """Fixture para EnvioEmail.
-    
-    Args:
-        processo_convocacao: Parâmetro processo convocacao da operação.
-    
-    Returns:
-        Resultado da operação.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Fixture para EnvioEmail."""
     return EnvioEmail.objects.create(
         processo_uuid=processo_convocacao.uuid,
         processo_nome=processo_convocacao.concurso_nome,
@@ -646,17 +429,7 @@ def envio_email(processo_convocacao):
 
 @pytest.fixture
 def envio_email_candidatos(envio_email):
-    """Fixture para EnvioEmailCandidato vinculados ao envio.
-    
-    Args:
-        envio_email: Parâmetro envio email da operação.
-    
-    Returns:
-        Resultado da operação.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Fixture para EnvioEmailCandidato vinculados ao envio."""
     from processos.models.envio_email_candidato import (
         ENVIO_STATUS_ERRO,
         ENVIO_STATUS_SUCESSO,
@@ -682,17 +455,7 @@ def envio_email_candidatos(envio_email):
 
 
 def test_envio_email_serializer_fields(envio_email):
-    """Testa os campos do EnvioEmailSerializer.
-    
-    Args:
-        envio_email: Parâmetro envio email da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Testa os campos do EnvioEmailSerializer."""
     serializer = EnvioEmailSerializer(envio_email)
     data = serializer.data
     assert data["uuid"] == str(envio_email.uuid)
@@ -704,17 +467,7 @@ def test_envio_email_serializer_fields(envio_email):
 
 
 def test_envio_email_candidato_serializer_fields(envio_email_candidatos):
-    """Testa os campos do EnvioEmailCandidatoSerializer.
-    
-    Args:
-        envio_email_candidatos: Parâmetro envio email candidatos da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Testa os campos do EnvioEmailCandidatoSerializer."""
     dest = envio_email_candidatos[0]
     serializer = EnvioEmailCandidatoSerializer(dest)
     data = serializer.data
@@ -728,18 +481,7 @@ def test_envio_email_candidato_serializer_fields(envio_email_candidatos):
 def test_envio_email_detalhe_serializer_fields(
     envio_email, envio_email_candidatos
 ):
-    """Testa os campos do EnvioEmailDetalheSerializer incluindo candidatos.
-    
-    Args:
-        envio_email: Parâmetro envio email da operação.
-        envio_email_candidatos: Parâmetro envio email candidatos da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Testa os campos do EnvioEmailDetalheSerializer incluindo candidatos."""
     serializer = EnvioEmailDetalheSerializer(envio_email)
     data = serializer.data
     assert data["uuid"] == str(envio_email.uuid)
@@ -753,17 +495,7 @@ def test_envio_email_detalhe_serializer_fields(
 
 
 def test_envio_email_envio_serializer_valid(processo_convocacao):
-    """Testa EnvioEmailEnvioSerializer com dados válidos.
-    
-    Args:
-        processo_convocacao: Parâmetro processo convocacao da operação.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Testa EnvioEmailEnvioSerializer com dados válidos."""
     data = {
         "processo_uuid": str(processo_convocacao.uuid),
         "processo_nome": "Processo Teste",
@@ -779,14 +511,7 @@ def test_envio_email_envio_serializer_valid(processo_convocacao):
 
 
 def test_envio_email_envio_serializer_processo_nao_encontrado():
-    """Testa EnvioEmailEnvioSerializer quando processo não existe.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Testa EnvioEmailEnvioSerializer quando processo não existe."""
     data = {
         "processo_uuid": str(uuid.uuid4()),
         "processo_nome": "Processo Inexistente",

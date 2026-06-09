@@ -1,4 +1,5 @@
 """Módulo tests/services/test_agenda_api_service."""
+
 from unittest.mock import Mock, patch
 
 import pytest
@@ -10,14 +11,7 @@ from processos.services.exceptions import AgendaServiceError
 
 @override_settings(AGENDA_API_URL="http://ms-agenda")
 def test_excluir_agendas_por_processo_sucesso_retorna_json():
-    """Verifica excluir agendas por processo sucesso retorna json.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Verifica excluir agendas por processo sucesso retorna json."""
     service = AgendaApiService()
     processo_uuid = "11111111-1111-1111-1111-111111111111"
 
@@ -45,14 +39,7 @@ def test_excluir_agendas_por_processo_sucesso_retorna_json():
 
 @override_settings(AGENDA_API_URL="http://ms-agenda")
 def test_excluir_agendas_por_processo_sucesso_sem_body_retorna_dict_vazio():
-    """Verifica excluir agendas por processo sucesso sem body retorna dict vazio.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Verifica exclusão de agendas sem corpo na resposta."""
     service = AgendaApiService()
     processo_uuid = "22222222-2222-2222-2222-222222222222"
 
@@ -73,14 +60,7 @@ def test_excluir_agendas_por_processo_sucesso_sem_body_retorna_dict_vazio():
 
 @override_settings(AGENDA_API_URL="http://ms-agenda")
 def test_excluir_agendas_por_processo_status_diferente_200_gera_erro():
-    """Verifica excluir agendas por processo status diferente 200 gera erro.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Verifica excluir agendas por processo status diferente 200 gera erro."""
     service = AgendaApiService()
     processo_uuid = "33333333-3333-3333-3333-333333333333"
 
@@ -102,14 +82,7 @@ def test_excluir_agendas_por_processo_status_diferente_200_gera_erro():
 
 @override_settings(AGENDA_API_URL="http://ms-agenda")
 def test_excluir_agendas_por_processo_excecao_do_client_gera_erro():
-    """Verifica excluir agendas por processo excecao do client gera erro.
-    
-    Returns:
-        Nenhum valor; valida comportamento via asserções.
-    
-    Raises:
-        Nenhuma exceção específica documentada.
-    """
+    """Verifica excluir agendas por processo excecao do client gera erro."""
     service = AgendaApiService()
     processo_uuid = "44444444-4444-4444-4444-444444444444"
 
