@@ -1,3 +1,4 @@
+"""Módulo tests/services/test_escolhas_api_service."""
 from unittest.mock import Mock, patch
 
 import pytest
@@ -8,6 +9,14 @@ from processos.services.exceptions import EscolhasServiceError
 
 
 def test_buscar_candidatos_com_escolha_sem_config_retorna_lista_vazia():
+    """Verifica buscar candidatos com escolha sem config retorna lista vazia.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     service = EscolhasApiService()
     with override_settings(ESCOLHAS_API_URL=""):
         assert service.buscar_candidatos_com_escolha("concurso") == []
@@ -15,6 +24,14 @@ def test_buscar_candidatos_com_escolha_sem_config_retorna_lista_vazia():
 
 @override_settings(ESCOLHAS_API_URL="http://ms-escolha")
 def test_buscar_candidatos_com_escolha_json_lista_mapeia_candidato_uuid():
+    """Verifica buscar candidatos com escolha json lista mapeia candidato uuid.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     service = EscolhasApiService()
     concurso_uuid = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
 
@@ -47,6 +64,14 @@ def test_buscar_candidatos_com_escolha_json_lista_mapeia_candidato_uuid():
 
 @override_settings(ESCOLHAS_API_URL="http://ms-escolha")
 def test_buscar_candidatos_com_escolha_json_dict_results_mapeia_candidato_uuid():  # noqa: E501
+    """Verifica buscar candidatos com escolha json dict results mapeia candidato uuid.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     service = EscolhasApiService()
 
     response = Mock()
@@ -62,6 +87,14 @@ def test_buscar_candidatos_com_escolha_json_dict_results_mapeia_candidato_uuid()
 
 @override_settings(ESCOLHAS_API_URL="http://ms-escolha")
 def test_buscar_candidatos_com_escolha_json_dict_sem_results_retorna_lista_vazia():  # noqa: E501
+    """Verifica buscar candidatos com escolha json dict sem results retorna lista vazia.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     service = EscolhasApiService()
 
     response = Mock()
@@ -77,6 +110,14 @@ def test_buscar_candidatos_com_escolha_json_dict_sem_results_retorna_lista_vazia
 
 @override_settings(ESCOLHAS_API_URL="http://ms-escolha")
 def test_buscar_candidatos_com_escolha_erro_do_client_e_propagado():
+    """Verifica buscar candidatos com escolha erro do client e propagado.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     service = EscolhasApiService()
 
     response = Mock()
@@ -91,6 +132,14 @@ def test_buscar_candidatos_com_escolha_erro_do_client_e_propagado():
 
 
 def test_excluir_lotes_vagas_por_processo_sem_config_gera_value_error():
+    """Verifica excluir lotes vagas por processo sem config gera value error.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     service = EscolhasApiService()
     with override_settings(ESCOLHAS_API_URL=""), pytest.raises(ValueError):
         service.excluir_lotes_vagas_por_processo("processo")
@@ -98,6 +147,14 @@ def test_excluir_lotes_vagas_por_processo_sem_config_gera_value_error():
 
 @override_settings(ESCOLHAS_API_URL="http://ms-escolha")
 def test_excluir_lotes_vagas_por_processo_sucesso_retorna_json():
+    """Verifica excluir lotes vagas por processo sucesso retorna json.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     service = EscolhasApiService()
     processo_uuid = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
 
@@ -125,6 +182,14 @@ def test_excluir_lotes_vagas_por_processo_sucesso_retorna_json():
 
 @override_settings(ESCOLHAS_API_URL="http://ms-escolha")
 def test_excluir_lotes_vagas_por_processo_sucesso_sem_body_retorna_dict_vazio():  # noqa: E501
+    """Verifica excluir lotes vagas por processo sucesso sem body retorna dict vazio.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     service = EscolhasApiService()
 
     response = Mock()
@@ -142,6 +207,14 @@ def test_excluir_lotes_vagas_por_processo_sucesso_sem_body_retorna_dict_vazio():
 
 @override_settings(ESCOLHAS_API_URL="http://ms-escolha")
 def test_excluir_lotes_vagas_por_processo_status_diferente_200_gera_erro():
+    """Verifica excluir lotes vagas por processo status diferente 200 gera erro.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     service = EscolhasApiService()
 
     response = Mock()
@@ -161,6 +234,14 @@ def test_excluir_lotes_vagas_por_processo_status_diferente_200_gera_erro():
 
 @override_settings(ESCOLHAS_API_URL="http://ms-escolha")
 def test_excluir_lotes_vagas_por_processo_excecao_do_client_gera_erro():
+    """Verifica excluir lotes vagas por processo excecao do client gera erro.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     service = EscolhasApiService()
 
     with patch(  # noqa: SIM117

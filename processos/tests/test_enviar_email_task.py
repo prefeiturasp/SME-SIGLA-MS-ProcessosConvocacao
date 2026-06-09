@@ -1,6 +1,4 @@
-"""
-Testes unitários para processos.tasks.enviar_email_task.
-"""
+"""Testes unitários para processos.tasks.enviar_email_task."""
 
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
@@ -26,6 +24,17 @@ pytestmark = pytest.mark.django_db
 
 
 def _task_kwargs(candidato):
+    """Executa  task kwargs.
+    
+    Args:
+        candidato: Parâmetro candidato da operação.
+    
+    Returns:
+        Resultado da operação.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     return {
         "email": candidato.email,
         "assunto": ASSUNTO_TESTE,
@@ -37,6 +46,17 @@ def _task_kwargs(candidato):
 
 @pytest.fixture
 def processo_convocacao(db):
+    """Executa processo convocacao.
+    
+    Args:
+        db: Parâmetro db da operação.
+    
+    Returns:
+        Resultado da operação.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     from processos.models import ProcessoConvocacao
 
     return ProcessoConvocacao.objects.create(
@@ -50,6 +70,17 @@ def processo_convocacao(db):
 
 @pytest.fixture
 def envio_email(processo_convocacao):
+    """Executa envio email.
+    
+    Args:
+        processo_convocacao: Parâmetro processo convocacao da operação.
+    
+    Returns:
+        Resultado da operação.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     return EnvioEmail.objects.create(
         processo_uuid=processo_convocacao.uuid,
         processo_nome=processo_convocacao.concurso_nome,
@@ -60,6 +91,17 @@ def envio_email(processo_convocacao):
 
 @pytest.fixture
 def envio_candidato(envio_email):
+    """Executa envio candidato.
+    
+    Args:
+        envio_email: Parâmetro envio email da operação.
+    
+    Returns:
+        Resultado da operação.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     return EnvioEmailCandidato.objects.create(
         envio_email=envio_email,
         nome="Fulano",
@@ -85,6 +127,19 @@ def test_enviar_email_candidato_task_converte_base64_para_cid(
     mock_logo_path,
     envio_candidato,
 ):
+    """Verifica enviar email candidato task converte base64 para cid.
+    
+    Args:
+        mock_email_cls: Parâmetro mock email cls da operação.
+        mock_logo_path: Parâmetro mock logo path da operação.
+        envio_candidato: Parâmetro envio candidato da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     mock_logo_path.is_file.return_value = False
     mock_msg = MagicMock()
     mock_email_cls.return_value = mock_msg
@@ -106,6 +161,19 @@ def test_enviar_email_candidato_task_converte_base64_para_cid(
 def test_enviar_email_candidato_task_sucesso_com_logo(
     mock_email_cls, mock_logo_path, envio_candidato
 ):
+    """Verifica enviar email candidato task sucesso com logo.
+    
+    Args:
+        mock_email_cls: Parâmetro mock email cls da operação.
+        mock_logo_path: Parâmetro mock logo path da operação.
+        envio_candidato: Parâmetro envio candidato da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     mock_logo_path.is_file.return_value = True
     mock_logo_path.read_bytes.return_value = b"\x89PNG\r\n\x1a\n"
     mock_msg = MagicMock()
@@ -131,6 +199,19 @@ def test_enviar_email_candidato_task_sucesso_com_logo(
 def test_enviar_email_candidato_task_sucesso_sem_logo(
     mock_email_cls, mock_logo_path, envio_candidato
 ):
+    """Verifica enviar email candidato task sucesso sem logo.
+    
+    Args:
+        mock_email_cls: Parâmetro mock email cls da operação.
+        mock_logo_path: Parâmetro mock logo path da operação.
+        envio_candidato: Parâmetro envio candidato da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     mock_logo_path.is_file.return_value = False
     mock_msg = MagicMock()
     mock_email_cls.return_value = mock_msg
@@ -149,6 +230,19 @@ def test_enviar_email_candidato_task_sucesso_sem_logo(
 def test_enviar_email_candidato_task_erro_no_send(
     mock_email_cls, mock_logo_path, envio_candidato
 ):
+    """Verifica enviar email candidato task erro no send.
+    
+    Args:
+        mock_email_cls: Parâmetro mock email cls da operação.
+        mock_logo_path: Parâmetro mock logo path da operação.
+        envio_candidato: Parâmetro envio candidato da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     mock_logo_path.is_file.return_value = False
     mock_msg = MagicMock()
     mock_msg.send.side_effect = Exception("Connection refused")
@@ -164,6 +258,14 @@ def test_enviar_email_candidato_task_erro_no_send(
 
 
 def test_constantes_task():
+    """Verifica constantes task.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     assert CID_LOGO_SIGLA == "logo_sigla"
     assert "templates" in str(LOGO_EMAIL_PATH) and "assets" in str(
         LOGO_EMAIL_PATH

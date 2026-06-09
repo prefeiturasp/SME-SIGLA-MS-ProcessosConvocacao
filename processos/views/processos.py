@@ -48,9 +48,7 @@ STATUS_CANCELADO = "CANCELADO"
 
 
 class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet para gerenciar processos de convocação.
-    """
+    """ViewSet para gerenciar processos de convocação."""
 
     queryset = ProcessoConvocacao.objects.filter(
         esta_ativo=True
@@ -64,7 +62,17 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
     pagination_class = CustomPagination
 
     def get_queryset(self) -> QuerySet[ProcessoConvocacao]:
-        """Aplica filtros por data de convocação e cargo."""
+        """Aplica filtros por data de convocação e cargo.
+        
+        Args:
+            self: Instância do objeto.
+        
+        Returns:
+            QuerySet filtrado conforme os parâmetros.
+        
+        Raises:
+            Nenhuma exceção específica documentada.
+        """
         queryset = super().get_queryset()
 
         data_inicio = self.request.query_params.get("data_convocacao_inicio")
@@ -99,6 +107,17 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
         return queryset
 
     def get_serializer_class(self) -> type[BaseSerializer]:
+        """Retorna a classe de serializer conforme a action.
+        
+        Args:
+            self: Instância do objeto.
+        
+        Returns:
+            Tipo retornado conforme a operação.
+        
+        Raises:
+            Nenhuma exceção específica documentada.
+        """
         if self.action == "create":
             return ProcessoConvocacaoCreateSerializer
         elif self.action == "list":
@@ -110,7 +129,20 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
         return ProcessoConvocacaoSerializer
 
     def list(self, request: Request, *args: Any, **kwargs: Any) -> Response:
-        """Lista processos paginados ou em formato select."""
+        """Lista processos paginados ou em formato select.
+        
+        Args:
+            self: Instância do objeto.
+            request: Requisição HTTP recebida.
+            *args: Argumentos posicionais variáveis.
+            **kwargs: Argumentos nomeados variáveis.
+        
+        Returns:
+            Resposta HTTP com o resultado da operação.
+        
+        Raises:
+            Nenhuma exceção específica documentada.
+        """
         logger.info(
             "Iniciando lista de processos de convocação",
             extra={
@@ -136,7 +168,18 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"], url_path="filtros")
     def filtros(self, request: Request) -> Response:
-        """Retorna opções de filtro (concursos, cargos, tipos de escolha)."""
+        """Retorna opções de filtro (concursos, cargos, tipos de escolha).
+        
+        Args:
+            self: Instância do objeto.
+            request: Requisição HTTP recebida.
+        
+        Returns:
+            Resposta HTTP com o resultado da operação.
+        
+        Raises:
+            Nenhuma exceção específica documentada.
+        """
         todos_processos = ProcessoConvocacao.objects.values(
             "concurso_uuid", "concurso_nome"
         )
@@ -175,7 +218,19 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["post"], url_path="finalizar")
     def finalizar(self, request: Request, pk: str | None = None) -> Response:
-        """Finaliza processo após validar escolhas no MS-Escolhas."""
+        """Finaliza processo após validar escolhas no MS-Escolhas.
+        
+        Args:
+            self: Instância do objeto.
+            request: Requisição HTTP recebida.
+            pk: Chave primária do recurso.
+        
+        Returns:
+            Resposta HTTP com o resultado da operação.
+        
+        Raises:
+            Nenhuma exceção específica documentada.
+        """
         processo = self.get_object()
         logger.info(
             "Iniciando finalização de processo de convocação",
@@ -253,7 +308,20 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def update(self, request: Request, *args: Any, **kwargs: Any) -> Response:
-        """Bloqueia alteração quando processo está finalizado."""
+        """Bloqueia alteração quando processo está finalizado.
+        
+        Args:
+            self: Instância do objeto.
+            request: Requisição HTTP recebida.
+            *args: Argumentos posicionais variáveis.
+            **kwargs: Argumentos nomeados variáveis.
+        
+        Returns:
+            Resposta HTTP com o resultado da operação.
+        
+        Raises:
+            Nenhuma exceção específica documentada.
+        """
         instance = self.get_object()
         if instance.status == STATUS_FINALIZADO:
             return Response(
@@ -265,7 +333,20 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
     def partial_update(
         self, request: Request, *args: Any, **kwargs: Any
     ) -> Response:
-        """Bloqueia alteração parcial quando processo está finalizado."""
+        """Bloqueia alteração parcial quando processo está finalizado.
+        
+        Args:
+            self: Instância do objeto.
+            request: Requisição HTTP recebida.
+            *args: Argumentos posicionais variáveis.
+            **kwargs: Argumentos nomeados variáveis.
+        
+        Returns:
+            Resposta HTTP com o resultado da operação.
+        
+        Raises:
+            Nenhuma exceção específica documentada.
+        """
         instance = self.get_object()
         if instance.status == STATUS_FINALIZADO:
             return Response(
@@ -278,6 +359,19 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
     def atualizar_passo(
         self, request: Request, pk: str | None = None
     ) -> Response:
+        """Executa atualizar passo.
+        
+        Args:
+            self: Instância do objeto.
+            request: Requisição HTTP recebida.
+            pk: Chave primária do recurso.
+        
+        Returns:
+            Resposta HTTP com o resultado da operação.
+        
+        Raises:
+            Nenhuma exceção específica documentada.
+        """
         processo = self.get_object()
         serializer = ProcessoConvocacaoPassoSerializer(
             processo,
@@ -292,7 +386,20 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
         )
 
     def destroy(self, request: Request, *args: Any, **kwargs: Any) -> Response:
-        """Exclui processo e limpa dependências nos microsserviços."""
+        """Exclui processo e limpa dependências nos microsserviços.
+        
+        Args:
+            self: Instância do objeto.
+            request: Requisição HTTP recebida.
+            *args: Argumentos posicionais variáveis.
+            **kwargs: Argumentos nomeados variáveis.
+        
+        Returns:
+            Resposta HTTP com o resultado da operação.
+        
+        Raises:
+            Nenhuma exceção específica documentada.
+        """
         processo = self.get_object()
         str(processo.uuid)
 

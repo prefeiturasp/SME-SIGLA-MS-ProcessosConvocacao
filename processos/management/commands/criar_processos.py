@@ -1,6 +1,4 @@
-"""
-Django management command to create sample processos and cargos.
-"""
+"""Django management command to create sample processos and cargos."""
 
 import random
 import uuid
@@ -16,11 +14,24 @@ from processos.models.constants import (
 
 
 class Command(BaseCommand):
+    """Define Command."""
     help = (
         "Cria processos de convocação e cargos de exemplo para desenvolvimento"
     )
 
     def add_arguments(self, parser):
+        """Registra argumentos da linha de comando.
+        
+        Args:
+            self: Instância do objeto.
+            parser: Parser de argumentos do comando.
+        
+        Returns:
+            Não retorna valor.
+        
+        Raises:
+            Nenhuma exceção específica documentada.
+        """
         parser.add_argument(
             "--count",
             type=int,
@@ -35,6 +46,19 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        """Executa a lógica principal do comando.
+        
+        Args:
+            self: Instância do objeto.
+            *args: Argumentos posicionais variáveis.
+            **options: Parâmetro options da operação.
+        
+        Returns:
+            Não retorna valor; executa a operação do comando.
+        
+        Raises:
+            Nenhuma exceção específica documentada.
+        """
         count = options["count"]
         cargos_per_processo = options["cargos_per_processo"]
 

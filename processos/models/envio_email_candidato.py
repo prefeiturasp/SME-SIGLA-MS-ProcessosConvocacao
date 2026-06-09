@@ -1,3 +1,4 @@
+"""Módulo models/envio_email_candidato."""
 from auditlog.registry import auditlog
 from django.db import models
 
@@ -15,9 +16,7 @@ ENVIO_STATUS_CHOICES = [
 
 
 class EnvioEmailCandidato(BaseModel):
-    """
-    Registro do envio de e-mail para cada candidato.
-    """
+    """Registro do envio de e-mail para cada candidato."""
 
     envio_email = models.ForeignKey(
         "EnvioEmail",
@@ -44,12 +43,24 @@ class EnvioEmailCandidato(BaseModel):
     )
 
     class Meta:
+        """Configuração do serializer."""
         verbose_name = "Envio de e-mail - Candidato"
         verbose_name_plural = "Envio de e-mail - Candidatos"
         ordering = ["-criado_em"]
         db_table = "processos_envio_email_candidato"
 
     def __str__(self) -> str:
+        """Executa   str  .
+        
+        Args:
+            self: Instância do objeto.
+        
+        Returns:
+            Texto resultante da operação.
+        
+        Raises:
+            Nenhuma exceção específica documentada.
+        """
         return f"{self.nome} ({self.email}) - {self.get_status_display()}"
 
 

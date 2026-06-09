@@ -1,3 +1,4 @@
+"""Serviços de gestão de cargos do processo de convocação."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -14,6 +15,8 @@ from processos.serializers import (
 
 @dataclass(frozen=True)
 class SubstituirCargosResult:
+    """Resultado da substituição de cargos de um processo."""
+
     cargos_criados: list[dict[str, Any]]
     cargos_atualizados: list[dict[str, Any]]
     cargos_removidos: int
@@ -22,10 +25,24 @@ class SubstituirCargosResult:
 
 
 class CargosProcessoService:
+    """Operações de persistência de cargos vinculados ao processo."""
+
     @staticmethod
     def salvar_cargos(
         *, processo: ProcessoConvocacao, cargos_data: list[dict[str, Any]]
     ) -> SubstituirCargosResult:
+        """Cria, atualiza e remove cargos conforme o payload recebido.
+        
+        Args:
+            processo: Processo de convocação relacionado.
+            cargos_data: Lista de cargos enviada no payload.
+        
+        Returns:
+            Resultado da operação.
+        
+        Raises:
+            Nenhuma exceção específica documentada.
+        """
         cargos_criados: list[dict[str, Any]] = []
         cargos_atualizados: list[dict[str, Any]] = []
         erros: list[dict[str, Any]] = []

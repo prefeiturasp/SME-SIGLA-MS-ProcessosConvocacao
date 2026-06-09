@@ -1,12 +1,11 @@
+"""Módulo models/base."""
 import uuid
 
 from django.db import models
 
 
 class BaseModel(models.Model):
-    """
-    Modelo base abstrato com campos comuns.
-    """
+    """Modelo base abstrato com campos comuns."""
 
     uuid = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False
@@ -19,5 +18,6 @@ class BaseModel(models.Model):
     )
 
     class Meta:
+        """Configuração do serializer."""
         abstract = True
         ordering = ["-criado_em"]

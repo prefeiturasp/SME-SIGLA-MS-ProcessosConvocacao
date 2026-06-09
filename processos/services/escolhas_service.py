@@ -1,5 +1,5 @@
-"""
-Serviço para comunicação com o microserviço de Escolhas (MS-Escolha).
+"""Serviço para comunicação com o microserviço de Escolhas (MS-Escolha).
+
 Usado na finalização do processo para validar se todos os convocados fizeram
 escolha.
 """
@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class EscolhasApiService:
+    """Define EscolhasApiService."""
     DEFAULT_TIMEOUT = 30
     TIMEOUT_SEGUNDOS = 30
     PATH_ESCOLHAS = "/api/v1/escolhas/"
@@ -25,7 +26,17 @@ class EscolhasApiService:
     PAGE_SIZE = 10000
 
     def _get_base_url(self) -> str:
-        """Obtém a URL base do MS-Escolha a partir das configurações."""
+        """Obtém a URL base do MS-Escolha a partir das configurações.
+        
+        Args:
+            self: Instância do objeto.
+        
+        Returns:
+            Texto resultante da operação.
+        
+        Raises:
+            Nenhuma exceção específica documentada.
+        """
         base_url = getattr(settings, "ESCOLHAS_API_URL", "") or ""
         if not base_url.strip():
             logger.warning(
@@ -35,24 +46,17 @@ class EscolhasApiService:
         return base_url.rstrip("/")
 
     def buscar_candidatos_com_escolha(self, concurso_uuid: str) -> list[str]:
-        """
-        Busca no MS-Escolha os candidato_uuid que já têm registro de resposta
-        (escolha,
-        reconvocação ou não escolha).
-        Pendente = candidato sem nenhum registro; qualquer situação conta como
-        "respondeu".
-
+        """Busca no MS-Escolha os candidato_uuid que já têm registro de resposta.
+        
         Args:
-            concurso_uuid: UUID do concurso (o ProcessoConvocacao tem
-            concurso_uuid).
-
+            self: Instância do objeto.
+            concurso_uuid: UUID do concurso (o ProcessoConvocacao tem.
+        
         Returns:
-            Lista de candidato_uuid (strings) que possuem registro no concurso
-            (qualquer
-            situação).
-            Lista vazia se ESCOLHAS_API_URL não estiver configurada ou em caso
-            de erro
-            (logado).
+            Lista com os registros resultantes.
+        
+        Raises:
+            Nenhuma exceção específica documentada.
         """
         base_url = self._get_base_url()
         if not base_url:
@@ -124,11 +128,18 @@ class EscolhasApiService:
         return candidato_uuids
 
     def excluir_lotes_vagas_por_processo(self, processo_uuid: str) -> dict:
-        """
-        Remove lotes de vagas (e vagas em cascata) do processo no MS-Escolha.
-
-        Endpoint:
-          DELETE /api/v1/vagas-escolas/por-processo/?processo_uuid=<uuid>
+        """Remove lotes de vagas (e vagas em cascata) do processo no MS-Escolha.
+        
+        Args:
+            self: Instância do objeto.
+            processo_uuid: UUID do processo de convocação.
+        
+        Returns:
+            Dicionário com os dados processados.
+        
+        Raises:
+            ValueError: Se o valor informado não for válido.
+            EscolhasServiceError: Se a integração com o MS-Escolhas falhar.
         """
         base_url = self._get_base_url()
         if not base_url:

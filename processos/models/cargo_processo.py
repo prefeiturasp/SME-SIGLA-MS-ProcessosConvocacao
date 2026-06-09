@@ -1,3 +1,4 @@
+"""Módulo models/cargo_processo."""
 from auditlog.registry import auditlog
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
@@ -6,11 +7,7 @@ from .base import BaseModel
 
 
 class CargoProcesso(BaseModel):
-    """
-    Modelo para representar os cargos selecionados para um processo de
-    convocação
-    específico.
-    """
+    """Modelo para representar os cargos selecionados para um processo de convocação específico."""
 
     processo = models.ForeignKey(
         "ProcessoConvocacao",
@@ -57,6 +54,7 @@ class CargoProcesso(BaseModel):
     )
 
     class Meta:
+        """Configuração do serializer."""
         verbose_name = "Cargo do Processo"
         verbose_name_plural = "Cargos do Processo"
         unique_together = ["processo", "cargo_nome"]
@@ -64,6 +62,17 @@ class CargoProcesso(BaseModel):
         db_table = "processos_cargos"
 
     def __str__(self) -> str:
+        """Executa   str  .
+        
+        Args:
+            self: Instância do objeto.
+        
+        Returns:
+            Texto resultante da operação.
+        
+        Raises:
+            Nenhuma exceção específica documentada.
+        """
         return f"{self.processo.concurso_nome} - {self.cargo_nome}"
 
 

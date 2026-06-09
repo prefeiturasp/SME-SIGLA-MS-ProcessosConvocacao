@@ -48,12 +48,15 @@ TEMPLATE_DINAMICO = "email/envio_email_dinamico.html"
 
 def dados_template(candidato: dict[str, Any]) -> dict[str, str]:
     """Extrai placeholders de cargo e classificação do habilitado.
-
+    
     Args:
         candidato: item retornado pelo MS-Candidatos.
-
+    
     Returns:
-        Dict com chaves ``cargo`` e ``classificacao`` para o template.
+        Dicionário com os dados processados.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
     """
     cargo_nome = candidato.get("descricao_cargo") or "—"
     cat = (candidato.get("categoria_efetiva") or "").strip().upper()
@@ -76,17 +79,31 @@ def _preencher_template(
     dados: dict[str, str],
 ) -> str:
     """Substitui placeholders ``[[chave]]`` no HTML pelo dict ``dados``.
-
+    
     Args:
         conteudo: HTML do template; ``None`` é tratado como string vazia.
         dados: mapa chave → valor para substituição.
-
+    
     Returns:
-        HTML com placeholders preenchidos.
+        Texto resultante da operação.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
     """
     pattern = re.compile(r"\[\[(.*?)\]\]")
 
     def replace_func(match: Match[str]) -> str:
+        """Executa replace func.
+        
+        Args:
+            match: Parâmetro match da operação.
+        
+        Returns:
+            Texto resultante da operação.
+        
+        Raises:
+            Nenhuma exceção específica documentada.
+        """
         chave = match.group(1)
         return str(dados.get(chave, f"[[ERRO: {chave} NÃO ENCONTRADO]]"))
 
@@ -94,7 +111,18 @@ def _preencher_template(
 
 
 def _renderizar_conteudo(*, tipo: str, context: dict[str, Any]) -> str:
-    """Renderiza corpo do e-mail no template dinâmico."""
+    """Renderiza corpo do e-mail no template dinâmico.
+    
+    Args:
+        tipo: Parâmetro tipo da operação.
+        context: Contexto de renderização ou serialização.
+    
+    Returns:
+        Texto resultante da operação.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     return render_to_string(TEMPLATE_DINAMICO, context)
 
 
@@ -106,15 +134,18 @@ def iniciar_processamento_envio(
     conteudo: str | None,
 ) -> EnvioEmail:
     """Inicia envio assíncrono de e-mails para habilitados convocados.
-
+    
     Args:
         processo_uuid: UUID do processo de convocação.
         processo_nome: nome exibido no histórico de envio.
         tipo: ``CONVOCACAO``, ``VAGAS`` ou ``RESULTADOS``.
         conteudo: HTML com placeholders ``[[cargo]]``, etc.
-
+    
     Returns:
-        Registro ``EnvioEmail`` com candidatos enfileirados no Celery.
+        Resultado da operação.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
     """
     logger.info(
         "Iniciando processamento de envio de e-mail",

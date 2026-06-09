@@ -1,6 +1,4 @@
-"""
-Configuração e requisições à API do MS-Candidatos (habilitados por processo).
-"""
+"""Configuração e requisições à API do MS-Candidatos (habilitados por processo)."""
 
 import logging
 from typing import Any
@@ -16,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class CandidatosApiService:
+    """Define CandidatosApiService."""
     PATH_HABILITADOS = "/api/v1/habilitados/"
     FIELDS_HABILITADOS = (
         "candidato__nome,candidato__registro_funcional,"
@@ -27,10 +26,32 @@ class CandidatosApiService:
 
     @property
     def _candidatos_api_url(self) -> str:
+        """Executa  candidatos api url.
+        
+        Args:
+            self: Instância do objeto.
+        
+        Returns:
+            Texto resultante da operação.
+        
+        Raises:
+            Nenhuma exceção específica documentada.
+        """
         return getattr(settings, "CANDIDATOS_API_URL", "").rstrip("/")
 
     def _url_habilitados_por_processo(self, processo_uuid: str) -> str:
-        """Monta a URL para buscar habilitados do processo no MS-Candidatos."""
+        """Monta a URL para buscar habilitados do processo no MS-Candidatos.
+        
+        Args:
+            self: Instância do objeto.
+            processo_uuid: UUID do processo de convocação.
+        
+        Returns:
+            Texto resultante da operação.
+        
+        Raises:
+            Nenhuma exceção específica documentada.
+        """
         params = {
             "processo_uuid": processo_uuid,
             "foi_convocado": "true",
@@ -43,16 +64,17 @@ class CandidatosApiService:
     def buscar_habilitados_por_processo(
         self, processo_uuid: str
     ) -> list[dict[str, Any]]:
-        """
-        Busca no MS-Candidatos os habilitados do processo (foi_convocado=true).
-
-        URL: GET /api/v1/habilitados/?processo_uuid=<uuid>&foi_convocado=true
-             &fields=candidato__nome,candidato__registro_funcional,candidato__email,
-                     cargo_nome,classificacao
-
+        """Busca no MS-Candidatos os habilitados do processo (foi_convocado=true).
+        
+        Args:
+            self: Instância do objeto.
+            processo_uuid: UUID do processo de convocação.
+        
         Returns:
-            Lista de registros retornados pela API (ex.: results ou lista
-            direta).
+            Lista com os registros resultantes.
+        
+        Raises:
+            Nenhuma exceção específica documentada.
         """
         if not self._candidatos_api_url:
             logger.warning(
@@ -107,11 +129,18 @@ class CandidatosApiService:
         return []
 
     def desconvocar_por_processo(self, processo_uuid: str) -> dict:
-        """
-        PATCH /api/v1/habilitados/desconvocar
-
-        Payload:
-        { "processo_uuid": "<uuid>"}
+        """PATCH /api/v1/habilitados/desconvocar.
+        
+        Args:
+            self: Instância do objeto.
+            processo_uuid: UUID do processo de convocação.
+        
+        Returns:
+            Dicionário com os dados processados.
+        
+        Raises:
+            ValueError: Se o valor informado não for válido.
+            CandidatosServiceError: Se a integração com o MS-Candidatos falhar.
         """
         if not settings.CANDIDATOS_API_URL:
             raise ValueError("CANDIDATOS_API_URL não configurada")

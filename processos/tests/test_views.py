@@ -1,6 +1,4 @@
-"""
-Testes unitários para as views do app processos usando pytest.
-"""
+"""Testes unitários para as views do app processos usando pytest."""
 
 import uuid
 from datetime import timedelta
@@ -31,7 +29,14 @@ pytestmark = pytest.mark.django_db
 
 @pytest.fixture
 def user():
-    """Fixture para criar um usuário de teste."""
+    """Fixture para criar um usuário de teste.
+    
+    Returns:
+        Resultado da operação.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     return User.objects.create_user(
         username="testuser", password="testpass123"
     )
@@ -39,19 +44,45 @@ def user():
 
 @pytest.fixture
 def concurso_uuid():
-    """Fixture para UUID do concurso."""
+    """Fixture para UUID do concurso.
+    
+    Returns:
+        Resultado da operação.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     return uuid.uuid4()
 
 
 @pytest.fixture
 def concurso_nome():
-    """Fixture para nome do concurso."""
+    """Fixture para nome do concurso.
+    
+    Returns:
+        Resultado da operação.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     return "Concurso Teste"
 
 
 @pytest.fixture
 def processo_convocacao(user, concurso_uuid, concurso_nome):
-    """Fixture para criar um ProcessoConvocacao."""
+    """Fixture para criar um ProcessoConvocacao.
+    
+    Args:
+        user: Parâmetro user da operação.
+        concurso_uuid: UUID do concurso.
+        concurso_nome: Parâmetro concurso nome da operação.
+    
+    Returns:
+        Resultado da operação.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     return ProcessoConvocacao.objects.create(
         concurso_uuid=concurso_uuid,
         concurso_nome=concurso_nome,
@@ -65,7 +96,17 @@ def processo_convocacao(user, concurso_uuid, concurso_nome):
 
 @pytest.fixture
 def cargos_processo(processo_convocacao):
-    """Fixture para criar cargos para o processo."""
+    """Fixture para criar cargos para o processo.
+    
+    Args:
+        processo_convocacao: Parâmetro processo convocacao da operação.
+    
+    Returns:
+        Resultado da operação.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     cargos = []
     nomes = ["Analista de Sistemas", "Desenvolvedor Backend"]
 
@@ -82,7 +123,17 @@ def cargos_processo(processo_convocacao):
 
 @pytest.fixture
 def processo_cargo(user):
-    """Fixture para processo de teste para cargos."""
+    """Fixture para processo de teste para cargos.
+    
+    Args:
+        user: Parâmetro user da operação.
+    
+    Returns:
+        Resultado da operação.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     return ProcessoConvocacao.objects.create(
         concurso_uuid=uuid.uuid4(),
         concurso_nome="Concurso Teste",
@@ -95,7 +146,17 @@ def processo_cargo(user):
 
 @pytest.fixture
 def cargo_processo(processo_cargo):
-    """Fixture para criar um CargoProcesso."""
+    """Fixture para criar um CargoProcesso.
+    
+    Args:
+        processo_cargo: Parâmetro processo cargo da operação.
+    
+    Returns:
+        Resultado da operação.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     return CargoProcesso.objects.create(
         processo=processo_cargo,
         cargo_nome="Analista de Sistemas",
@@ -105,7 +166,17 @@ def cargo_processo(processo_cargo):
 
 @pytest.fixture
 def processo_permissao(user):
-    """Fixture para processo de teste de permissões."""
+    """Fixture para processo de teste de permissões.
+    
+    Args:
+        user: Parâmetro user da operação.
+    
+    Returns:
+        Resultado da operação.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     return ProcessoConvocacao.objects.create(
         concurso_uuid=uuid.uuid4(),
         concurso_nome="Concurso Permissões",
@@ -118,7 +189,17 @@ def processo_permissao(user):
 
 @pytest.fixture
 def processo_lista(user):
-    """Fixture para processo de teste para listagem."""
+    """Fixture para processo de teste para listagem.
+    
+    Args:
+        user: Parâmetro user da operação.
+    
+    Returns:
+        Resultado da operação.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     return ProcessoConvocacao.objects.create(
         concurso_uuid=uuid.uuid4(),
         concurso_nome="Concurso Lista",
@@ -131,7 +212,18 @@ def processo_lista(user):
 
 # Testes para ProcessoConvocacaoViewSet
 def test_processo_convocacao_list(authenticated_client, processo_convocacao):
-    """Testa a listagem de processos de convocação."""
+    """Testa a listagem de processos de convocação.
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+        processo_convocacao: Parâmetro processo convocacao da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     url = reverse("processoconvocacao-list")
     response = authenticated_client.get(url)
 
@@ -145,7 +237,17 @@ def test_processo_convocacao_list(authenticated_client, processo_convocacao):
 
 
 def test_processo_convocacao_create(authenticated_client):
-    """Testa a criação de um processo de convocação."""
+    """Testa a criação de um processo de convocação.
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     url = reverse("processoconvocacao-list")
     data = {
         "concurso_uuid": str(uuid.uuid4()),
@@ -169,7 +271,18 @@ def test_processo_convocacao_create(authenticated_client):
 def test_processo_convocacao_retrieve(
     authenticated_client, processo_convocacao
 ):
-    """Testa a recuperação de um processo específico."""
+    """Testa a recuperação de um processo específico.
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+        processo_convocacao: Parâmetro processo convocacao da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     url = reverse("processoconvocacao-detail", args=[processo_convocacao.uuid])
     response = authenticated_client.get(url)
 
@@ -179,7 +292,18 @@ def test_processo_convocacao_retrieve(
 
 
 def test_processo_convocacao_update(authenticated_client, processo_convocacao):
-    """Testa a atualização de um processo."""
+    """Testa a atualização de um processo.
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+        processo_convocacao: Parâmetro processo convocacao da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     url = reverse("processoconvocacao-detail", args=[processo_convocacao.uuid])
     data = {
         "concurso_nome": "Concurso Atualizado",
@@ -203,12 +327,36 @@ def test_processo_convocacao_delete(
     authenticated_client,
     processo_convocacao,
 ):
-    """Testa a exclusão lógica de um processo."""
+    """Testa a exclusão lógica de um processo.
+    
+    Args:
+        mock_excluir_dependencias: Parâmetro mock excluir dependencias da operação.
+        authenticated_client: Cliente autenticado para requisições de teste.
+        processo_convocacao: Parâmetro processo convocacao da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     # Para poder deletar, o status não pode ser EM_ANDAMENTO nem FINALIZADO
     processo_convocacao.status = "CANCELADO"
     processo_convocacao.save(update_fields=["status"])
 
     def _excluir_e_inativar(*, processo, auth_header=None):
+        """Executa  excluir e inativar.
+        
+        Args:
+            processo: Processo de convocação relacionado.
+            auth_header: Parâmetro auth header da operação.
+        
+        Returns:
+            Não retorna valor.
+        
+        Raises:
+            Nenhuma exceção específica documentada.
+        """
         processo.inativar()
 
     mock_excluir_dependencias.side_effect = _excluir_e_inativar
@@ -224,7 +372,18 @@ def test_processo_convocacao_delete(
 def test_filtro_data_convocacao_inicio(
     authenticated_client, processo_convocacao
 ):
-    """Testa filtro por data de convocação início."""
+    """Testa filtro por data de convocação início.
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+        processo_convocacao: Parâmetro processo convocacao da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     url = reverse("processoconvocacao-list")
 
     # Data de início antes da data de convocação do processo
@@ -240,7 +399,18 @@ def test_filtro_data_convocacao_inicio(
 
 
 def test_filtro_data_convocacao_fim(authenticated_client, processo_convocacao):
-    """Testa filtro por data de convocação fim."""
+    """Testa filtro por data de convocação fim.
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+        processo_convocacao: Parâmetro processo convocacao da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     url = reverse("processoconvocacao-list")
 
     # Data de fim após a data de convocação do processo
@@ -256,7 +426,18 @@ def test_filtro_data_convocacao_fim(authenticated_client, processo_convocacao):
 def test_filtro_data_convocacao_range(
     authenticated_client, processo_convocacao
 ):
-    """Testa filtro por range de datas de convocação."""
+    """Testa filtro por range de datas de convocação.
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+        processo_convocacao: Parâmetro processo convocacao da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     url = reverse("processoconvocacao-list")
 
     # Range que inclui a data de convocação do processo
@@ -282,7 +463,19 @@ def test_filtro_data_convocacao_range(
 def test_filtro_cargo_uuid(
     authenticated_client, processo_convocacao, cargos_processo
 ):
-    """Testa filtro por cargo_uuid."""
+    """Testa filtro por cargo_uuid.
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+        processo_convocacao: Parâmetro processo convocacao da operação.
+        cargos_processo: Parâmetro cargos processo da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     url = reverse("processoconvocacao-list")
 
     # Usar o UUID do primeiro cargo
@@ -295,7 +488,17 @@ def test_filtro_cargo_uuid(
 
 
 def test_filtro_data_invalida(authenticated_client):
-    """Testa filtro com data inválida."""
+    """Testa filtro com data inválida.
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     url = reverse("processoconvocacao-list")
 
     response = authenticated_client.get(
@@ -308,7 +511,17 @@ def test_filtro_data_invalida(authenticated_client):
 
 
 def test_filtro_cargo_uuid_invalido(authenticated_client):
-    """Testa filtro com cargo_uuid inválido."""
+    """Testa filtro com cargo_uuid inválido.
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     url = reverse("processoconvocacao-list")
 
     response = authenticated_client.get(url, {"cargo_uuid": "uuid-invalido"})
@@ -322,7 +535,19 @@ def test_filtro_cargo_uuid_invalido(authenticated_client):
 def test_cargos_list_sucesso(
     authenticated_client, processo_convocacao, cargos_processo
 ):
-    """Lista cargos do processo com sucesso."""
+    """Lista cargos do processo com sucesso.
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+        processo_convocacao: Parâmetro processo convocacao da operação.
+        cargos_processo: Parâmetro cargos processo da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     url = reverse(
         "processo-cargos-list",
         kwargs={"processo_pk": processo_convocacao.uuid},
@@ -337,7 +562,17 @@ def test_cargos_list_sucesso(
 
 
 def test_cargos_list_processo_nao_encontrado(authenticated_client):
-    """Retorna 404 quando processo não existe."""
+    """Retorna 404 quando processo não existe.
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     url = reverse("processo-cargos-list", kwargs={"processo_pk": uuid.uuid4()})
     response = authenticated_client.get(url)
 
@@ -346,7 +581,18 @@ def test_cargos_list_processo_nao_encontrado(authenticated_client):
 
 
 def test_cargos_create_novos_cargos(authenticated_client, processo_convocacao):
-    """POST cria novos cargos quando payload não tem uuid."""
+    """POST cria novos cargos quando payload não tem uuid.
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+        processo_convocacao: Parâmetro processo convocacao da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     url = reverse(
         "processo-cargos-list",
         kwargs={"processo_pk": processo_convocacao.uuid},
@@ -372,7 +618,19 @@ def test_cargos_create_novos_cargos(authenticated_client, processo_convocacao):
 def test_cargos_create_atualiza_existentes(
     authenticated_client, processo_convocacao, cargos_processo
 ):
-    """POST atualiza cargos existentes quando payload tem uuid."""
+    """POST atualiza cargos existentes quando payload tem uuid.
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+        processo_convocacao: Parâmetro processo convocacao da operação.
+        cargos_processo: Parâmetro cargos processo da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     cargo = cargos_processo[0]
     url = reverse(
         "processo-cargos-list",
@@ -402,7 +660,19 @@ def test_cargos_create_atualiza_existentes(
 def test_cargos_create_remove_cargos_nao_enviados(
     authenticated_client, processo_convocacao, cargos_processo
 ):
-    """POST remove cargos que não estão no payload."""
+    """POST remove cargos que não estão no payload.
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+        processo_convocacao: Parâmetro processo convocacao da operação.
+        cargos_processo: Parâmetro cargos processo da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     cargo = cargos_processo[0]
     url = reverse(
         "processo-cargos-list",
@@ -427,7 +697,17 @@ def test_cargos_create_remove_cargos_nao_enviados(
 
 
 def test_cargos_create_processo_nao_encontrado(authenticated_client):
-    """POST retorna 404 quando processo não existe."""
+    """POST retorna 404 quando processo não existe.
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     url = reverse("processo-cargos-list", kwargs={"processo_pk": uuid.uuid4()})
     response = authenticated_client.post(url, {"cargos": []}, format="json")
 
@@ -438,7 +718,18 @@ def test_cargos_create_processo_nao_encontrado(authenticated_client):
 def test_cargos_create_processo_finalizado(
     authenticated_client, processo_convocacao
 ):
-    """POST retorna 400 quando processo está finalizado."""
+    """POST retorna 400 quando processo está finalizado.
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+        processo_convocacao: Parâmetro processo convocacao da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     processo_convocacao.status = "FINALIZADO"
     processo_convocacao.save()
 
@@ -459,8 +750,18 @@ def test_cargos_create_processo_finalizado(
 def test_cargos_create_payload_nao_e_lista(
     authenticated_client, processo_convocacao
 ):
-    """POST retorna 400 quando payload é lista (espera dict com chave
-    cargos)."""
+    """POST retorna 400 quando payload é lista (espera dict com chave.
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+        processo_convocacao: Parâmetro processo convocacao da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     url = reverse(
         "processo-cargos-list",
         kwargs={"processo_pk": processo_convocacao.uuid},
@@ -476,7 +777,19 @@ def test_cargos_create_payload_nao_e_lista(
 def test_cargos_create_uuid_nao_encontrado_retorna_207(
     authenticated_client, processo_convocacao, cargos_processo
 ):
-    """POST com uuid de cargo inexistente retorna 207 com erros."""
+    """POST com uuid de cargo inexistente retorna 207 com erros.
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+        processo_convocacao: Parâmetro processo convocacao da operação.
+        cargos_processo: Parâmetro cargos processo da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     url = reverse(
         "processo-cargos-list",
         kwargs={"processo_pk": processo_convocacao.uuid},
@@ -505,7 +818,19 @@ def test_cargos_create_uuid_nao_encontrado_retorna_207(
 def test_cargos_destroy_sucesso(
     authenticated_client, processo_cargo, cargo_processo
 ):
-    """DELETE remove cargo do processo."""
+    """DELETE remove cargo do processo.
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+        processo_cargo: Parâmetro processo cargo da operação.
+        cargo_processo: Parâmetro cargo processo da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     url = reverse(
         "processo-cargos-detail",
         kwargs={
@@ -522,7 +847,18 @@ def test_cargos_destroy_sucesso(
 def test_cargos_destroy_processo_nao_encontrado(
     authenticated_client, cargo_processo
 ):
-    """DELETE retorna 404 quando processo não existe."""
+    """DELETE retorna 404 quando processo não existe.
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+        cargo_processo: Parâmetro cargo processo da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     processo_inexistente = uuid.uuid4()
     url = reverse(
         "processo-cargos-detail",
@@ -540,7 +876,19 @@ def test_cargos_destroy_processo_nao_encontrado(
 def test_cargos_destroy_processo_finalizado(
     authenticated_client, processo_cargo, cargo_processo
 ):
-    """DELETE retorna 400 quando processo está finalizado."""
+    """DELETE retorna 400 quando processo está finalizado.
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+        processo_cargo: Parâmetro processo cargo da operação.
+        cargo_processo: Parâmetro cargo processo da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     processo_cargo.status = "FINALIZADO"
     processo_cargo.save()
 
@@ -560,7 +908,18 @@ def test_cargos_destroy_processo_finalizado(
 def test_cargos_destroy_cargo_nao_encontrado(
     authenticated_client, processo_convocacao
 ):
-    """DELETE retorna 404 quando cargo não pertence ao processo."""
+    """DELETE retorna 404 quando cargo não pertence ao processo.
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+        processo_convocacao: Parâmetro processo convocacao da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     cargo_uuid_outro_processo = uuid.uuid4()
     url = reverse(
         "processo-cargos-detail",
@@ -579,7 +938,19 @@ def test_cargos_destroy_cargo_nao_encontrado(
 def test_endpoint_filtros_basic(
     authenticated_client, processo_convocacao, cargos_processo
 ):
-    """Testa o endpoint /filtros/ com dados básicos."""
+    """Testa o endpoint /filtros/ com dados básicos.
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+        processo_convocacao: Parâmetro processo convocacao da operação.
+        cargos_processo: Parâmetro cargos processo da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     url = reverse("processoconvocacao-filtros")
     response = authenticated_client.get(url)
 
@@ -620,7 +991,18 @@ def test_endpoint_filtros_basic(
 
 
 def test_endpoint_filtros_multiplos_processos(authenticated_client, user):
-    """Testa o endpoint /filtros/ com múltiplos processos."""
+    """Testa o endpoint /filtros/ com múltiplos processos.
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+        user: Parâmetro user da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     # Criar múltiplos processos com concursos diferentes
     processo1 = ProcessoConvocacao.objects.create(
         concurso_uuid=uuid.uuid4(),
@@ -669,7 +1051,18 @@ def test_endpoint_filtros_multiplos_processos(authenticated_client, user):
 
 
 def test_endpoint_filtros_concurso_duplicado(authenticated_client, user):
-    """Testa que concursos duplicados são removidos no endpoint /filtros/."""
+    """Testa que concursos duplicados são removidos no endpoint /filtros/.
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+        user: Parâmetro user da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     # Criar dois processos com o mesmo concurso
     concurso_uuid = uuid.uuid4()
     concurso_nome = "Concurso Duplicado"
@@ -705,8 +1098,18 @@ def test_endpoint_filtros_concurso_duplicado(authenticated_client, user):
 
 
 def test_endpoint_filtros_cargo_duplicado(authenticated_client, user):
-    """Testa que cargos com nomes duplicados são removidos no endpoint
-    /filtros/."""
+    """Testa que cargos com nomes duplicados são removidos no endpoint.
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+        user: Parâmetro user da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     # Criar dois processos
     processo1 = ProcessoConvocacao.objects.create(
         concurso_uuid=uuid.uuid4(),
@@ -751,7 +1154,17 @@ def test_endpoint_filtros_cargo_duplicado(authenticated_client, user):
 
 
 def test_endpoint_filtros_sem_dados(authenticated_client):
-    """Testa o endpoint /filtros/ quando não há dados."""
+    """Testa o endpoint /filtros/ quando não há dados.
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     url = reverse("processoconvocacao-filtros")
     response = authenticated_client.get(url)
 
@@ -769,7 +1182,17 @@ def test_endpoint_filtros_sem_dados(authenticated_client):
 
 
 def test_endpoint_filtros_tipos_escolha(authenticated_client):
-    """Testa que os tipos de escolha são retornados corretamente."""
+    """Testa que os tipos de escolha são retornados corretamente.
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     url = reverse("processoconvocacao-filtros")
     response = authenticated_client.get(url)
 
@@ -800,7 +1223,19 @@ def test_endpoint_filtros_tipos_escolha(authenticated_client):
 def test_finalizar_sucesso_todos_com_escolha(
     mock_buscar, authenticated_client, processo_convocacao
 ):
-    """Finaliza processo quando todos os candidatos fizeram escolha."""
+    """Finaliza processo quando todos os candidatos fizeram escolha.
+    
+    Args:
+        mock_buscar: Parâmetro mock buscar da operação.
+        authenticated_client: Cliente autenticado para requisições de teste.
+        processo_convocacao: Parâmetro processo convocacao da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     cand1 = uuid.uuid4()
     cand2 = uuid.uuid4()
     CargoProcesso.objects.create(
@@ -829,7 +1264,19 @@ def test_finalizar_sucesso_todos_com_escolha(
 def test_finalizar_sucesso_sem_candidatos(
     mock_buscar, authenticated_client, processo_convocacao
 ):
-    """Finaliza processo quando não há candidatos (habilitados vazio)."""
+    """Finaliza processo quando não há candidatos (habilitados vazio).
+    
+    Args:
+        mock_buscar: Parâmetro mock buscar da operação.
+        authenticated_client: Cliente autenticado para requisições de teste.
+        processo_convocacao: Parâmetro processo convocacao da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     CargoProcesso.objects.create(
         processo=processo_convocacao,
         cargo_nome="Cargo A",
@@ -850,7 +1297,18 @@ def test_finalizar_sucesso_sem_candidatos(
 
 
 def test_finalizar_ja_finalizado(authenticated_client, processo_convocacao):
-    """Retorna 400 quando processo já está finalizado."""
+    """Retorna 400 quando processo já está finalizado.
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+        processo_convocacao: Parâmetro processo convocacao da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     processo_convocacao.status = "FINALIZADO"
     processo_convocacao.save()
 
@@ -866,7 +1324,18 @@ def test_finalizar_ja_finalizado(authenticated_client, processo_convocacao):
 
 
 def test_finalizar_ja_cancelado(authenticated_client, processo_convocacao):
-    """Retorna 400 quando processo está cancelado."""
+    """Retorna 400 quando processo está cancelado.
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+        processo_convocacao: Parâmetro processo convocacao da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     processo_convocacao.status = "CANCELADO"
     processo_convocacao.save()
 
@@ -884,8 +1353,18 @@ def test_finalizar_ja_cancelado(authenticated_client, processo_convocacao):
 def test_finalizar_status_nao_em_andamento(
     authenticated_client, processo_convocacao
 ):
-    """Retorna 400 quando processo não está em andamento (status diferente de
-    EM_ANDAMENTO)."""
+    """Retorna 400 quando processo não está em andamento (status diferente de EM_ANDAMENTO).
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+        processo_convocacao: Parâmetro processo convocacao da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     # Usa um status fora dos 3 principais para acionar a mensagem genérica
     processo_convocacao.status = "PENDENTE"
     processo_convocacao.save(update_fields=["status"])
@@ -908,7 +1387,19 @@ def test_finalizar_status_nao_em_andamento(
 def test_finalizar_candidatos_pendentes(
     mock_buscar, authenticated_client, processo_convocacao
 ):
-    """Retorna 400 quando existem candidatos sem escolha."""
+    """Retorna 400 quando existem candidatos sem escolha.
+    
+    Args:
+        mock_buscar: Parâmetro mock buscar da operação.
+        authenticated_client: Cliente autenticado para requisições de teste.
+        processo_convocacao: Parâmetro processo convocacao da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     cand1 = uuid.uuid4()
     cand2 = uuid.uuid4()
     CargoProcesso.objects.create(
@@ -937,7 +1428,19 @@ def test_finalizar_candidatos_pendentes(
 def test_finalizar_erro_ao_buscar_escolhas(
     mock_buscar, authenticated_client, processo_convocacao
 ):
-    """Retorna 400 quando buscar_candidatos_com_escolha levanta exceção."""
+    """Retorna 400 quando buscar_candidatos_com_escolha levanta exceção.
+    
+    Args:
+        mock_buscar: Parâmetro mock buscar da operação.
+        authenticated_client: Cliente autenticado para requisições de teste.
+        processo_convocacao: Parâmetro processo convocacao da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     CargoProcesso.objects.create(
         processo=processo_convocacao,
         cargo_nome="Cargo A",
@@ -965,7 +1468,19 @@ def test_finalizar_erro_ao_buscar_escolhas(
 def test_finalizar_multiplos_cargos_todos_com_escolha(
     mock_buscar, authenticated_client, processo_convocacao
 ):
-    """Finaliza processo com múltiplos cargos quando todos fizeram escolha."""
+    """Finaliza processo com múltiplos cargos quando todos fizeram escolha.
+    
+    Args:
+        mock_buscar: Parâmetro mock buscar da operação.
+        authenticated_client: Cliente autenticado para requisições de teste.
+        processo_convocacao: Parâmetro processo convocacao da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     cand1 = uuid.uuid4()
     cand2 = uuid.uuid4()
     cand3 = uuid.uuid4()
@@ -1000,7 +1515,19 @@ def test_finalizar_multiplos_cargos_todos_com_escolha(
 def test_finalizar_multiplos_cargos_um_pendente(
     mock_buscar, authenticated_client, processo_convocacao
 ):
-    """Retorna 400 quando um cargo tem candidato pendente."""
+    """Retorna 400 quando um cargo tem candidato pendente.
+    
+    Args:
+        mock_buscar: Parâmetro mock buscar da operação.
+        authenticated_client: Cliente autenticado para requisições de teste.
+        processo_convocacao: Parâmetro processo convocacao da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     cand1 = uuid.uuid4()
     cand2 = uuid.uuid4()
     CargoProcesso.objects.create(
@@ -1030,7 +1557,18 @@ def test_finalizar_multiplos_cargos_um_pendente(
 def test_processo_convocacao_filters(
     authenticated_client, processo_convocacao
 ):
-    """Testa filtros básicos dos processos."""
+    """Testa filtros básicos dos processos.
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+        processo_convocacao: Parâmetro processo convocacao da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     url = reverse("processoconvocacao-list")
 
     # Filtro por status
@@ -1054,7 +1592,18 @@ def test_processo_convocacao_filters(
 
 
 def test_atualizar_passo_sucesso(authenticated_client, processo_convocacao):
-    """Atualiza passo do processo com sucesso."""
+    """Atualiza passo do processo com sucesso.
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+        processo_convocacao: Parâmetro processo convocacao da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     url = reverse(
         "processoconvocacao-atualizar-passo", args=[processo_convocacao.uuid]
     )
@@ -1068,7 +1617,18 @@ def test_atualizar_passo_sucesso(authenticated_client, processo_convocacao):
 def test_atualizar_passo_nao_regrede(
     authenticated_client, processo_convocacao
 ):
-    """Permite regressão de passo no comportamento atual da API."""
+    """Permite regressão de passo no comportamento atual da API.
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+        processo_convocacao: Parâmetro processo convocacao da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     processo_convocacao.passo = 3
     processo_convocacao.save(update_fields=["passo"])
 
@@ -1083,7 +1643,18 @@ def test_atualizar_passo_nao_regrede(
 
 
 def test_atualizar_passo_invalido(authenticated_client, processo_convocacao):
-    """Retorna 400 para passo inválido."""
+    """Retorna 400 para passo inválido.
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+        processo_convocacao: Parâmetro processo convocacao da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     url = reverse(
         "processoconvocacao-atualizar-passo", args=[processo_convocacao.uuid]
     )
@@ -1095,9 +1666,18 @@ def test_atualizar_passo_invalido(authenticated_client, processo_convocacao):
 def test_atualizar_passo_processo_finalizado(
     authenticated_client, processo_convocacao
 ):
-    """Permite atualização de passo mesmo com processo finalizado no
-    comportamento
-    atual da API."""
+    """Permite atualização de passo mesmo com processo finalizado no.
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+        processo_convocacao: Parâmetro processo convocacao da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     processo_convocacao.status = "FINALIZADO"
     processo_convocacao.save(update_fields=["status"])
 
@@ -1113,7 +1693,18 @@ def test_atualizar_passo_processo_finalizado(
 
 # Testes de Busca
 def test_processo_convocacao_search(authenticated_client, processo_convocacao):
-    """Testa busca por texto nos processos."""
+    """Testa busca por texto nos processos.
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+        processo_convocacao: Parâmetro processo convocacao da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     url = reverse("processoconvocacao-list")
 
     # Busca por nome do concurso
@@ -1132,7 +1723,17 @@ def test_processo_convocacao_search(authenticated_client, processo_convocacao):
 
 @pytest.fixture
 def envio_email(processo_convocacao):
-    """Fixture para EnvioEmail."""
+    """Fixture para EnvioEmail.
+    
+    Args:
+        processo_convocacao: Parâmetro processo convocacao da operação.
+    
+    Returns:
+        Resultado da operação.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     return EnvioEmail.objects.create(
         processo_uuid=processo_convocacao.uuid,
         processo_nome=processo_convocacao.concurso_nome,
@@ -1143,7 +1744,17 @@ def envio_email(processo_convocacao):
 
 @pytest.fixture
 def envio_email_candidatos(envio_email):
-    """Fixture para EnvioEmailCandidato vinculados ao envio."""
+    """Fixture para EnvioEmailCandidato vinculados ao envio.
+    
+    Args:
+        envio_email: Parâmetro envio email da operação.
+    
+    Returns:
+        Resultado da operação.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     from processos.models.envio_email_candidato import (
         ENVIO_STATUS_ERRO,
         ENVIO_STATUS_SUCESSO,
@@ -1169,7 +1780,18 @@ def envio_email_candidatos(envio_email):
 
 
 def test_envio_email_list(authenticated_client, envio_email):
-    """Testa GET /api/v1/envio-email/ (listagem do histórico)."""
+    """Testa GET /api/v1/envio-email/ (listagem do histórico).
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+        envio_email: Parâmetro envio email da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     url = reverse("envio-email-list")
     response = authenticated_client.get(url)
     assert response.status_code == status.HTTP_200_OK
@@ -1186,7 +1808,19 @@ def test_envio_email_list(authenticated_client, envio_email):
 def test_envio_email_retrieve(
     authenticated_client, envio_email, envio_email_candidatos
 ):
-    """Testa GET /api/v1/envio-email/<uuid>/ (detalhe com candidatos)."""
+    """Testa GET /api/v1/envio-email/<uuid>/ (detalhe com candidatos).
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+        envio_email: Parâmetro envio email da operação.
+        envio_email_candidatos: Parâmetro envio email candidatos da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     url = reverse("envio-email-detail", args=[envio_email.uuid])
     response = authenticated_client.get(url)
     assert response.status_code == status.HTTP_200_OK
@@ -1200,7 +1834,17 @@ def test_envio_email_retrieve(
 
 
 def test_envio_email_retrieve_not_found(authenticated_client):
-    """Testa GET detalhe com UUID inexistente."""
+    """Testa GET detalhe com UUID inexistente.
+    
+    Args:
+        authenticated_client: Cliente autenticado para requisições de teste.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     url = reverse("envio-email-detail", args=[uuid.uuid4()])
     response = authenticated_client.get(url)
     assert response.status_code == status.HTTP_404_NOT_FOUND
@@ -1210,7 +1854,19 @@ def test_envio_email_retrieve_not_found(authenticated_client):
 def test_envio_email_create(
     mock_iniciar, authenticated_client, processo_convocacao
 ):
-    """Testa POST /api/v1/envio-email/ (inicia processamento de envio)."""
+    """Testa POST /api/v1/envio-email/ (inicia processamento de envio).
+    
+    Args:
+        mock_iniciar: Parâmetro mock iniciar da operação.
+        authenticated_client: Cliente autenticado para requisições de teste.
+        processo_convocacao: Parâmetro processo convocacao da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     mock_envio = EnvioEmail.objects.create(
         processo_uuid=processo_convocacao.uuid,
         processo_nome=processo_convocacao.concurso_nome,
@@ -1241,7 +1897,18 @@ def test_envio_email_create(
 def test_envio_email_create_invalid_payload(
     mock_iniciar, authenticated_client
 ):
-    """Testa POST com payload inválido (processo não encontrado)."""
+    """Testa POST com payload inválido (processo não encontrado).
+    
+    Args:
+        mock_iniciar: Parâmetro mock iniciar da operação.
+        authenticated_client: Cliente autenticado para requisições de teste.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     url = reverse("envio-email-list")
     payload = {
         'processo_uuid': str(uuid.uuid4()),
@@ -1258,9 +1925,19 @@ def test_envio_email_create_invalid_payload(
 def test_envio_email_create_quando_servico_levanta_excecao_retorna_500(
     mock_iniciar, authenticated_client, processo_convocacao
 ):
-    """Quando iniciar_processamento_envio levanta exceção, a view retorna 500
-    com
-    detail."""
+    """Quando iniciar_processamento_envio levanta exceção, a view retorna 500.
+    
+    Args:
+        mock_iniciar: Parâmetro mock iniciar da operação.
+        authenticated_client: Cliente autenticado para requisições de teste.
+        processo_convocacao: Parâmetro processo convocacao da operação.
+    
+    Returns:
+        Nenhum valor; valida comportamento via asserções.
+    
+    Raises:
+        Nenhuma exceção específica documentada.
+    """
     mock_iniciar.side_effect = Exception(
         "Email duplicado entre candidatos: duplicado@test.com"
     )

@@ -36,7 +36,18 @@ class CargoProcessoViewSet(viewsets.ModelViewSet):
     def _get_processo(
         self, pk: str | UUID | None
     ) -> ProcessoConvocacao | None:
-        """Busca processo pelo UUID da URL ou retorna None."""
+        """Busca processo pelo UUID da URL ou retorna None.
+        
+        Args:
+            self: Instância do objeto.
+            pk: Chave primária do recurso.
+        
+        Returns:
+            Instância do processo de convocação.
+        
+        Raises:
+            Nenhuma exceção específica documentada.
+        """
         try:
             return ProcessoConvocacao.objects.get(pk=pk)
         except ProcessoConvocacao.DoesNotExist:
@@ -47,7 +58,19 @@ class CargoProcessoViewSet(viewsets.ModelViewSet):
         request: Request,
         processo_pk: str | None = None,
     ) -> Response:
-        """Lista cargos do processo."""
+        """Lista cargos do processo.
+        
+        Args:
+            self: Instância do objeto.
+            request: Requisição HTTP recebida.
+            processo_pk: Parâmetro processo pk da operação.
+        
+        Returns:
+            Resposta HTTP com o resultado da operação.
+        
+        Raises:
+            Nenhuma exceção específica documentada.
+        """
         processo = self._get_processo(processo_pk)
         if not processo:
             return Response(
@@ -64,7 +87,19 @@ class CargoProcessoViewSet(viewsets.ModelViewSet):
         request: Request,
         processo_pk: str | None = None,
     ) -> Response:
-        """Substitui todos os cargos e porcentagens do processo."""
+        """Substitui todos os cargos e porcentagens do processo.
+        
+        Args:
+            self: Instância do objeto.
+            request: Requisição HTTP recebida.
+            processo_pk: Parâmetro processo pk da operação.
+        
+        Returns:
+            Resposta HTTP com o resultado da operação.
+        
+        Raises:
+            Nenhuma exceção específica documentada.
+        """
         processo = self._get_processo(processo_pk)
         if not processo:
             return Response(
@@ -121,7 +156,20 @@ class CargoProcessoViewSet(viewsets.ModelViewSet):
         processo_pk: str | None = None,
         cargo_uuid: str | None = None,
     ) -> Response:
-        """Remove um cargo do processo."""
+        """Remove um cargo do processo.
+        
+        Args:
+            self: Instância do objeto.
+            request: Requisição HTTP recebida.
+            processo_pk: Parâmetro processo pk da operação.
+            cargo_uuid: Parâmetro cargo uuid da operação.
+        
+        Returns:
+            Resposta HTTP com o resultado da operação.
+        
+        Raises:
+            Nenhuma exceção específica documentada.
+        """
         processo = self._get_processo(processo_pk)
         if not processo:
             return Response(

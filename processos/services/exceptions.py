@@ -1,3 +1,4 @@
+"""Módulo services/exceptions."""
 class AgendaServiceError(Exception):
     """Erro ao chamar o MS-Agenda."""
 

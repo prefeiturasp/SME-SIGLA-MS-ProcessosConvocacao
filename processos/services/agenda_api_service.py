@@ -1,6 +1,4 @@
-"""
-Requisições ao MS-Agenda (exclusão de agendas por processo de convocação).
-"""
+"""Requisições ao MS-Agenda (exclusão de agendas por processo de convocação)."""
 
 import logging
 
@@ -14,11 +12,21 @@ logger = logging.getLogger(__name__)
 
 
 class AgendaApiService:
+    """Define AgendaApiService."""
     TIMEOUT_SEGUNDOS = 30
 
     def excluir_agendas_por_processo(self, processo_uuid: str) -> dict:
-        """
-        DELETE /api/v1/agendas/por-processo/?processo_uuid=<uuid>
+        """DELETE /api/v1/agendas/por-processo/?processo_uuid=<uuid>.
+        
+        Args:
+            self: Instância do objeto.
+            processo_uuid: UUID do processo de convocação.
+        
+        Returns:
+            Dicionário com os dados processados.
+        
+        Raises:
+            AgendaServiceError: Se a integração com o MS-Agenda falhar.
         """
         url = f"{settings.AGENDA_API_URL}/api/v1/agendas/por-processo/"
         params = {"processo_uuid": processo_uuid}

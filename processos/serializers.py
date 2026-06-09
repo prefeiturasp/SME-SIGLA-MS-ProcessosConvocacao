@@ -1,3 +1,4 @@
+"""Serializers do app processos."""
 from __future__ import annotations
 
 from typing import Any
@@ -21,6 +22,8 @@ class CargoProcessoSerializer(serializers.ModelSerializer):
     """Serializer para o modelo CargoProcesso."""
 
     class Meta:
+        """Configuração do serializer."""
+
         model = CargoProcesso
         fields = [
             "uuid",
@@ -44,6 +47,8 @@ class CargoProcessoCreateSerializer(serializers.ModelSerializer):
     """Serializer para criação de CargoProcesso."""
 
     class Meta:
+        """Configuração do serializer."""
+
         model = CargoProcesso
         fields = [
             "cargo_nome",
@@ -60,30 +65,18 @@ class CargoProcessoCreateSerializer(serializers.ModelSerializer):
 
 
 class CargoProcessoUpsertSerializer(CargoProcessoCreateSerializer):
-    """
-    Serializer de entrada para criar/atualizar CargoProcesso.
-
-    - Se vier `uuid`, a view tenta atualizar o registro existente do processo.
-    - Se não vier `uuid`, cria um novo registro.
-    """
+    """Serializer de entrada para criar/atualizar CargoProcesso."""
 
     uuid = serializers.UUIDField(required=False, allow_null=True)
 
     class Meta(CargoProcessoCreateSerializer.Meta):
+        """Estende a configuração de criação com campo uuid opcional."""
+
         fields = ["uuid"] + list(CargoProcessoCreateSerializer.Meta.fields)
 
 
 class ProcessoCargosPayloadSerializer(serializers.Serializer):
-    """
-    Valida o payload do endpoint de substituição de cargos de um processo.
-
-    Exemplo:
-    {
-      "porcentagem_nna": 0.2,
-      "porcentagem_pcd": 0.05,
-      "cargos": [ ... ]
-    }
-    """
+    """Valida o payload do endpoint de substituição de cargos de um processo."""
 
     porcentagem_nna = serializers.FloatField(
         min_value=0.0, max_value=1.0, required=False
@@ -100,6 +93,8 @@ class ProcessoConvocacaoSerializer(serializers.ModelSerializer):
     cargos_processo = CargoProcessoSerializer(many=True, read_only=True)
 
     class Meta:
+        """Configuração do serializer."""
+
         model = ProcessoConvocacao
         fields = [
             "uuid",
@@ -122,6 +117,8 @@ class ProcessoConvocacaoCreateSerializer(serializers.ModelSerializer):
     """Serializer para criação de processo de convocação com cargos."""
 
     class Meta:
+        """Configuração do serializer."""
+
         model = ProcessoConvocacao
         fields = [
             "uuid",
@@ -137,7 +134,18 @@ class ProcessoConvocacaoCreateSerializer(serializers.ModelSerializer):
         read_only_fields = ["uuid"]
 
     def validate_concurso_uuid(self, value: UUID | str) -> UUID | str:
-        """Valida se o concurso_uuid é um UUID válido."""
+        """Valida se o concurso_uuid é um UUID válido.
+        
+        Args:
+            self: Instância do objeto.
+            value: Valor recebido para validação.
+        
+        Returns:
+            Valor validado do campo concurso uuid.
+        
+        Raises:
+            ValidationError: Se os dados informados forem inválidos.
+        """
         try:
             UUID(str(value))
             return value
@@ -152,6 +160,8 @@ class ProcessoConvocacaoListSerializer(serializers.ModelSerializer):
     pode_deletar = serializers.SerializerMethodField()
 
     class Meta:
+        """Configuração do serializer."""
+
         model = ProcessoConvocacao
         fields = [
             "uuid",
@@ -169,9 +179,33 @@ class ProcessoConvocacaoListSerializer(serializers.ModelSerializer):
         ]
 
     def get_quantidade_cargos(self, obj: ProcessoConvocacao) -> int:
+        """Retorna a quantidade de cargos vinculados ao processo.
+        
+        Args:
+            self: Instância do objeto.
+            obj: Instância do objeto processado.
+        
+        Returns:
+            Valor inteiro calculado.
+        
+        Raises:
+            Nenhuma exceção específica documentada.
+        """
         return obj.cargos_processo.count()
 
     def get_pode_deletar(self, obj: ProcessoConvocacao) -> bool:
+        """Indica se o processo pode ser excluído.
+        
+        Args:
+            self: Instância do objeto.
+            obj: Instância do objeto processado.
+        
+        Returns:
+            Verdadeiro se a condição for satisfeita.
+        
+        Raises:
+            Nenhuma exceção específica documentada.
+        """
         return bool(obj.pode_deletar())
 
 
@@ -179,6 +213,8 @@ class ProcessoConvocacaoUpdateSerializer(serializers.ModelSerializer):
     """Serializer para atualização de processo de convocação."""
 
     class Meta:
+        """Configuração do serializer."""
+
         model = ProcessoConvocacao
         fields = [
             "concurso_nome",
@@ -195,22 +231,21 @@ class ProcessoConvocacaoPassoSerializer(serializers.ModelSerializer):
     """Serializer para atualização de passo do processo de convocação."""
 
     class Meta:
+        """Configuração do serializer."""
+
         model = ProcessoConvocacao
         fields = ["passo"]
 
 
 class ProcessoConvocacaoSelectSerializer(serializers.ModelSerializer):
-    """
-    Serializer para selects/dropdowns no frontend.
-    Inclui status para que o front possa filtrar (ex.: não exibir finalizados
-    na
-    Escolha de Candidato).
-    """
+    """Serializer para selects/dropdowns no frontend."""
 
     value = serializers.UUIDField(source="uuid")
     label = serializers.CharField(source="descricao")
 
     class Meta:
+        """Configuração do serializer."""
+
         model = ProcessoConvocacao
         fields = ["value", "label", "concurso_uuid", "status"]
 
@@ -226,7 +261,18 @@ class EnvioEmailEnvioSerializer(serializers.Serializer):
     conteudo = serializers.CharField(help_text='Conteúdo do e-mail (HTML)')
 
     def validate_processo_uuid(self, value: UUID) -> UUID:
-        """Garante que o processo existe."""
+        """Garante que o processo existe.
+        
+        Args:
+            self: Instância do objeto.
+            value: Valor recebido para validação.
+        
+        Returns:
+            Valor validado do campo processo uuid.
+        
+        Raises:
+            ValidationError: Se os dados informados forem inválidos.
+        """
         if not ProcessoConvocacao.objects.filter(uuid=value).exists():
             raise serializers.ValidationError(
                 "Processo de convocação não encontrado."
@@ -238,6 +284,8 @@ class EnvioEmailSerializer(serializers.ModelSerializer):
     """Serializer para GET /api/v1/envio-email/ (listagem do histórico)."""
 
     class Meta:
+        """Configuração do serializer."""
+
         model = EnvioEmail
         fields = [
             "uuid",
@@ -253,6 +301,8 @@ class EnvioEmailCandidatoSerializer(serializers.ModelSerializer):
     """Serializer para candidatos no detalhe do envio."""
 
     class Meta:
+        """Configuração do serializer."""
+
         model = EnvioEmailCandidato
         fields = [
             "nome",
@@ -265,12 +315,13 @@ class EnvioEmailCandidatoSerializer(serializers.ModelSerializer):
 
 
 class EnvioEmailDetalheSerializer(serializers.ModelSerializer):
-    """Serializer para GET /api/v1/envio-email/<uuid>/ (detalhe com
-    candidatos)."""
+    """Serializer para GET /api/v1/envio-email/<uuid>/ (detalhe com candidatos)."""
 
     candidatos = EnvioEmailCandidatoSerializer(many=True, read_only=True)
 
     class Meta:
+        """Configuração do serializer."""
+
         model = EnvioEmail
         fields = [
             "uuid",
@@ -284,15 +335,38 @@ class EnvioEmailDetalheSerializer(serializers.ModelSerializer):
 
 
 class ConteudoHtmlField(serializers.CharField):
-    """Retorna e persiste HTML sem escape JSON duplicado (ex.:
-    \\\"ql-align-center\\\")."""
+    """Retorna e persiste HTML sem escape JSON duplicado (ex.:."""
 
     def to_representation(self, value: str | None) -> str | None:
+        """Normaliza HTML na serialização.
+        
+        Args:
+            self: Instância do objeto.
+            value: Valor recebido para validação.
+        
+        Returns:
+            Texto resultante da operação.
+        
+        Raises:
+            Nenhuma exceção específica documentada.
+        """
         if value is None:
             return value
         return normalizar_conteudo_html(value)
 
     def to_internal_value(self, data: Any) -> str:
+        """Normaliza HTML na desserialização.
+        
+        Args:
+            self: Instância do objeto.
+            data: Dados de entrada.
+        
+        Returns:
+            Texto resultante da operação.
+        
+        Raises:
+            Nenhuma exceção específica documentada.
+        """
         return normalizar_conteudo_html(super().to_internal_value(data))
 
 
@@ -305,6 +379,8 @@ class EnvioEmailConteudoSerializer(serializers.ModelSerializer):
     conteudo = ConteudoHtmlField()
 
     class Meta:
+        """Configuração do serializer."""
+
         model = EnvioEmailConteudo
         fields = [
             "uuid",
@@ -329,5 +405,7 @@ class EnvioEmailConteudoUpdateSerializer(serializers.ModelSerializer):
     conteudo = ConteudoHtmlField()
 
     class Meta:
+        """Configuração do serializer."""
+
         model = EnvioEmailConteudo
         fields = ["conteudo"]
