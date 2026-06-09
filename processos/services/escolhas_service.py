@@ -51,7 +51,7 @@ class EscolhasApiService:
 
         Args:
             self: Instância do objeto.
-            concurso_uuid: UUID do concurso (o ProcessoConvocacao tem.
+            concurso_uuid: UUID do concurso.
 
         Returns:
             Lista com os registros resultantes.
