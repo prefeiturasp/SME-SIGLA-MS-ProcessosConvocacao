@@ -36,10 +36,7 @@ def converter_imagens_base64_para_cid(
         html: Conteúdo HTML a processar.
 
     Returns:
-        Resultado da operação.
-
-    Raises:
-        Nenhuma exceção específica documentada.
+        Html processado e lista de imagens.
     """
     if not html:
         return html, []
@@ -48,17 +45,7 @@ def converter_imagens_base64_para_cid(
     contador = 0
 
     def substituir(match: re.Match[str]) -> str:
-        """Executa substituir.
-
-        Args:
-            match: Parâmetro match da operação.
-
-        Returns:
-            Texto resultante da operação.
-
-        Raises:
-            Nenhuma exceção específica documentada.
-        """
+        """Substitui src data URI por cid:."""
         nonlocal contador
         subtype_raw = match.group("subtype").lower()
         subtype = _SUBTYPE_MIME.get(subtype_raw, subtype_raw)

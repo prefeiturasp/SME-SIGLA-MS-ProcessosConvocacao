@@ -343,35 +343,13 @@ class ConteudoHtmlField(serializers.CharField):
     """Retorna e persiste HTML sem escape JSON duplicado (ex.:."""
 
     def to_representation(self, value: str | None) -> str | None:
-        """Normaliza HTML na serialização.
-
-        Args:
-            self: Instância do objeto.
-            value: Valor recebido para validação.
-
-        Returns:
-            Texto resultante da operação.
-
-        Raises:
-            Nenhuma exceção específica documentada.
-        """
+        """Normaliza HTML na serialização."""
         if value is None:
             return value
         return normalizar_conteudo_html(value)
 
     def to_internal_value(self, data: Any) -> str:
-        """Normaliza HTML na desserialização.
-
-        Args:
-            self: Instância do objeto.
-            data: Dados de entrada.
-
-        Returns:
-            Texto resultante da operação.
-
-        Raises:
-            Nenhuma exceção específica documentada.
-        """
+        """Normaliza HTML na desserialização."""
         return normalizar_conteudo_html(super().to_internal_value(data))
 
 

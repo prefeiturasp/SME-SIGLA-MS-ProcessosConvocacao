@@ -16,9 +16,6 @@ def normalizar_conteudo_html(valor: str | None) -> str:
 
     Returns:
         Texto resultante da operação.
-
-    Raises:
-        Nenhuma exceção específica documentada.
     """
     if not valor:
         return valor or ""

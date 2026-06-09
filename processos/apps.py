@@ -10,17 +10,7 @@ class ProcessosConfig(AppConfig):
     name = "processos"
 
     def ready(self) -> None:
-        """Importa Celery na inicialização do Django.
-
-        Args:
-            self: Instância do objeto.
-
-        Returns:
-            Não retorna valor.
-
-        Raises:
-            Nenhuma exceção específica documentada.
-        """
+        """Importa Celery na inicialização do Django."""
         try:  # noqa: SIM105
             from config import celery_app  # noqa: F401
         except Exception:

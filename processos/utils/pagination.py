@@ -27,9 +27,6 @@ class CustomPagination(PageNumberPagination):
 
         Returns:
             Resposta HTTP com o resultado da operação.
-
-        Raises:
-            Nenhuma exceção específica documentada.
         """
         return Response(
             {

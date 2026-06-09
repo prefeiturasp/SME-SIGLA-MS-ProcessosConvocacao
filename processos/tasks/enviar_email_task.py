@@ -46,12 +46,6 @@ def enviar_email_candidato_task(
         conteudo: Parâmetro conteudo da operação.
         envio_email_candidato_id: ID do candidato no envio de e-mail.
         correlation_id: Parâmetro correlation id da operação.
-
-    Returns:
-        Não retorna valor.
-
-    Raises:
-        Nenhuma exceção específica documentada.
     """
     candidato_uuid = UUID(envio_email_candidato_id)
     from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@localhost")
