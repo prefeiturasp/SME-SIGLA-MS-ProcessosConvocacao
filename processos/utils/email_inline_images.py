@@ -1,5 +1,4 @@
-"""
-Converte <img src="data:image/...;base64,..."> em anexos inline (cid:).
+"""Converte <img src="data:image/...;base64,..."> em anexos inline (cid:).
 
 Clientes de e-mail (Gmail, Outlook etc.) costumam bloquear data URI no corpo
 HTML.
@@ -31,9 +30,13 @@ _SUBTYPE_MIME = {
 def converter_imagens_base64_para_cid(
     html: str,
 ) -> tuple[str, list[MIMEImage]]:
-    """
-    Substitui src data URI por cid: e retorna partes MIME para anexar ao
-    e-mail.
+    """Substitui src data URI por cid: e retorna partes MIME para anexar ao.
+
+    Args:
+        html: Conteúdo HTML a processar.
+
+    Returns:
+        Html processado e lista de imagens.
     """
     if not html:
         return html, []
@@ -42,6 +45,7 @@ def converter_imagens_base64_para_cid(
     contador = 0
 
     def substituir(match: re.Match[str]) -> str:
+        """Substitui src data URI por cid:."""
         nonlocal contador
         subtype_raw = match.group("subtype").lower()
         subtype = _SUBTYPE_MIME.get(subtype_raw, subtype_raw)

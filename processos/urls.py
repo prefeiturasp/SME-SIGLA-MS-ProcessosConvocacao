@@ -1,6 +1,4 @@
-"""
-URL configuration for the processes module.
-"""
+"""URL configuration for the processes module."""
 
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter

@@ -36,31 +36,13 @@ class EnvioEmailViewSet(
     lookup_url_kwarg = "uuid"
 
     def get_serializer_class(self) -> type[BaseSerializer]:
-        """Retorna serializer de listagem ou detalhe com candidatos."""
+        """Retorna serializer de acordo com a ação."""
         if self.action == "retrieve":
             return EnvioEmailDetalheSerializer
         return EnvioEmailSerializer
 
     def create(self, request: Request) -> Response:
-        """Inicia processamento assíncrono de envio de e-mails.
-
-        Args:
-            request: body com ``processo_uuid``, ``processo_nome``, ``tipo``,
-                ``conteudo``.
-
-        Returns:
-            200 com UUID do envio ou 400/500 em caso de erro.
-
-        Examples:
-            POST body::
-
-                {
-                  "processo_uuid": "uuid",
-                  "processo_nome": "Processo X",
-                  "tipo": "CONVOCACAO",
-                  "conteudo": "<p>Olá [[cargo]]</p>"
-                }
-        """
+        """Inicia processamento assíncrono de envio de e-mails."""
         logger.info(
             "Iniciando processamento de envio de e-mail",
             extra={

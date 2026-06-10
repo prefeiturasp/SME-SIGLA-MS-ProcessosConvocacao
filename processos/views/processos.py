@@ -48,9 +48,7 @@ STATUS_CANCELADO = "CANCELADO"
 
 
 class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet para gerenciar processos de convocação.
-    """
+    """ViewSet para gerenciar processos de convocação."""
 
     queryset = ProcessoConvocacao.objects.filter(
         esta_ativo=True
@@ -99,6 +97,7 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
         return queryset
 
     def get_serializer_class(self) -> type[BaseSerializer]:
+        """Retorna a classe de serializer conforme a action."""
         if self.action == "create":
             return ProcessoConvocacaoCreateSerializer
         elif self.action == "list":
@@ -253,7 +252,7 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def update(self, request: Request, *args: Any, **kwargs: Any) -> Response:
-        """Bloqueia alteração quando processo está finalizado."""
+        """Atualiza o processo e bloqueia alterações se estiver finalizado."""
         instance = self.get_object()
         if instance.status == STATUS_FINALIZADO:
             return Response(
@@ -278,6 +277,7 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
     def atualizar_passo(
         self, request: Request, pk: str | None = None
     ) -> Response:
+        """Executa a atualização do passo da convocação."""
         processo = self.get_object()
         serializer = ProcessoConvocacaoPassoSerializer(
             processo,

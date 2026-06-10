@@ -1,6 +1,4 @@
-"""
-Configuração para testes do app processos.
-"""
+"""Configuração para testes do app processos."""
 
 import uuid
 

@@ -1,3 +1,5 @@
+"""Módulo tests/services/test_candidatos_api_service."""
+
 from unittest.mock import Mock, patch
 
 import pytest
@@ -8,6 +10,7 @@ from processos.services.exceptions import CandidatosServiceError
 
 
 def test_buscar_habilitados_por_processo_sem_config_retorna_lista_vazia():
+    """Sem config, buscar habilitados por processo retorna lista vazia."""
     service = CandidatosApiService()
     with override_settings(CANDIDATOS_API_URL=""):
         assert service.buscar_habilitados_por_processo("uuid") == []
@@ -15,6 +18,7 @@ def test_buscar_habilitados_por_processo_sem_config_retorna_lista_vazia():
 
 @override_settings(CANDIDATOS_API_URL="http://ms-candidatos")
 def test_buscar_habilitados_por_processo_retorna_lista_quando_json_lista():
+    """Verifica habilitados quando a API retorna lista JSON."""
     service = CandidatosApiService()
     processo_uuid = "11111111-1111-1111-1111-111111111111"
 
@@ -41,6 +45,7 @@ def test_buscar_habilitados_por_processo_retorna_lista_quando_json_lista():
 
 @override_settings(CANDIDATOS_API_URL="http://ms-candidatos")
 def test_buscar_habilitados_por_processo_retorna_results_quando_json_dict_com_results():  # noqa: E501
+    """Verifica habilitados quando a API retorna results."""
     service = CandidatosApiService()
 
     response = Mock()
@@ -59,6 +64,7 @@ def test_buscar_habilitados_por_processo_retorna_results_quando_json_dict_com_re
 
 @override_settings(CANDIDATOS_API_URL="http://ms-candidatos")
 def test_buscar_habilitados_por_processo_retorna_vazio_quando_json_dict_sem_results():  # noqa: E501
+    """Verifica habilitados vazios sem results no JSON."""
     service = CandidatosApiService()
 
     response = Mock()
@@ -74,6 +80,7 @@ def test_buscar_habilitados_por_processo_retorna_vazio_quando_json_dict_sem_resu
 
 @override_settings(CANDIDATOS_API_URL="http://ms-candidatos")
 def test_buscar_habilitados_por_processo_propagada_erro_do_client():
+    """Verifica buscar habilitados por processo propagada erro do client."""
     service = CandidatosApiService()
 
     response = Mock()
@@ -88,6 +95,7 @@ def test_buscar_habilitados_por_processo_propagada_erro_do_client():
 
 
 def test_desconvocar_por_processo_sem_config_gera_value_error():
+    """Verifica desconvocar por processo sem config gera value error."""
     service = CandidatosApiService()
     with override_settings(CANDIDATOS_API_URL=""):  # noqa: SIM117
         with pytest.raises(ValueError):
@@ -96,6 +104,7 @@ def test_desconvocar_por_processo_sem_config_gera_value_error():
 
 @override_settings(CANDIDATOS_API_URL="http://ms-candidatos")
 def test_desconvocar_por_processo_sucesso_retorna_json():
+    """Verifica desconvocar por processo sucesso retorna json."""
     service = CandidatosApiService()
     processo_uuid = "22222222-2222-2222-2222-222222222222"
 
@@ -126,6 +135,7 @@ def test_desconvocar_por_processo_sucesso_retorna_json():
 
 @override_settings(CANDIDATOS_API_URL="http://ms-candidatos")
 def test_desconvocar_por_processo_sucesso_sem_body_retorna_dict_vazio():
+    """Desconvocar por processo sem body retorna dict vazio."""
     service = CandidatosApiService()
 
     response = Mock()
@@ -143,6 +153,7 @@ def test_desconvocar_por_processo_sucesso_sem_body_retorna_dict_vazio():
 
 @override_settings(CANDIDATOS_API_URL="http://ms-candidatos")
 def test_desconvocar_por_processo_status_diferente_200_gera_erro():
+    """Verifica desconvocar por processo status diferente 200 gera erro."""
     service = CandidatosApiService()
 
     response = Mock()
@@ -162,6 +173,7 @@ def test_desconvocar_por_processo_status_diferente_200_gera_erro():
 
 @override_settings(CANDIDATOS_API_URL="http://ms-candidatos")
 def test_desconvocar_por_processo_excecao_do_client_gera_erro():
+    """Verifica desconvocar por processo excecao do client gera erro."""
     service = CandidatosApiService()
 
     with patch(  # noqa: SIM117

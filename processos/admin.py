@@ -69,7 +69,7 @@ class ProcessoConvocacaoAdmin(admin.ModelAdmin):
         self,
         request: HttpRequest,
     ) -> QuerySet[ProcessoConvocacao]:
-        """Otimiza queryset com cargos relacionados."""
+        """Otimiza queryset com prefetch_related."""
         return (
             super().get_queryset(request).prefetch_related("cargos_processo")
         )
@@ -113,7 +113,7 @@ class CargoProcessoAdmin(admin.ModelAdmin):
     )
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[CargoProcesso]:
-        """Otimiza queryset com processo relacionado."""
+        """Otimiza queryset com select_related."""
         return super().get_queryset(request).select_related("processo")
 
 
@@ -173,6 +173,7 @@ class EnvioEmailConteudoAdmin(admin.ModelAdmin):
     ordering = ("tipo",)
 
     def has_add_permission(self, request: HttpRequest) -> bool:
+        """Verifica se tem permissão para adicionar."""
         return False
 
     def has_delete_permission(
@@ -180,4 +181,5 @@ class EnvioEmailConteudoAdmin(admin.ModelAdmin):
         request: HttpRequest,
         obj: EnvioEmailConteudo | None = None,
     ) -> bool:
+        """Verifica se tem permissão para deletar."""
         return False

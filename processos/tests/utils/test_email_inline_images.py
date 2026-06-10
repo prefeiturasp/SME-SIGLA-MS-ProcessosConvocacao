@@ -12,6 +12,7 @@ PNG_1X1_B64 = (
 
 
 def test_converter_imagem_base64_para_cid():
+    """Verifica converter imagem base64 para cid."""
     html = f'<p class="ql-align-center"><img src="data:image/png;base64,{PNG_1X1_B64}"></p>'  # noqa: E501
     novo_html, partes = converter_imagens_base64_para_cid(html)
 
@@ -22,6 +23,7 @@ def test_converter_imagem_base64_para_cid():
 
 
 def test_converter_varias_imagens():
+    """Verifica converter varias imagens."""
     html = (
         f'<img src="data:image/png;base64,{PNG_1X1_B64}">'
         f'<img src="data:image/png;base64,{PNG_1X1_B64}">'
@@ -34,6 +36,7 @@ def test_converter_varias_imagens():
 
 
 def test_html_sem_imagem_retorna_inalterado():
+    """Verifica html sem imagem retorna inalterado."""
     html = "<p>texto</p>"
     novo_html, partes = converter_imagens_base64_para_cid(html)
     assert novo_html == html
@@ -41,6 +44,7 @@ def test_html_sem_imagem_retorna_inalterado():
 
 
 def test_base64_invalido_mantem_data_uri():
+    """Verifica base64 invalido mantem data uri."""
     html = '<img src="data:image/png;base64,!!!invalido!!!">'
     novo_html, partes = converter_imagens_base64_para_cid(html)
     assert "data:image/png" in novo_html

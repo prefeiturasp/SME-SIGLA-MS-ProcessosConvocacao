@@ -1,6 +1,4 @@
-"""
-Constantes e enums para os modelos de processos de convocação.
-"""
+"""Constantes e enums para os modelos de processos de convocação."""
 
 # Status dos processos
 PROCESSO_STATUS_CHOICES = [

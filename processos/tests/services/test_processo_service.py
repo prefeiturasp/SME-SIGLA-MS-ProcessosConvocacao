@@ -1,3 +1,5 @@
+"""Módulo tests/services/test_processo_service."""
+
 from unittest.mock import Mock
 
 import pytest
@@ -17,6 +19,7 @@ from processos.services.processo_service import ProcessoConvocacaoService
 def _processo_mock(
     uuid_value: str = "11111111-1111-1111-1111-111111111111",
 ) -> Mock:
+    """Executa  processo mock."""
     processo = Mock()
     processo.uuid = uuid_value
     processo.inativar = Mock()
@@ -24,6 +27,7 @@ def _processo_mock(
 
 
 def test_excluir_processo_e_dependencias_sucesso_chama_integracoes_e_inativa():
+    """Verifica exclusão com integrações e inativação local."""
     agenda = Mock(spec=AgendaApiService)
     candidatos = Mock(spec=CandidatosApiService)
     escolhas = Mock(spec=EscolhasApiService)
@@ -50,6 +54,7 @@ def test_excluir_processo_e_dependencias_sucesso_chama_integracoes_e_inativa():
 
 
 def test_excluir_processo_e_dependencias_quando_agenda_falha_retorna_processo_service_error_e_nao_chama_outros():  # noqa: E501
+    """Verifica falha na agenda sem chamar demais integrações."""
     agenda = Mock(spec=AgendaApiService)
     candidatos = Mock(spec=CandidatosApiService)
     escolhas = Mock(spec=EscolhasApiService)
@@ -75,6 +80,7 @@ def test_excluir_processo_e_dependencias_quando_agenda_falha_retorna_processo_se
 
 
 def test_excluir_processo_e_dependencias_quando_candidatos_falha_retorna_processo_service_error_e_nao_chama_escolhas():  # noqa: E501
+    """Verifica falha em candidatos sem chamar escolhas."""
     agenda = Mock(spec=AgendaApiService)
     candidatos = Mock(spec=CandidatosApiService)
     escolhas = Mock(spec=EscolhasApiService)
@@ -100,6 +106,7 @@ def test_excluir_processo_e_dependencias_quando_candidatos_falha_retorna_process
 
 
 def test_excluir_processo_e_dependencias_quando_escolhas_falha_retorna_processo_service_error_e_nao_inativa():  # noqa: E501
+    """Verifica falha em escolhas sem inativar processo."""
     agenda = Mock(spec=AgendaApiService)
     candidatos = Mock(spec=CandidatosApiService)
     escolhas = Mock(spec=EscolhasApiService)

@@ -1,6 +1,4 @@
-"""
-Testes unitários para processos.services.envio_email_service.
-"""
+"""Testes unitários para processos.services.envio_email_service."""
 
 from unittest.mock import patch
 from uuid import uuid4
@@ -24,6 +22,7 @@ pytestmark = pytest.mark.django_db
 
 @pytest.fixture
 def processo_convocacao(db):
+    """Executa processo convocacao."""
     return ProcessoConvocacao.objects.create(
         concurso_uuid=uuid4(),
         concurso_nome="Concurso Teste",
@@ -39,6 +38,7 @@ def processo_convocacao(db):
 def test_iniciar_processamento_envio_lista_vazia(
     mock_buscar, processo_convocacao
 ):
+    """Verifica iniciar processamento envio lista vazia."""
     mock_buscar.return_value = []
 
     with patch("config.celery.app") as mock_celery:
@@ -62,6 +62,7 @@ def test_iniciar_processamento_envio_lista_vazia(
 def test_iniciar_processamento_envio_um_habilitado(
     mock_buscar, mock_render, mock_celery, processo_convocacao
 ):
+    """Verifica iniciar processamento envio um habilitado."""
     mock_buscar.return_value = [
         {
             "candidato": {
@@ -95,6 +96,7 @@ def test_iniciar_processamento_envio_um_habilitado(
 
 
 def test_constantes_servico():
+    """Verifica constantes servico."""
     assert TIPO_CONVOCACAO in ASSUNTO_POR_TIPO
     assert (
         TEMPLATE_POR_TIPO[TIPO_CONVOCACAO]
