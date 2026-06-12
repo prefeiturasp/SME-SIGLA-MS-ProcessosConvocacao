@@ -167,9 +167,9 @@ class EnvioEmailCandidatoAdmin(admin.ModelAdmin):
 class EnvioEmailConteudoAdmin(admin.ModelAdmin):
     """Admin para templates de conteúdo de e-mail por tipo."""
 
-    list_display = ("tipo", "atualizado_em", "criado_em")
+    list_display = ("tipo", "assunto", "atualizado_em", "criado_em")
     readonly_fields = ("uuid", "tipo", "criado_em", "atualizado_em")
-    fields = ("tipo", "conteudo", "uuid", "criado_em", "atualizado_em")
+    fields = ("tipo", "assunto", "conteudo", "uuid", "criado_em", "atualizado_em")
     ordering = ("tipo",)
 
     def has_add_permission(self, request: HttpRequest) -> bool:

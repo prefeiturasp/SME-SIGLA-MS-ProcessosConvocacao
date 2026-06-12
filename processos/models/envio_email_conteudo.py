@@ -4,7 +4,7 @@ from auditlog.registry import auditlog
 from django.db import models
 
 from .base import BaseModel
-from .envio_email import ENVIO_EMAIL_TIPO_CHOICES
+from .envio_email import ASSUNTO_POR_TIPO, ENVIO_EMAIL_TIPO_CHOICES, TIPO_CONVOCACAO
 
 
 class EnvioEmailConteudo(BaseModel):
@@ -16,7 +16,22 @@ class EnvioEmailConteudo(BaseModel):
         unique=True,
         verbose_name="Tipo de envio",
     )
+    assunto = models.CharField(
+        max_length=255,
+        verbose_name="Assunto do e-mail",
+        default="",
+        blank=True,
+    )
     conteudo = models.TextField(
+        verbose_name="Corpo do e-mail (HTML)",
+        help_text=(
+            "Fragmento HTML do corpo (sem cabeçalho PMSP). "
+            "Variáveis Django: {{ cargo }}, {{ classificacao }}, "
+            "{{ data_publicacao }}, etc. "
+            "O layout base vem de templates/email/envio_email.html."
+        ),
+    )
+    conteudo_gabarito = models.TextField(
         verbose_name="Corpo do e-mail (HTML)",
         help_text=(
             "Fragmento HTML do corpo (sem cabeçalho PMSP). "
@@ -33,6 +48,12 @@ class EnvioEmailConteudo(BaseModel):
         verbose_name_plural = "Conteúdos de e-mail por tipo"
         ordering = ["tipo"]
         db_table = "processos_envio_email_conteudo"
+
+    def assunto_efetivo(self) -> str:
+        """Retorna o assunto salvo ou o padrão definido para o tipo."""
+        if self.assunto and self.assunto.strip():
+            return self.assunto.strip()
+        return ASSUNTO_POR_TIPO.get(self.tipo, ASSUNTO_POR_TIPO[TIPO_CONVOCACAO])
 
     def __str__(self) -> str:
         """Executa   str  .
