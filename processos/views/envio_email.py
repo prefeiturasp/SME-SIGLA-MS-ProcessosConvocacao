@@ -68,6 +68,7 @@ class EnvioEmailViewSet(
                 processo_nome=data["processo_nome"],
                 tipo=data["tipo"],
                 conteudo=data.get("conteudo"),
+                assunto=data.get("assunto"),
             )
             return Response(
                 {

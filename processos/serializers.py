@@ -263,7 +263,16 @@ class EnvioEmailEnvioSerializer(serializers.Serializer):
     tipo = serializers.ChoiceField(
         choices=ENVIO_EMAIL_TIPO_CHOICES, help_text="Tipo de envio"
     )
-    conteudo = serializers.CharField(help_text="Conteúdo do e-mail (HTML)")
+    conteudo = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        help_text="Conteúdo do e-mail (HTML); se vazio, usa conteúdo salvo ou gabarito",
+    )
+    assunto = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        help_text="Assunto do e-mail; se vazio, usa assunto salvo ou padrão do tipo",
+    )
 
     def validate_processo_uuid(self, value: UUID) -> UUID:
         """Garante que o processo existe.
@@ -360,6 +369,7 @@ class EnvioEmailConteudoSerializer(serializers.ModelSerializer):
         source="get_tipo_display", read_only=True
     )
     conteudo = ConteudoHtmlField()
+    conteudo_gabarito = ConteudoHtmlField()
 
     class Meta:
         """Configuração do serializer."""
@@ -369,7 +379,9 @@ class EnvioEmailConteudoSerializer(serializers.ModelSerializer):
             "uuid",
             "tipo",
             "tipo_display",
+            "assunto",
             "conteudo",
+            "conteudo_gabarito",
             "criado_em",
             "atualizado_em",
         ]
@@ -386,9 +398,10 @@ class EnvioEmailConteudoUpdateSerializer(serializers.ModelSerializer):
     """Serializer para PATCH — apenas o HTML do template."""
 
     conteudo = ConteudoHtmlField()
+    conteudo_gabarito = ConteudoHtmlField()
 
     class Meta:
         """Configuração do serializer."""
 
         model = EnvioEmailConteudo
-        fields = ["conteudo"]
+        fields = ["assunto", "conteudo", "conteudo_gabarito"]
