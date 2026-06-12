@@ -4,16 +4,9 @@ import pytest
 from django.urls import reverse
 from rest_framework import status
 
-from processos.models import EnvioEmailConteudo
 from processos.models.envio_email import TIPO_CONVOCACAO
 
 pytestmark = pytest.mark.django_db
-
-
-@pytest.fixture
-def conteudo_convocacao():
-    """Executa conteudo convocacao."""
-    return EnvioEmailConteudo.objects.get(tipo=TIPO_CONVOCACAO)
 
 
 def test_envio_email_conteudo_list(authenticated_client, conteudo_convocacao):
@@ -46,6 +39,8 @@ def test_envio_email_conteudo_list_filtrar_por_tipo(
     assert len(data) == 1
     assert data[0]["tipo"] == TIPO_CONVOCACAO
     assert data[0]["uuid"] == str(conteudo_convocacao.uuid)
+    assert "assunto" in data[0]
+    assert "conteudo_gabarito" in data[0]
 
 
 def test_envio_email_conteudo_list_filtrar_tipo_inexistente_retorna_vazio(
@@ -67,8 +62,58 @@ def test_envio_email_conteudo_retrieve(
     response = authenticated_client.get(url)
     assert response.status_code == status.HTTP_200_OK
     assert response.data["tipo"] == TIPO_CONVOCACAO
+    assert "assunto" in response.data
     assert "conteudo" in response.data
+    assert "conteudo_gabarito" in response.data
     assert "tipo_display" in response.data
+
+
+def test_envio_email_conteudo_patch_conteudo_gabarito(
+    authenticated_client, conteudo_convocacao
+):
+    """Verifica envio email conteudo patch conteudo gabarito."""
+    url = reverse(
+        "envio-email-conteudo-detail", args=[conteudo_convocacao.uuid]
+    )
+    novo_html = "<p>Novo gabarito {{ cargo }}</p>"
+    response = authenticated_client.patch(
+        url, {"conteudo_gabarito": novo_html}, format="json"
+    )
+    assert response.status_code == status.HTTP_200_OK
+    assert response.data["conteudo_gabarito"] == novo_html
+    conteudo_convocacao.refresh_from_db()
+    assert conteudo_convocacao.conteudo_gabarito == novo_html
+
+
+def test_envio_email_conteudo_retorna_assunto_vazio_quando_nao_salvo(
+    authenticated_client, conteudo_convocacao
+):
+    """Verifica GET retorna assunto vazio quando não há valor salvo no template."""
+    conteudo_convocacao.assunto = ""
+    conteudo_convocacao.save(update_fields=["assunto", "atualizado_em"])
+
+    url = reverse(
+        "envio-email-conteudo-detail", args=[conteudo_convocacao.uuid]
+    )
+    response = authenticated_client.get(url)
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.data["assunto"] == ""
+
+
+def test_envio_email_conteudo_patch_assunto(authenticated_client, conteudo_convocacao):
+    """Verifica envio email conteudo patch assunto."""
+    url = reverse(
+        "envio-email-conteudo-detail", args=[conteudo_convocacao.uuid]
+    )
+    novo_assunto = "Novo assunto de convocação"
+    response = authenticated_client.patch(
+        url, {"assunto": novo_assunto}, format="json"
+    )
+    assert response.status_code == status.HTTP_200_OK
+    assert response.data["assunto"] == novo_assunto
+    conteudo_convocacao.refresh_from_db()
+    assert conteudo_convocacao.assunto == novo_assunto
 
 
 def test_envio_email_conteudo_patch(authenticated_client, conteudo_convocacao):
