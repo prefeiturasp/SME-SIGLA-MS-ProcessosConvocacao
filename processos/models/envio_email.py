@@ -15,6 +15,12 @@ ENVIO_EMAIL_TIPO_CHOICES = [
     (TIPO_RESULTADOS, "Resultados"),
 ]
 
+ASSUNTO_POR_TIPO = {
+    TIPO_CONVOCACAO: "Ciência de Convocação de Escolha de Vaga - PMSP",
+    TIPO_VAGAS: "Comunicado de Vagas - PMSP",
+    TIPO_RESULTADOS: "Comunicado de Resultados - PMSP",
+}
+
 
 class EnvioEmail(BaseModel):
     """Registro de um lote de envio de e-mails (histórico)."""

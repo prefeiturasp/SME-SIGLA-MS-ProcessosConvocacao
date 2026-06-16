@@ -7,7 +7,66 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from ..models import CargoProcesso, ProcessoConvocacao
+from ..models import CargoProcesso, EnvioEmailConteudo, ProcessoConvocacao
+from ..models.envio_email import (
+    TIPO_CONVOCACAO,
+    TIPO_RESULTADOS,
+    TIPO_VAGAS,
+)
+
+
+class _DisableMigrations:
+    def __contains__(self, item: str) -> bool:
+        return True
+
+    def __getitem__(self, item: str) -> None:
+        return None
+
+
+@pytest.fixture(scope="session")
+def django_db_modify_db_settings() -> None:
+    """Ajusta settings para o ambiente de testes."""
+    from django.conf import settings
+
+    settings.MIGRATION_MODULES = _DisableMigrations()
+    settings.MIDDLEWARE = [
+        middleware
+        for middleware in settings.MIDDLEWARE
+        if not middleware.startswith("sigla_sdk.")
+    ]
+
+
+@pytest.fixture
+def envio_email_conteudos(db):
+    """Garante templates de e-mail por tipo para os testes."""
+    defaults_por_tipo = {
+        TIPO_CONVOCACAO: {
+            "conteudo": "",
+            "conteudo_gabarito": "<p>gabarito convocacao</p>",
+            "assunto": "",
+        },
+        TIPO_VAGAS: {
+            "conteudo": "",
+            "conteudo_gabarito": "<p>gabarito vagas</p>",
+            "assunto": "",
+        },
+        TIPO_RESULTADOS: {
+            "conteudo": "",
+            "conteudo_gabarito": "<p>gabarito resultados</p>",
+            "assunto": "",
+        },
+    }
+    for tipo, defaults in defaults_por_tipo.items():
+        EnvioEmailConteudo.objects.update_or_create(
+            tipo=tipo,
+            defaults=defaults,
+        )
+
+
+@pytest.fixture
+def conteudo_convocacao(envio_email_conteudos):
+    """Template de conteúdo de convocação para testes de e-mail."""
+    return EnvioEmailConteudo.objects.get(tipo=TIPO_CONVOCACAO)
 
 
 @pytest.fixture

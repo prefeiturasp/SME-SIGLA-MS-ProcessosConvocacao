@@ -14,8 +14,10 @@ from sigla_sdk.context import get_correlation_id
 from processos.models import (
     EnvioEmail,
     EnvioEmailCandidato,
+    EnvioEmailConteudo,
 )
 from processos.models.envio_email import (
+    ASSUNTO_POR_TIPO,
     TIPO_CONVOCACAO,
     TIPO_RESULTADOS,
     TIPO_VAGAS,
@@ -24,12 +26,6 @@ from processos.models.envio_email_candidato import ENVIO_STATUS_PENDENTE
 from processos.services.candidatos_api_url import CandidatosApiService
 
 logger = logging.getLogger(__name__)
-
-ASSUNTO_POR_TIPO = {
-    TIPO_CONVOCACAO: "Ciência de Convocação de Escolha de Vaga - PMSP",
-    TIPO_VAGAS: "Comunicado de Vagas - PMSP",
-    TIPO_RESULTADOS: "Comunicado de Resultados - PMSP",
-}
 
 TITULO_POR_TIPO = {
     TIPO_CONVOCACAO: "Ciência de Convocação de Escolha de Vaga - PMSP",
@@ -110,6 +106,33 @@ def _preencher_template(
     return pattern.sub(replace_func, conteudo or "")
 
 
+def _obter_template_conteudo(tipo: str) -> EnvioEmailConteudo | None:
+    """Retorna o template persistido para o tipo de envio, se existir."""
+    try:
+        return EnvioEmailConteudo.objects.get(tipo=tipo)
+    except EnvioEmailConteudo.DoesNotExist:
+        return None
+
+
+def _resolver_conteudo_envio(tipo: str, conteudo: str | None) -> str:
+    """Usa o conteúdo informado ou faz fallback para conteúdo salvo/gabarito."""
+    if conteudo and conteudo.strip():
+        return conteudo
+    template = _obter_template_conteudo(tipo)
+    if not template:
+        return ""
+    if template.conteudo and template.conteudo.strip():
+        return template.conteudo
+    return template.conteudo_gabarito or ""
+
+
+def _resolver_assunto_envio(tipo: str, assunto: str | None) -> str:
+    """Usa o assunto informado ou o padrão fixo do tipo no envio."""
+    if assunto and assunto.strip():
+        return assunto.strip()
+    return ASSUNTO_POR_TIPO.get(tipo, ASSUNTO_POR_TIPO[TIPO_CONVOCACAO])
+
+
 def _renderizar_conteudo(*, tipo: str, context: dict[str, Any]) -> str:
     """Renderiza corpo do e-mail no template dinâmico.
 
@@ -132,6 +155,7 @@ def iniciar_processamento_envio(
     processo_nome: str,
     tipo: str,
     conteudo: str | None,
+    assunto: str | None = None,
 ) -> EnvioEmail:
     """Inicia envio assíncrono de e-mails para habilitados convocados.
 
@@ -140,6 +164,7 @@ def iniciar_processamento_envio(
         processo_nome: nome exibido no histórico de envio.
         tipo: ``CONVOCACAO``, ``VAGAS`` ou ``RESULTADOS``.
         conteudo: HTML com placeholders ``[[cargo]]``, etc.
+        assunto: Assunto do e-mail; se vazio, usa template salvo ou padrão.
 
     Returns:
         Resultado da operação.
@@ -157,12 +182,12 @@ def iniciar_processamento_envio(
         },
     )
     processo_uuid_str = str(processo_uuid)
-    assunto = ASSUNTO_POR_TIPO.get(tipo, ASSUNTO_POR_TIPO[TIPO_CONVOCACAO])
+    assunto = _resolver_assunto_envio(tipo, assunto)
     habilitados = CandidatosApiService().buscar_habilitados_por_processo(
         processo_uuid_str
     )
     quantidade = len(habilitados)
-    conteudo = conteudo or ""
+    conteudo = _resolver_conteudo_envio(tipo, conteudo)
 
     envio = EnvioEmail.objects.create(
         processo_uuid=processo_uuid,

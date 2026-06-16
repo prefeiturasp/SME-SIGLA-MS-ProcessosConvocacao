@@ -510,6 +510,39 @@ def test_envio_email_envio_serializer_valid(processo_convocacao):
     )
 
 
+def test_envio_email_envio_serializer_aceita_assunto_e_conteudo_opcionais(
+    processo_convocacao,
+):
+    """Testa payload de envio com assunto e conteúdo em branco."""
+    data = {
+        "processo_uuid": str(processo_convocacao.uuid),
+        "processo_nome": "Processo Teste",
+        "tipo": TIPO_CONVOCACAO,
+        "conteudo": "",
+        "assunto": "",
+    }
+    serializer = EnvioEmailEnvioSerializer(data=data)
+    assert serializer.is_valid()
+    assert serializer.validated_data["conteudo"] == ""
+    assert serializer.validated_data["assunto"] == ""
+
+
+def test_envio_email_envio_serializer_aceita_assunto_customizado(
+    processo_convocacao,
+):
+    """Testa payload de envio com assunto customizado."""
+    data = {
+        "processo_uuid": str(processo_convocacao.uuid),
+        "processo_nome": "Processo Teste",
+        "tipo": TIPO_CONVOCACAO,
+        "conteudo": "<p>Conteúdo</p>",
+        "assunto": "Meu assunto",
+    }
+    serializer = EnvioEmailEnvioSerializer(data=data)
+    assert serializer.is_valid()
+    assert serializer.validated_data["assunto"] == "Meu assunto"
+
+
 def test_envio_email_envio_serializer_processo_nao_encontrado():
     """Testa EnvioEmailEnvioSerializer quando processo não existe."""
     data = {
