@@ -23,20 +23,15 @@ SECRET_KEY = os.environ.get(
 )
 DEBUG = os.environ.get("DEBUG", "True").lower() == "true"
 ALLOWED_HOSTS = [
-    host
-    for host in os.environ.get(
-        "DJANGO_ALLOWED_HOSTS",
-        "*",
-    ).split(",")
-    if host
+    "localhost",
+    "127.0.0.1",
+    "0.0.0.0",
+    "qa-api-sigla.sme.prefeitura.sp.gov.br",
+    "hom-api-sigla.sme.prefeitura.sp.gov.br",
 ]
 CSRF_TRUSTED_ORIGINS = [
-    origin
-    for origin in os.environ.get(
-        "DJANGO_CSRF_TRUSTED_ORIGINS",
-        "*",
-    ).split(",")
-    if origin
+    "https://qa-api-sigla.sme.prefeitura.sp.gov.br",
+    "https://hom-api-sigla.sme.prefeitura.sp.gov.br",
 ]
 
 # Application definition
