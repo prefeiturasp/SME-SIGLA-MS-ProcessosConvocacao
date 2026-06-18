@@ -18,7 +18,7 @@ ignore = [
 "*/settings*.py" = ["F401", "F403", "F405", "E501", "E402"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["processos"]
+known-first-party = ["core", "processos", "cargos", "envio_email"]
 
 [tool.ruff.format]
 quote-style = "double"
