@@ -3,6 +3,7 @@ Django settings for convocacao_processes project.
 """
 
 import os
+import sys
 from datetime import timedelta
 from pathlib import Path
 
@@ -14,20 +15,28 @@ DJANGO_ENVIRONMENT = os.environ.get("DJANGO_ENVIRONMENT", "local")
 MS_PATH = os.environ.get("MS_PATH", "/ms-processos-convocacao")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+# Adiciona a pasta 'apps' ao sys.path do Python
+sys.path.insert(0, os.path.join(BASE_DIR, "apps"))
+
 SECRET_KEY = os.environ.get(
     "SECRET_KEY", "django-insecure-your-secret-key-here"
 )
 DEBUG = os.environ.get("DEBUG", "True").lower() == "true"
 ALLOWED_HOSTS = [
-    "localhost",
-    "127.0.0.1",
-    "0.0.0.0",
-    "qa-api-sigla.sme.prefeitura.sp.gov.br",
-    "hom-api-sigla.sme.prefeitura.sp.gov.br",
+    host
+    for host in os.environ.get(
+        "DJANGO_ALLOWED_HOSTS",
+        "*",
+    ).split(",")
+    if host
 ]
 CSRF_TRUSTED_ORIGINS = [
-    "https://qa-api-sigla.sme.prefeitura.sp.gov.br",
-    "https://hom-api-sigla.sme.prefeitura.sp.gov.br",
+    origin
+    for origin in os.environ.get(
+        "DJANGO_CSRF_TRUSTED_ORIGINS",
+        "*",
+    ).split(",")
+    if origin
 ]
 
 # Application definition
@@ -38,12 +47,17 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "rest_framework",
+    # Third-party
+    "auditlog",
     "corsheaders",
     "django_filters",
-    "auditlog",
     "drf_spectacular",
+    "rest_framework",
+    # Local
+    "core",
     "processos",
+    "cargos",
+    "envio_email",
 ]
 
 MIDDLEWARE = [
@@ -201,6 +215,16 @@ LOGGING = {
             "level": "DEBUG",
             "propagate": False,
         },
+        "envio_email": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        "cargos": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
         "django.server": {
             "handlers": ["console"],
             "level": "ERROR",  # Alterando para ERROR, ele para de mostrar os GET/POST/OPTIONS de rotina (INFO)
@@ -216,7 +240,7 @@ SPECTACULAR_SETTINGS = {
     "SERVE_INCLUDE_SCHEMA": False,
 }
 
-# E-mail
+# E-mail config
 EMAIL_BACKEND = os.environ.get(
     "DJANGO_EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
 )
@@ -242,15 +266,11 @@ CELERY_TASK_SOFT_TIME_LIMIT = 60
 # Fila dedicada para isolar mensagens no Redis compartilhado (outros projetos usam a fila "celery")
 CELERY_TASK_DEFAULT_QUEUE = "processos_convocacao"
 
-# MS-Candidatos (API de habilitados)
+
+# MS URLs
 CANDIDATOS_API_URL = os.environ.get("CANDIDATOS_API_URL", "").rstrip("/")
-
-# MS-Agenda (exclusão de agendas por processo)
 AGENDA_API_URL = os.environ.get("AGENDAS_API_URL", "").rstrip("/")
-
-# MS-Escolha (API para validar se convocados fizeram escolha na finalização)
 ESCOLHAS_API_URL = os.environ.get("ESCOLHAS_API_URL", "").rstrip("/")
-
 MS_URL = os.environ.get("MS_URL", "").rstrip("/")
 
 JWT_SIGNING_KEY = os.environ.get(

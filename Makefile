@@ -3,7 +3,7 @@
 
 .PHONY: help pep257 makemigrations migrate runserver coverage test clean install format lint check
 
-PEP_APP_DIRS = processos
+PEP_APP_DIRS = processos cargos envio_email
 
 # Comando padrão - mostra ajuda
 help:
@@ -35,7 +35,7 @@ runserver:
 # Executa testes com relatório de cobertura
 coverage:
 	@echo "Executando testes com cobertura..."
-	pytest --ds=config.settings_test --cov=processos --cov-report=term-missing --cov-report=html
+	pytest --ds=config.settings_test --cov=processos --cov=cargos --cov=envio_email --cov-report=term-missing --cov-report=html
 
 # Executa todos os testes
 test:
