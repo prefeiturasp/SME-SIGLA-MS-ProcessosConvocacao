@@ -89,19 +89,19 @@ def test_envio_email_detalhe_nao_encontrado(authenticated_client):
     assert resposta.status_code == status.HTTP_404_NOT_FOUND
 
 
-@patch("envio_email.api.views_envio.iniciar_processamento_envio")
+@patch("envio_email.api.views.views_envio.iniciar_processamento_envio")
 def test_envio_email_create(
     mock_iniciar, authenticated_client, processo_convocacao
 ):
     """Testa POST /api/v1/envio-email/ (inicia processamento de envio)."""
-    mock_envio = EnvioEmail.objects.create(
-        processo_uuid=processo_convocacao.uuid,
-        processo_nome=processo_convocacao.concurso_nome,
-        tipo=TIPO_CONVOCACAO,
-        quantidade_candidatos=0,
-    )
+    mock_envio = {
+        "processo_uuid": str(processo_convocacao.uuid),
+        "processo_nome": processo_convocacao.concurso_nome,
+        "tipo": TIPO_CONVOCACAO,
+        "quantidade_candidatos": 0,
+        "uuid": str(uuid.uuid4()),
+    }
     mock_iniciar.return_value = mock_envio
-
     url = reverse("envio-email-list")
     dados_requisicao = {
         "processo_uuid": str(processo_convocacao.uuid),
@@ -113,14 +113,14 @@ def test_envio_email_create(
     assert resposta.status_code == status.HTTP_200_OK
     assert "detail" in resposta.data
     assert "envio_email_uuid" in resposta.data
-    assert resposta.data["envio_email_uuid"] == str(mock_envio.uuid)
+    assert resposta.data["envio_email_uuid"] == str(mock_envio["uuid"])
     mock_iniciar.assert_called_once()
     kwargs_chamada = mock_iniciar.call_args[1]
     assert kwargs_chamada["processo_nome"] == processo_convocacao.concurso_nome
     assert kwargs_chamada["tipo"] == TIPO_CONVOCACAO
 
 
-@patch("envio_email.api.views_envio.iniciar_processamento_envio")
+@patch("envio_email.api.views.views_envio.iniciar_processamento_envio")
 def test_envio_email_criacao_corpo_invalido(
     mock_iniciar, authenticated_client
 ):
@@ -137,7 +137,7 @@ def test_envio_email_criacao_corpo_invalido(
     mock_iniciar.assert_not_called()
 
 
-@patch("envio_email.api.views_envio.iniciar_processamento_envio")
+@patch("envio_email.api.views.views_envio.iniciar_processamento_envio")
 def test_envio_email_create_quando_servico_levanta_excecao_retorna_500(
     mock_iniciar, authenticated_client, processo_convocacao
 ):

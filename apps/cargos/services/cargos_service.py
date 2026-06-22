@@ -7,11 +7,13 @@ from typing import Any
 
 from django.db import transaction
 
+from cargos.repository import CargoProcessoRepository
 from cargos.serializers import (
     CargoProcessoCreateSerializer,
     CargoProcessoSerializer,
 )
 from processos.models import ProcessoConvocacao
+from processos.repository import ProcessoConvocacaoRepository
 
 
 @dataclass(frozen=True)
@@ -29,6 +31,49 @@ class CargosProcessoService:
     """Operações de persistência de cargos vinculados ao processo."""
 
     @staticmethod
+    def substituir_cargos_processo(
+        *,
+        processo: ProcessoConvocacao,
+        dados_validados: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Atualiza porcentagens do processo e substitui os cargos."""
+        dados_cargos = dados_validados["cargos"]
+
+        campos_atualizacao: list[str] = []
+        if (
+            "porcentagem_nna" in dados_validados
+            and dados_validados["porcentagem_nna"] != processo.porcentagem_nna
+        ):
+            processo.porcentagem_nna = dados_validados["porcentagem_nna"]
+            campos_atualizacao.append("porcentagem_nna")
+        if (
+            "porcentagem_pcd" in dados_validados
+            and dados_validados["porcentagem_pcd"] != processo.porcentagem_pcd
+        ):
+            processo.porcentagem_pcd = dados_validados["porcentagem_pcd"]
+            campos_atualizacao.append("porcentagem_pcd")
+        if campos_atualizacao:
+            ProcessoConvocacaoRepository.salvar(
+                processo, campos_atualizacao=campos_atualizacao
+            )
+
+        resultado = CargosProcessoService.salvar_cargos(
+            processo=processo, dados_cargos=dados_cargos
+        )
+
+        corpo_resposta: dict[str, Any] = {
+            "success": True,
+            "cargos_criados": len(resultado.cargos_criados),
+            "cargos_atualizados": len(resultado.cargos_atualizados),
+            "cargos_removidos": resultado.cargos_removidos,
+            "cargos": resultado.cargos,
+        }
+        if resultado.erros:
+            corpo_resposta["erros"] = resultado.erros
+
+        return corpo_resposta
+
+    @staticmethod
     def salvar_cargos(
         *, processo: ProcessoConvocacao, dados_cargos: list[dict[str, Any]]
     ) -> SubstituirCargosResultado:
@@ -37,10 +82,6 @@ class CargosProcessoService:
         cargos_atualizados: list[dict[str, Any]] = []
         erros: list[dict[str, Any]] = []
 
-        cargos_existentes_qs = processo.cargos_processo.all()
-        cargos_por_uuid = {
-            str(cargo.uuid): cargo for cargo in cargos_existentes_qs
-        }
         uuids_processados: set[str] = set()
 
         with transaction.atomic():
@@ -49,7 +90,11 @@ class CargosProcessoService:
 
                 if uuid_cargo:
                     uuid_cargo_str = str(uuid_cargo)
-                    cargo_existente = cargos_por_uuid.get(uuid_cargo_str)
+                    cargo_existente = (
+                        CargoProcessoRepository.carregar_instancia_por_processo_e_uuid(
+                            processo, uuid_cargo_str
+                        )
+                    )
                     if not cargo_existente:
                         erros.append(
                             {
@@ -93,15 +138,11 @@ class CargosProcessoService:
                             }
                         )
 
-            cargos_a_remover_qs = cargos_existentes_qs.exclude(
-                uuid__in=uuids_processados
+            cargos_removidos = CargoProcessoRepository.excluir_fora_de_uuids(
+                processo, uuids_processados
             )
-            cargos_removidos = cargos_a_remover_qs.count()
-            cargos_a_remover_qs.delete()
 
-        resultado_atual = CargoProcessoSerializer(
-            processo.cargos_processo.all(), many=True
-        ).data
+        resultado_atual = CargoProcessoRepository.listar_por_processo(processo)
         return SubstituirCargosResultado(
             cargos_criados=cargos_criados,
             cargos_atualizados=cargos_atualizados,

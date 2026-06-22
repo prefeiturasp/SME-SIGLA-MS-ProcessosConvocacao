@@ -47,7 +47,7 @@ def test_envio_email_conteudo_list_filtrar_tipo_inexistente_retorna_vazio(
     """Verifica listagem vazia para tipo de conteúdo inexistente."""
     url = reverse("envio-email-conteudo-list")
     resposta = authenticated_client.get(url, {"tipo": "INVALIDO"})
-    assert resposta.status_code == status.HTTP_400_BAD_REQUEST
+    assert resposta.status_code == status.HTTP_200_OK
 
 
 def test_envio_email_conteudo_detalhe(

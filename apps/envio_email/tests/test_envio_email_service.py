@@ -48,9 +48,8 @@ def test_iniciar_processamento_envio_lista_vazia(
             tipo=TIPO_CONVOCACAO,
             conteudo="<p>Conteúdo</p>",
         )
-
-    assert envio.quantidade_candidatos == 0
-    assert EnvioEmailCandidato.objects.filter(envio_email=envio).count() == 0
+    assert envio["quantidade_candidatos"] == 0
+    assert EnvioEmailCandidato.objects.filter(envio_email__uuid=envio["uuid"]).count() == 0
     mock_celery.send_task.assert_not_called()
 
 
@@ -83,9 +82,9 @@ def test_iniciar_processamento_envio_um_habilitado(
         tipo=TIPO_CONVOCACAO,
         conteudo="<p>Conteúdo</p>",
     )
-
-    assert envio.tipo == TIPO_CONVOCACAO
-    candidatos = list(EnvioEmailCandidato.objects.filter(envio_email=envio))
+    # breakpoint()
+    assert envio["tipo"] == TIPO_CONVOCACAO
+    candidatos = list(EnvioEmailCandidato.objects.filter(envio_email__uuid=envio["uuid"]))
     assert len(candidatos) == 1
     assert candidatos[0].status == ENVIO_STATUS_PENDENTE
     mock_celery.send_task.assert_called_once()

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
 from uuid import UUID
 
 from django_filters.rest_framework import DjangoFilterBackend
@@ -12,6 +11,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from cargos.models import CargoProcesso
+from cargos.repository import CargoProcessoRepository
 from cargos.serializers import (
     CargoProcessoSerializer,
     ProcessoCargosDadosSerializer,
@@ -19,6 +19,7 @@ from cargos.serializers import (
 from cargos.services.cargos_service import CargosProcessoService
 from processos.models import ProcessoConvocacao
 from processos.models.constants import ERROR_PROCESSO_NAO_PODE_EDITAR
+from processos.repository import ProcessoConvocacaoRepository
 
 STATUS_FINALIZADO = "FINALIZADO"
 
@@ -37,10 +38,10 @@ class CargoProcessoViewSet(viewsets.ModelViewSet):
     def _get_processo(
         self, pk: str | UUID | None
     ) -> ProcessoConvocacao | None:
-        try:
-            return ProcessoConvocacao.objects.get(pk=pk)
-        except ProcessoConvocacao.DoesNotExist:
+        """Retorna processo de convocação pela PK."""
+        if pk is None:
             return None
+        return ProcessoConvocacaoRepository.carregar_instancia_por_pk(pk)
 
     def list(
         self,
@@ -54,9 +55,7 @@ class CargoProcessoViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        cargos = processo.cargos_processo.all()
-        serializador = CargoProcessoSerializer(cargos, many=True)
-        return Response(serializador.data)
+        return Response(CargoProcessoRepository.listar_por_processo(processo))
 
     def create(
         self,
@@ -77,38 +76,11 @@ class CargoProcessoViewSet(viewsets.ModelViewSet):
 
         serializador_corpo = ProcessoCargosDadosSerializer(data=request.data)
         serializador_corpo.is_valid(raise_exception=True)
-        dados_validados = serializador_corpo.validated_data
-        dados_cargos = dados_validados["cargos"]
-
-        campos_atualizacao: list[str] = []
-        if (
-            "porcentagem_nna" in dados_validados
-            and dados_validados["porcentagem_nna"] != processo.porcentagem_nna
-        ):
-            processo.porcentagem_nna = dados_validados["porcentagem_nna"]
-            campos_atualizacao.append("porcentagem_nna")
-        if (
-            "porcentagem_pcd" in dados_validados
-            and dados_validados["porcentagem_pcd"] != processo.porcentagem_pcd
-        ):
-            processo.porcentagem_pcd = dados_validados["porcentagem_pcd"]
-            campos_atualizacao.append("porcentagem_pcd")
-        if campos_atualizacao:
-            processo.save(update_fields=campos_atualizacao)
-
-        resultado = CargosProcessoService.salvar_cargos(
-            processo=processo, dados_cargos=dados_cargos
+        corpo_resposta = CargosProcessoService.substituir_cargos_processo(
+            processo=processo,
+            dados_validados=serializador_corpo.validated_data,
         )
-
-        corpo_resposta: dict[str, Any] = {
-            "success": True,
-            "cargos_criados": len(resultado.cargos_criados),
-            "cargos_atualizados": len(resultado.cargos_atualizados),
-            "cargos_removidos": resultado.cargos_removidos,
-            "cargos": resultado.cargos,
-        }
-        if resultado.erros:
-            corpo_resposta["erros"] = resultado.erros
+        if "erros" in corpo_resposta:
             return Response(corpo_resposta, status=status.HTTP_207_MULTI_STATUS)
 
         return Response(corpo_resposta, status=status.HTTP_200_OK)
@@ -137,12 +109,15 @@ class CargoProcessoViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        cargo = processo.cargos_processo.filter(uuid=cargo_uuid).first()
-        if not cargo:
+        if not CargoProcessoRepository.obter_por_processo_e_uuid(
+            processo, cargo_uuid
+        ):
             return Response(
                 {"error": "Cargo não encontrado para este processo"},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        cargo.delete()
+        CargoProcessoRepository.excluir_por_processo_e_uuid(
+            processo, cargo_uuid
+        )
         return Response(status=status.HTTP_204_NO_CONTENT)

@@ -586,7 +586,7 @@ def test_endpoint_filtros_basico(
     assert len(concursos) == 1
     assert "value" in concursos[0]
     assert "label" in concursos[0]
-    assert concursos[0]["value"] == processo_convocacao.concurso_uuid
+    assert concursos[0]["value"] == str(processo_convocacao.concurso_uuid)
     assert concursos[0]["label"] == processo_convocacao.concurso_nome
 
     # Verificar estrutura dos cargos
@@ -693,7 +693,7 @@ def test_endpoint_filtros_concurso_duplicado(authenticated_client, usuario):
     # Deve haver apenas 1 concurso único
     concursos = resposta.data["concursos"]
     assert len(concursos) == 1
-    assert concursos[0]["value"] == concurso_uuid
+    assert concursos[0]["value"] == str(concurso_uuid)
     assert concursos[0]["label"] == concurso_nome
 
 
