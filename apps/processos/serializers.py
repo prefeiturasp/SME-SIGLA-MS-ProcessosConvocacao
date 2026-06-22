@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
+from cargos.repository import CargoProcessoRepository
 from cargos.serializers import CargoProcessoSerializer
 from rest_framework import serializers
 
@@ -86,7 +87,7 @@ class ProcessoConvocacaoListSerializer(serializers.ModelSerializer):
         ]
 
     def get_quantidade_cargos(self, obj: ProcessoConvocacao) -> int:
-        return obj.cargos_processo.count()
+        return CargoProcessoRepository.contar_por_processo(obj)
 
     def get_pode_deletar(self, obj: ProcessoConvocacao) -> bool:
         return bool(obj.pode_deletar())

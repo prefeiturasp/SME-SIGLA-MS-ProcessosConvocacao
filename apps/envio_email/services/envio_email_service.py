@@ -11,11 +11,6 @@ from uuid import UUID
 from django.template.loader import render_to_string
 from sigla_sdk.context import get_correlation_id
 
-from envio_email.models import (
-    EnvioEmail,
-    EnvioEmailCandidato,
-    EnvioEmailConteudo,
-)
 from envio_email.models.envio_email import (
     ASSUNTO_POR_TIPO,
     TIPO_CONVOCACAO,
@@ -23,6 +18,11 @@ from envio_email.models.envio_email import (
     TIPO_VAGAS,
 )
 from envio_email.models.envio_email_candidato import ENVIO_STATUS_PENDENTE
+from envio_email.repository import (
+    EnvioEmailCandidatoRepository,
+    EnvioEmailConteudoRepository,
+    EnvioEmailRepository,
+)
 from processos.services.candidatos_api_url import CandidatosApiService
 
 logger = logging.getLogger(__name__)
@@ -95,12 +95,9 @@ def _preencher_template(
     return padrao.sub(substituir_placeholder, conteudo or "")
 
 
-def _obter_template_conteudo(tipo: str) -> EnvioEmailConteudo | None:
+def _obter_template_conteudo(tipo: str) -> dict[str, Any] | None:
     """Retorna o template persistido para o tipo de envio, se existir."""
-    try:
-        return EnvioEmailConteudo.objects.get(tipo=tipo)
-    except EnvioEmailConteudo.DoesNotExist:
-        return None
+    return EnvioEmailConteudoRepository.obter_por_tipo(tipo)
 
 
 def _resolver_conteudo_envio(tipo: str, conteudo: str | None) -> str:
@@ -110,9 +107,10 @@ def _resolver_conteudo_envio(tipo: str, conteudo: str | None) -> str:
     template = _obter_template_conteudo(tipo)
     if not template:
         return ""
-    if template.conteudo and template.conteudo.strip():
-        return template.conteudo
-    return template.conteudo_gabarito or ""
+    conteudo_salvo = template.get("conteudo") or ""
+    if conteudo_salvo.strip():
+        return conteudo_salvo
+    return template.get("conteudo_gabarito") or ""
 
 
 def _resolver_assunto_envio(tipo: str, assunto: str | None) -> str:
@@ -134,7 +132,7 @@ def iniciar_processamento_envio(
     tipo: str,
     conteudo: str | None,
     assunto: str | None = None,
-) -> EnvioEmail:
+) -> dict[str, Any]:
     """Inicia envio assíncrono de e-mails para habilitados convocados.
 
     Args:
@@ -167,7 +165,7 @@ def iniciar_processamento_envio(
     quantidade = len(habilitados)
     conteudo = _resolver_conteudo_envio(tipo, conteudo)
 
-    envio = EnvioEmail.objects.create(
+    envio = EnvioEmailRepository.criar(
         processo_uuid=processo_uuid,
         processo_nome=processo_nome,
         tipo=tipo,
@@ -196,8 +194,8 @@ def iniciar_processamento_envio(
         }
 
         conteudo_html = render_to_string(TEMPLATE_DINAMICO, contexto)
-        registro = EnvioEmailCandidato.objects.create(
-            envio_email=envio,
+        registro = EnvioEmailCandidatoRepository.criar(
+            envio_email=envio["uuid"],
             nome=nome,
             rf=rf,
             email=email,
@@ -209,7 +207,7 @@ def iniciar_processamento_envio(
         logger.info(
             "Adicionando candidato na fila",
             extra={
-                "envio_email_uuid": str(envio.uuid),
+                "envio_email_uuid": str(envio["uuid"]),
                 "processo_uuid": processo_uuid_str,
                 "processo_nome": processo_nome,
                 "correlation_id": get_correlation_id(),
@@ -227,7 +225,7 @@ def iniciar_processamento_envio(
                 "email": email,
                 "assunto": assunto,
                 "conteudo": conteudo_html,
-                "envio_email_candidato_id": str(registro.uuid),
+                "envio_email_candidato_id": str(registro["uuid"]),
                 "correlation_id": get_correlation_id(),
             },
         )

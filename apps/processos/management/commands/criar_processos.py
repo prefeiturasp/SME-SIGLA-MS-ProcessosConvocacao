@@ -6,8 +6,8 @@ import uuid
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from cargos.models import CargoProcesso
-from processos.models import ProcessoConvocacao
+from cargos.repository import CargoProcessoRepository
+from processos.repository import ProcessoConvocacaoRepository
 from processos.models.constants import (
     PROCESSO_STATUS_CHOICES,
     TIPO_ESCOLHA_CHOICES,
@@ -202,7 +202,7 @@ class Command(BaseCommand):
                 days=dias_aleatorios
             )
 
-            processo = ProcessoConvocacao.objects.create(
+            processo_dict = ProcessoConvocacaoRepository.criar(
                 concurso_uuid=concurso_escolhido["uuid"],
                 concurso_nome=concurso_escolhido["nome"],
                 descricao=descricao,
@@ -211,15 +211,18 @@ class Command(BaseCommand):
                 data_convocacao=data_convocacao,
                 data_corte_vagas=data_convocacao + timezone.timedelta(days=7),
             )
-            processos_criados.append(processo)
+            processos_criados.append(processo_dict)
+            processo = ProcessoConvocacaoRepository.carregar_instancia_por_pk(
+                processo_dict["uuid"]
+            )
 
             # Mostrar informações do processo criado
             status_display = dict(PROCESSO_STATUS_CHOICES)[random_status]
             tipo_display = dict(TIPO_ESCOLHA_CHOICES)[random_tipo]
 
             self.stdout.write(
-                f"  ✓ Criado processo: {processo.uuid} "
-                f"(Concurso: {processo.concurso_nome[:50]}...) "
+                f"  ✓ Criado processo: {processo_dict['uuid']} "
+                f"(Concurso: {processo_dict['concurso_nome'][:50]}...) "
                 f"(Status: {status_display}, Tipo: {tipo_display}) "
                 f"(Convocação: +{dias_aleatorios} dias)"
             )
@@ -230,15 +233,16 @@ class Command(BaseCommand):
             )
 
             for j, cargo_info in enumerate(cargos_para_processo):
-                cargo = CargoProcesso.objects.create(
+                cargo = CargoProcessoRepository.criar(
                     processo=processo,
-                    nome=cargo_info["nome"],
-                    cargo_uuid=cargo_info["uuid"],  # Usar o UUID fixo do cargo
+                    cargo_nome=cargo_info["nome"],
+                    cargo_uuid=cargo_info["uuid"],
                 )
                 cargos_criados.append(cargo)
 
                 self.stdout.write(
-                    f"    ✓ Cargo {j+1}: {cargo.nome} (UUID: {cargo.cargo_uuid})"  # noqa: E501
+                    f"    ✓ Cargo {j+1}: {cargo['cargo_nome']} "
+                    f"(UUID: {cargo['cargo_uuid']})"
                 )
 
         # Mostrar estatísticas finais
@@ -256,7 +260,7 @@ class Command(BaseCommand):
 
         # Contar concursos únicos utilizados
         concursos_utilizados = set(
-            processo.concurso_uuid for processo in processos_criados
+            processo["concurso_uuid"] for processo in processos_criados
         )
         self.stdout.write(
             self.style.SUCCESS(
@@ -265,7 +269,7 @@ class Command(BaseCommand):
         )
 
         # Contar cargos únicos utilizados
-        cargos_utilizados = set(cargo.cargo_uuid for cargo in cargos_criados)
+        cargos_utilizados = set(cargo["cargo_uuid"] for cargo in cargos_criados)
         self.stdout.write(
             self.style.SUCCESS(
                 f"👥 {len(cargos_utilizados)} cargos únicos utilizados"
@@ -279,7 +283,8 @@ class Command(BaseCommand):
 
         for processo in processos_criados:
             self.stdout.write(
-                f"  • {processo.concurso_nome} (UUID: {processo.concurso_uuid})"  # noqa: E501
+                f"  • {processo['concurso_nome']} "
+                f"(UUID: {processo['concurso_uuid']})"
             )
 
         # Mostrar cargos utilizados
@@ -288,7 +293,9 @@ class Command(BaseCommand):
         )
 
         for cargo in cargos_criados:
-            self.stdout.write(f"  • {cargo.nome} (UUID: {cargo.cargo_uuid})")
+            self.stdout.write(
+                f"  • {cargo['cargo_nome']} (UUID: {cargo['cargo_uuid']})"
+            )
 
         self.stdout.write(
             self.style.SUCCESS(

@@ -14,7 +14,7 @@ from envio_email.models import (
     EnvioEmailConteudo,
 )
 from envio_email.utils.conteudo_html import normalizar_conteudo_html
-from processos.models import ProcessoConvocacao
+from processos.repository import ProcessoConvocacaoRepository
 
 
 class EnvioEmailEnvioSerializer(serializers.Serializer):
@@ -39,7 +39,7 @@ class EnvioEmailEnvioSerializer(serializers.Serializer):
     )
 
     def validate_processo_uuid(self, value: UUID) -> UUID:
-        if not ProcessoConvocacao.objects.filter(uuid=value).exists():
+        if not ProcessoConvocacaoRepository.existe_por_uuid(value):
             raise serializers.ValidationError(
                 "Processo de convocação não encontrado."
             )

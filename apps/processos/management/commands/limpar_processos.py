@@ -2,8 +2,8 @@
 
 from django.core.management.base import BaseCommand
 
-from cargos.models import CargoProcesso
-from processos.models import ProcessoConvocacao
+from cargos.repository import CargoProcessoRepository
+from processos.repository import ProcessoConvocacaoRepository
 
 
 class Command(BaseCommand):
@@ -26,8 +26,8 @@ class Command(BaseCommand):
         Raises:
             Nenhuma exceção específica documentada.
         """
-        total_processos = ProcessoConvocacao.objects.count()
-        total_cargos = CargoProcesso.objects.count()
+        total_processos = ProcessoConvocacaoRepository.contar()
+        total_cargos = CargoProcessoRepository.contar()
         total_registros = total_processos + total_cargos
 
         self.stdout.write(
@@ -40,7 +40,7 @@ class Command(BaseCommand):
             # Remover cargos primeiro (devido à dependência FK)
             if total_cargos > 0:
                 self.stdout.write("🗑️  Removendo cargos...")
-                CargoProcesso.objects.all().delete()
+                CargoProcessoRepository.excluir_todos()
                 self.stdout.write(
                     self.style.SUCCESS(f"✅ {total_cargos} cargos removidos!")
                 )
@@ -48,7 +48,7 @@ class Command(BaseCommand):
             # Remover processos
             if total_processos > 0:
                 self.stdout.write("🗑️  Removendo processos...")
-                ProcessoConvocacao.objects.all().delete()
+                ProcessoConvocacaoRepository.excluir_todos()
                 self.stdout.write(
                     self.style.SUCCESS(
                         f"✅ {total_processos} processos removidos!"
@@ -62,8 +62,8 @@ class Command(BaseCommand):
             )
 
             # Verificar se realmente foi limpo
-            processos_restantes = ProcessoConvocacao.objects.count()
-            cargos_restantes = CargoProcesso.objects.count()
+            processos_restantes = ProcessoConvocacaoRepository.contar()
+            cargos_restantes = CargoProcessoRepository.contar()
 
             if processos_restantes == 0 and cargos_restantes == 0:
                 self.stdout.write(

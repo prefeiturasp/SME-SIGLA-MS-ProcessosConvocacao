@@ -100,9 +100,9 @@ class ProcessoConvocacao(BaseModel):
         Raises:
             Nenhuma exceção específica documentada.
         """
-        self.cargos_processo.all().delete()
-        self.esta_ativo = False
-        self.save(update_fields=["esta_ativo"])
+        from processos.repository import ProcessoConvocacaoRepository
+
+        ProcessoConvocacaoRepository.inativar(self)
 
 
 auditlog.register(ProcessoConvocacao)

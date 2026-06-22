@@ -17,8 +17,9 @@ from rest_framework.response import Response
 from rest_framework.serializers import BaseSerializer
 from sigla_sdk.context import get_correlation_id
 
-from cargos.models import CargoProcesso
+from cargos.repository import CargoProcessoRepository
 from processos.models import ProcessoConvocacao
+from processos.repository import ProcessoConvocacaoRepository
 from processos.models.constants import (
     ERROR_CANDIDATOS_PENDENTES_ESCOLHA,
     ERROR_PROCESSO_JA_CANCELADO,
@@ -64,7 +65,9 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> QuerySet[ProcessoConvocacao]:
         """Aplica filtros por data de convocação e cargo."""
-        queryset = super().get_queryset()
+        queryset = ProcessoConvocacao.objects.filter(
+            esta_ativo=True
+        ).prefetch_related("cargos_processo")
 
         data_inicio = self.request.query_params.get("data_convocacao_inicio")
         data_fim = self.request.query_params.get("data_convocacao_fim")
@@ -72,8 +75,10 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
         if data_inicio:
             try:
                 data_inicio = datetime.strptime(data_inicio, "%Y-%m-%d").date()
-                queryset = queryset.filter(
-                    data_convocacao__date__gte=data_inicio
+                queryset = (
+                    ProcessoConvocacaoRepository.aplicar_filtro_data_convocacao_gte(
+                        queryset, data_inicio
+                    )
                 )
             except ValueError:
                 pass
@@ -81,7 +86,11 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
         if data_fim:
             try:
                 data_fim = datetime.strptime(data_fim, "%Y-%m-%d").date()
-                queryset = queryset.filter(data_convocacao__date__lte=data_fim)
+                queryset = (
+                    ProcessoConvocacaoRepository.aplicar_filtro_data_convocacao_lte(
+                        queryset, data_fim
+                    )
+                )
             except ValueError:
                 pass
 
@@ -89,9 +98,11 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
         if cargo_uuid:
             try:
                 uuid.UUID(cargo_uuid)
-                queryset = queryset.filter(
-                    cargos_processo__cargo_uuid=cargo_uuid
-                ).distinct()
+                queryset = (
+                    ProcessoConvocacaoRepository.aplicar_filtro_cargo_uuid(
+                        queryset, uuid.UUID(cargo_uuid)
+                    )
+                )
             except ValueError:
                 pass
 
@@ -126,20 +137,17 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
             serializer = self.get_serializer(queryset, many=True)
             return Response(serializer.data)
 
-        page = self.paginate_queryset(queryset)
+        processos = ProcessoConvocacaoRepository.serializar_queryset(queryset)
+        page = self.paginate_queryset(processos)
         if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
+            return self.get_paginated_response(page)
 
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+        return Response(processos)
 
     @action(detail=False, methods=["get"], url_path="filtros")
     def filtros(self, request: Request) -> Response:
         """Retorna opções de filtro (concursos, cargos, tipos de escolha)."""
-        todos_processos = ProcessoConvocacao.objects.values(
-            "concurso_uuid", "concurso_nome"
-        )
+        todos_processos = ProcessoConvocacaoRepository.listar_opcoes_concurso()
         concursos_unicos = {}
         for processo in todos_processos:
             concurso_uuid = processo["concurso_uuid"]
@@ -149,9 +157,7 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
                     "label": processo["concurso_nome"],
                 }
 
-        todos_cargos = CargoProcesso.objects.values(
-            "cargo_uuid", "cargo_nome"
-        ).order_by("cargo_nome", "cargo_uuid")
+        todos_cargos = CargoProcessoRepository.listar_opcoes_filtro()
         cargos_unicos = {}
         for cargo in todos_cargos:
             if cargo["cargo_nome"] not in cargos_unicos:
@@ -210,8 +216,8 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
         # Candidatos do processo = união dos candidatos_uuids de todos os cargos (mesma lista da tela e do banco)  # noqa: E501
         habilitados_uuids = {
             str(uuid)
-            for cargo in processo.cargos_processo.all()
-            for uuid in (cargo.candidatos_uuids or [])
+            for cargo in CargoProcessoRepository.listar_por_processo(processo)
+            for uuid in (cargo.get("candidatos_uuids") or [])
         }
 
         # Quem fez escolha no concurso (MS-Escolha: escolha, reconvocação ou não escolha)  # noqa: E501
@@ -247,8 +253,9 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        processo.status = STATUS_FINALIZADO
-        processo.save()
+        ProcessoConvocacaoRepository.atualizar_status(
+            processo, STATUS_FINALIZADO
+        )
         serializer = ProcessoConvocacaoSerializer(processo)
         return Response(serializer.data, status=status.HTTP_200_OK)
 

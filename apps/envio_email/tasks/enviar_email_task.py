@@ -12,8 +12,8 @@ from config.celery import app
 from envio_email.models.envio_email_candidato import (
     ENVIO_STATUS_ERRO,
     ENVIO_STATUS_SUCESSO,
-    EnvioEmailCandidato,
 )
+from envio_email.repository import EnvioEmailCandidatoRepository
 from envio_email.utils.email_inline_images import (
     converter_imagens_base64_para_cid,
 )
@@ -88,14 +88,11 @@ def enviar_email_candidato_task(
         status_detalhe = "Email example.com não enviado"
         status_envio = ENVIO_STATUS_SUCESSO
 
-    try:
-        registro = EnvioEmailCandidato.objects.get(uuid=candidato_uuid)
-        registro.status = status_envio
-        registro.status_detalhe = status_detalhe
-        registro.save(
-            update_fields=["status", "status_detalhe", "atualizado_em"]
-        )
-    except EnvioEmailCandidato.DoesNotExist:
+    if not EnvioEmailCandidatoRepository.atualizar_status(
+        candidato_uuid,
+        status=status_envio,
+        status_detalhe=status_detalhe,
+    ):
         logger.warning(
             "EnvioEmailCandidato uuid=%s não encontrado para atualizar status",
             candidato_uuid,

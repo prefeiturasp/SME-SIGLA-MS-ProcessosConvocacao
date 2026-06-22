@@ -3,19 +3,16 @@
 from __future__ import annotations
 
 import logging
+from uuid import UUID
 
 from rest_framework import mixins, status, viewsets
+from rest_framework.exceptions import NotFound
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework.serializers import BaseSerializer
 from sigla_sdk.context import get_correlation_id
 
-from envio_email.models import EnvioEmail
-from envio_email.serializers import (
-    EnvioEmailDetalheSerializer,
-    EnvioEmailEnvioSerializer,
-    EnvioEmailSerializer,
-)
+from envio_email.repository import EnvioEmailRepository
+from envio_email.serializers import EnvioEmailEnvioSerializer
 from envio_email.services.envio_email_service import iniciar_processamento_envio
 
 logger = logging.getLogger(__name__)
@@ -28,17 +25,20 @@ class EnvioEmailViewSet(
 ):
     """Listagem, detalhe e disparo de envio de e-mails por processo."""
 
-    queryset = EnvioEmail.objects.prefetch_related("candidatos").order_by(
-        "-criado_em"
-    )
     pagination_class = None
     lookup_field = "uuid"
     lookup_url_kwarg = "uuid"
 
-    def get_serializer_class(self) -> type[BaseSerializer]:
-        if self.action == "retrieve":
-            return EnvioEmailDetalheSerializer
-        return EnvioEmailSerializer
+    def list(self, request: Request, *args, **kwargs) -> Response:
+        return Response(EnvioEmailRepository.listar_todos())
+
+    def retrieve(self, request: Request, *args, **kwargs) -> Response:
+        envio = EnvioEmailRepository.obter_por_uuid(
+            UUID(self.kwargs[self.lookup_url_kwarg])
+        )
+        if envio is None:
+            raise NotFound()
+        return Response(envio)
 
     def create(self, request: Request) -> Response:
         logger.info(
@@ -71,11 +71,11 @@ class EnvioEmailViewSet(
             return Response(
                 {
                     "detail": "Processamento de envio iniciado com sucesso.",
-                    "envio_email_uuid": str(envio.uuid),
+                    "envio_email_uuid": str(envio["uuid"]),
                     "processo_uuid": str(dados_validados["processo_uuid"]),
                     "processo_nome": dados_validados["processo_nome"],
                     "tipo": dados_validados["tipo"],
-                    "quantidade_candidatos": envio.quantidade_candidatos,
+                    "quantidade_candidatos": envio["quantidade_candidatos"],
                 },
                 status=status.HTTP_200_OK,
             )
