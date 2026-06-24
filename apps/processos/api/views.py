@@ -7,26 +7,18 @@ import uuid
 from datetime import datetime
 from typing import Any
 
+from cargos.repository import CargoProcessoRepository
 from django.db.models import QuerySet
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import status, viewsets
-from rest_framework.decorators import action
-from rest_framework.filters import OrderingFilter, SearchFilter
-from rest_framework.request import Request
-from rest_framework.response import Response
-from rest_framework.serializers import BaseSerializer
-from sigla_sdk.context import get_correlation_id
-
-from cargos.repository import CargoProcessoRepository
-from processos.models import ProcessoConvocacao
-from processos.repository import ProcessoConvocacaoRepository
-from processos.models.constants import (
+from processos.constants import (
     ERROR_CANDIDATOS_PENDENTES_ESCOLHA,
     ERROR_PROCESSO_JA_CANCELADO,
     ERROR_PROCESSO_JA_FINALIZADO,
     ERROR_PROCESSO_NAO_PODE_EDITAR,
     TIPO_ESCOLHA_CHOICES,
 )
+from processos.models import ProcessoConvocacao
+from processos.repository import ProcessoConvocacaoRepository
 from processos.serializers import (
     ProcessoConvocacaoCreateSerializer,
     ProcessoConvocacaoListSerializer,
@@ -40,7 +32,14 @@ from processos.services.processo_service import (
     ProcessoConvocacaoService,
     ProcessoServiceError,
 )
-from processos.utils.pagination import CustomPagination
+from processos.utils import CustomPagination
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework.request import Request
+from rest_framework.response import Response
+from rest_framework.serializers import BaseSerializer
+from sigla_sdk.context import get_correlation_id
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +64,7 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> QuerySet[ProcessoConvocacao]:
         """Aplica filtros por data de convocação e cargo."""
+        repo = ProcessoConvocacaoRepository
         queryset = ProcessoConvocacao.objects.filter(
             esta_ativo=True
         ).prefetch_related("cargos_processo")
@@ -75,10 +75,8 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
         if data_inicio:
             try:
                 data_inicio = datetime.strptime(data_inicio, "%Y-%m-%d").date()
-                queryset = (
-                    ProcessoConvocacaoRepository.aplicar_filtro_data_convocacao_gte(
-                        queryset, data_inicio
-                    )
+                queryset = repo.aplicar_filtro_data_convocacao_gte(
+                    queryset, data_inicio
                 )
             except ValueError:
                 pass
@@ -86,10 +84,8 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
         if data_fim:
             try:
                 data_fim = datetime.strptime(data_fim, "%Y-%m-%d").date()
-                queryset = (
-                    ProcessoConvocacaoRepository.aplicar_filtro_data_convocacao_lte(
-                        queryset, data_fim
-                    )
+                queryset = repo.aplicar_filtro_data_convocacao_lte(
+                    queryset, data_fim
                 )
             except ValueError:
                 pass
@@ -98,10 +94,8 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
         if cargo_uuid:
             try:
                 uuid.UUID(cargo_uuid)
-                queryset = (
-                    ProcessoConvocacaoRepository.aplicar_filtro_cargo_uuid(
-                        queryset, uuid.UUID(cargo_uuid)
-                    )
+                queryset = repo.aplicar_filtro_cargo_uuid(
+                    queryset, uuid.UUID(cargo_uuid)
                 )
             except ValueError:
                 pass
@@ -213,7 +207,8 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Candidatos do processo = união dos candidatos_uuids de todos os cargos (mesma lista da tela e do banco)  # noqa: E501
+        # Candidatos do processo = união dos candidatos_uuids de todos os
+        # cargos (mesma lista da tela e do banco)
         habilitados_uuids = {
             str(uuid)
             for cargo in CargoProcessoRepository.listar_por_processo(processo)

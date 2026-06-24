@@ -4,10 +4,9 @@ import uuid
 from datetime import timedelta
 
 import pytest
+from cargos.models import CargoProcesso
 from django.contrib.auth.models import User
 from django.utils import timezone
-
-from cargos.models import CargoProcesso
 from processos.models import ProcessoConvocacao
 from processos.serializers import (
     ProcessoConvocacaoCreateSerializer,

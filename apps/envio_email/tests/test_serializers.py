@@ -3,7 +3,6 @@
 import uuid
 
 import pytest
-
 from envio_email.models import EnvioEmail, EnvioEmailCandidato
 from envio_email.models.envio_email import TIPO_CONVOCACAO
 from envio_email.models.envio_email_candidato import (

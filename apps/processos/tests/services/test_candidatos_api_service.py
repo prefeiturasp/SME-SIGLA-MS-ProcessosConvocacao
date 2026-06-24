@@ -4,7 +4,6 @@ from unittest.mock import Mock, patch
 
 import pytest
 from django.test import override_settings
-
 from processos.services.candidatos_api_url import CandidatosApiService
 from processos.services.exceptions import CandidatosServiceError
 
@@ -124,7 +123,9 @@ def test_desconvocar_por_processo_sucesso_retorna_json():
     mock_patch.assert_called_once()
     url_chamada = mock_patch.call_args[0][0]
     kwargs_chamada = mock_patch.call_args.kwargs
-    assert url_chamada == "http://ms-candidatos/api/v1/habilitados/desconvocar/"
+    assert (
+        url_chamada == "http://ms-candidatos/api/v1/habilitados/desconvocar/"
+    )
     assert kwargs_chamada["json"] == {"processo_uuid": processo_uuid}
     assert kwargs_chamada["headers"] == {
         "Accept": "application/json",

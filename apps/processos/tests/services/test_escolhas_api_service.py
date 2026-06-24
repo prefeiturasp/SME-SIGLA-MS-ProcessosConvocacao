@@ -4,7 +4,6 @@ from unittest.mock import Mock, patch
 
 import pytest
 from django.test import override_settings
-
 from processos.services.escolhas_service import EscolhasApiService
 from processos.services.exceptions import EscolhasServiceError
 
@@ -126,7 +125,9 @@ def test_excluir_lotes_vagas_por_processo_sucesso_retorna_json():
     mock_delete.assert_called_once()
     url_chamada = mock_delete.call_args[0][0]
     kwargs_chamada = mock_delete.call_args.kwargs
-    assert url_chamada == "http://ms-escolha/api/v1/vagas-escolas/por-processo/"
+    assert (
+        url_chamada == "http://ms-escolha/api/v1/vagas-escolas/por-processo/"
+    )
     assert kwargs_chamada["params"] == {"processo_uuid": processo_uuid}
     assert kwargs_chamada["headers"] == {"Accept": "application/json"}
     assert kwargs_chamada["timeout"] == service.TIMEOUT_SEGUNDOS

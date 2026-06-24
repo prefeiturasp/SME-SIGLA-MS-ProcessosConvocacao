@@ -3,15 +3,14 @@
 import random
 import uuid
 
+from cargos.repository import CargoProcessoRepository
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-
-from cargos.repository import CargoProcessoRepository
-from processos.repository import ProcessoConvocacaoRepository
-from processos.models.constants import (
+from processos.constants import (
     PROCESSO_STATUS_CHOICES,
     TIPO_ESCOLHA_CHOICES,
 )
+from processos.repository import ProcessoConvocacaoRepository
 
 
 class Command(BaseCommand):
@@ -259,9 +258,9 @@ class Command(BaseCommand):
         )
 
         # Contar concursos únicos utilizados
-        concursos_utilizados = set(
+        concursos_utilizados = {
             processo["concurso_uuid"] for processo in processos_criados
-        )
+        }
         self.stdout.write(
             self.style.SUCCESS(
                 f"🏆 {len(concursos_utilizados)} concursos únicos utilizados"
@@ -269,7 +268,7 @@ class Command(BaseCommand):
         )
 
         # Contar cargos únicos utilizados
-        cargos_utilizados = set(cargo["cargo_uuid"] for cargo in cargos_criados)
+        cargos_utilizados = {cargo["cargo_uuid"] for cargo in cargos_criados}
         self.stdout.write(
             self.style.SUCCESS(
                 f"👥 {len(cargos_utilizados)} cargos únicos utilizados"

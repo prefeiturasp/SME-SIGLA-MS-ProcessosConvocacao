@@ -3,10 +3,9 @@
 import logging
 
 from django.conf import settings
+from processos.services.exceptions import AgendaServiceError
 from sigla_sdk.context import get_correlation_id
 from sigla_sdk.http.api_client import http_client
-
-from processos.services.exceptions import AgendaServiceError
 
 logger = logging.getLogger(__name__)
 

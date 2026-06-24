@@ -1,9 +1,8 @@
 """Modelo de template de conteúdo de e-mail por tipo."""
 
 from auditlog.registry import auditlog
-from django.db import models
-
 from core.models import BaseModel
+from django.db import models
 
 from .envio_email import (
     ASSUNTO_POR_TIPO,
@@ -55,7 +54,9 @@ class EnvioEmailConteudo(BaseModel):
     def assunto_efetivo(self) -> str:
         if self.assunto and self.assunto.strip():
             return self.assunto.strip()
-        return ASSUNTO_POR_TIPO.get(self.tipo, ASSUNTO_POR_TIPO[TIPO_CONVOCACAO])
+        return ASSUNTO_POR_TIPO.get(
+            self.tipo, ASSUNTO_POR_TIPO[TIPO_CONVOCACAO]
+        )
 
     def __str__(self) -> str:
         return f"{self.get_tipo_display()}"

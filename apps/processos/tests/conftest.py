@@ -3,11 +3,9 @@
 import uuid
 
 import pytest
+from cargos.models import CargoProcesso
 from django.contrib.auth.models import User
 from django.utils import timezone
-from rest_framework.test import APIClient
-
-from cargos.models import CargoProcesso
 from envio_email.models import EnvioEmailConteudo
 from envio_email.models.envio_email import (
     TIPO_CONVOCACAO,
@@ -15,6 +13,7 @@ from envio_email.models.envio_email import (
     TIPO_VAGAS,
 )
 from processos.models import ProcessoConvocacao
+from rest_framework.test import APIClient
 
 
 class _DisableMigrations:

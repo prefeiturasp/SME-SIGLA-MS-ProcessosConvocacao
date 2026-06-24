@@ -1,4 +1,4 @@
-"""Serviço genérico de envio de e-mails por processo."""
+"""Serviços de envio de e-mails por processo."""
 
 from __future__ import annotations
 
@@ -9,8 +9,6 @@ from typing import Any
 from uuid import UUID
 
 from django.template.loader import render_to_string
-from sigla_sdk.context import get_correlation_id
-
 from envio_email.models.envio_email import (
     ASSUNTO_POR_TIPO,
     TIPO_CONVOCACAO,
@@ -24,6 +22,7 @@ from envio_email.repository import (
     EnvioEmailRepository,
 )
 from processos.services.candidatos_api_url import CandidatosApiService
+from sigla_sdk.context import get_correlation_id
 
 logger = logging.getLogger(__name__)
 
@@ -101,7 +100,7 @@ def _obter_template_conteudo(tipo: str) -> dict[str, Any] | None:
 
 
 def _resolver_conteudo_envio(tipo: str, conteudo: str | None) -> str:
-    """Usa o conteúdo informado ou faz fallback para conteúdo salvo/gabarito."""
+    """Use o conteúdo informado ou o conteúdo salvo/gabarito."""
     if conteudo and conteudo.strip():
         return conteudo
     template = _obter_template_conteudo(tipo)
@@ -114,7 +113,7 @@ def _resolver_conteudo_envio(tipo: str, conteudo: str | None) -> str:
 
 
 def _resolver_assunto_envio(tipo: str, assunto: str | None) -> str:
-    """Usa o assunto informado ou o padrão fixo do tipo no envio."""
+    """Use o assunto informado ou o padrão fixo do tipo no envio."""
     if assunto and assunto.strip():
         return assunto.strip()
     return ASSUNTO_POR_TIPO.get(tipo, ASSUNTO_POR_TIPO[TIPO_CONVOCACAO])

@@ -7,8 +7,6 @@ from uuid import UUID
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.utils.html import strip_tags
-
-from config.celery import app
 from envio_email.models.envio_email_candidato import (
     ENVIO_STATUS_ERRO,
     ENVIO_STATUS_SUCESSO,
@@ -17,6 +15,8 @@ from envio_email.repository import EnvioEmailCandidatoRepository
 from envio_email.utils.email_inline_images import (
     converter_imagens_base64_para_cid,
 )
+
+from config.celery import app
 
 logger = logging.getLogger(__name__)
 
