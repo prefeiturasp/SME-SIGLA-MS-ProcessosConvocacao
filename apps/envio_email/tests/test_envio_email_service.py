@@ -1,21 +1,20 @@
-"""Testes unitários para envio_email.services.envio_email_service."""
+"""Testes unitários para envio_email.services."""
 
 from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
-
 from envio_email.models import EnvioEmailCandidato
-from processos.models import ProcessoConvocacao
 from envio_email.models.envio_email import TIPO_CONVOCACAO
 from envio_email.models.envio_email_candidato import ENVIO_STATUS_PENDENTE
-from envio_email.services.envio_email_service import (
+from envio_email.services import (
     ASSUNTO_POR_TIPO,
     TEMPLATE_POR_TIPO,
     _resolver_assunto_envio,
     _resolver_conteudo_envio,
     iniciar_processamento_envio,
 )
+from processos.models import ProcessoConvocacao
 
 pytestmark = pytest.mark.django_db
 
@@ -33,7 +32,7 @@ def processo_convocacao(db):
 
 
 @patch(
-    "envio_email.services.envio_email_service.CandidatosApiService.buscar_habilitados_por_processo"
+    "envio_email.services.CandidatosApiService.buscar_habilitados_por_processo"
 )
 def test_iniciar_processamento_envio_lista_vazia(
     mock_buscar, processo_convocacao
@@ -49,14 +48,19 @@ def test_iniciar_processamento_envio_lista_vazia(
             conteudo="<p>Conteúdo</p>",
         )
     assert envio["quantidade_candidatos"] == 0
-    assert EnvioEmailCandidato.objects.filter(envio_email__uuid=envio["uuid"]).count() == 0
+    assert (
+        EnvioEmailCandidato.objects.filter(
+            envio_email__uuid=envio["uuid"]
+        ).count()
+        == 0
+    )
     mock_celery.send_task.assert_not_called()
 
 
 @patch("config.celery.app")
-@patch("envio_email.services.envio_email_service.render_to_string")
+@patch("envio_email.services.render_to_string")
 @patch(
-    "envio_email.services.envio_email_service.CandidatosApiService.buscar_habilitados_por_processo"
+    "envio_email.services.CandidatosApiService.buscar_habilitados_por_processo"
 )
 def test_iniciar_processamento_envio_um_habilitado(
     mock_buscar, mock_render, mock_celery, processo_convocacao
@@ -84,7 +88,9 @@ def test_iniciar_processamento_envio_um_habilitado(
     )
     # breakpoint()
     assert envio["tipo"] == TIPO_CONVOCACAO
-    candidatos = list(EnvioEmailCandidato.objects.filter(envio_email__uuid=envio["uuid"]))
+    candidatos = list(
+        EnvioEmailCandidato.objects.filter(envio_email__uuid=envio["uuid"])
+    )
     assert len(candidatos) == 1
     assert candidatos[0].status == ENVIO_STATUS_PENDENTE
     mock_celery.send_task.assert_called_once()
@@ -95,9 +101,9 @@ def test_iniciar_processamento_envio_um_habilitado(
 
 
 @patch("config.celery.app")
-@patch("envio_email.services.envio_email_service.render_to_string")
+@patch("envio_email.services.render_to_string")
 @patch(
-    "envio_email.services.envio_email_service.CandidatosApiService.buscar_habilitados_por_processo"
+    "envio_email.services.CandidatosApiService.buscar_habilitados_por_processo"
 )
 def test_iniciar_processamento_envio_usa_assunto_informado(
     mock_buscar, mock_render, mock_celery, processo_convocacao
@@ -132,12 +138,16 @@ def test_iniciar_processamento_envio_usa_assunto_informado(
 
 
 @patch("config.celery.app")
-@patch("envio_email.services.envio_email_service.render_to_string")
+@patch("envio_email.services.render_to_string")
 @patch(
-    "envio_email.services.envio_email_service.CandidatosApiService.buscar_habilitados_por_processo"
+    "envio_email.services.CandidatosApiService.buscar_habilitados_por_processo"
 )
 def test_iniciar_processamento_envio_usa_gabarito_quando_conteudo_vazio(
-    mock_buscar, mock_render, mock_celery, processo_convocacao, conteudo_convocacao
+    mock_buscar,
+    mock_render,
+    mock_celery,
+    processo_convocacao,
+    conteudo_convocacao,
 ):
     """Verifica fallback para gabarito quando corpo de conteúdo vazio."""
     mock_buscar.return_value = [
@@ -185,7 +195,10 @@ def test_constantes_servico():
 
 def test_resolver_conteudo_envio_usa_corpo_quando_informado():
     """Verifica resolver conteúdo usa corpo quando informado."""
-    assert _resolver_conteudo_envio(TIPO_CONVOCACAO, "<p>personalizado</p>") == "<p>personalizado</p>"
+    assert (
+        _resolver_conteudo_envio(TIPO_CONVOCACAO, "<p>personalizado</p>")
+        == "<p>personalizado</p>"
+    )
 
 
 def test_resolver_conteudo_envio_fallback_para_gabarito(conteudo_convocacao):
@@ -212,10 +225,15 @@ def test_resolver_conteudo_envio_prefere_conteudo_salvo(conteudo_convocacao):
 
 def test_resolver_assunto_envio_usa_corpo_quando_informado():
     """Verifica resolver assunto usa corpo quando informado."""
-    assert _resolver_assunto_envio(TIPO_CONVOCACAO, "Assunto personalizado") == "Assunto personalizado"
+    assert (
+        _resolver_assunto_envio(TIPO_CONVOCACAO, "Assunto personalizado")
+        == "Assunto personalizado"
+    )
 
 
-def test_resolver_assunto_envio_fallback_para_padrao_do_tipo(conteudo_convocacao):
+def test_resolver_assunto_envio_fallback_para_padrao_do_tipo(
+    conteudo_convocacao,
+):
     """Verifica fallback para assunto padrão quando corpo vazio."""
     conteudo_convocacao.assunto = "Assunto do template"
     conteudo_convocacao.save(update_fields=["assunto", "atualizado_em"])

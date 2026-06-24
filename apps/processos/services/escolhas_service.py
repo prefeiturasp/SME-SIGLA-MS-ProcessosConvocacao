@@ -8,10 +8,9 @@ import logging
 from urllib.parse import urlencode
 
 from django.conf import settings
+from processos.services.exceptions import EscolhasServiceError
 from sigla_sdk.context import get_correlation_id
 from sigla_sdk.http.api_client import http_client
-
-from processos.services.exceptions import EscolhasServiceError
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +20,8 @@ class EscolhasApiService:
 
     TIMEOUT_SEGUNDOS = 30
     CAMINHO_ESCOLHAS = "/api/v1/escolhas/"
-    # Qualquer situação (escolha, reconvocação, nao-escolha) = candidato respondeu. Só pendente = sem registro.  # noqa: E501
+    # Qualquer situação (escolha, reconvocação, nao-escolha) = candidato
+    # respondeu. Só pendente = sem registro.
     SITUACOES_COM_ESCOLHA = "escolha,reconvocacao,nao-escolha"
     TAMANHO_PAGINA = 10000
 

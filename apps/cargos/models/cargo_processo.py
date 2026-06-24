@@ -1,10 +1,9 @@
 """Modelo de cargos vinculados a um processo de convocação."""
 
 from auditlog.registry import auditlog
+from core.models import BaseModel
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
-
-from core.models import BaseModel
 
 
 class CargoProcesso(BaseModel):
@@ -35,7 +34,8 @@ class CargoProcesso(BaseModel):
     candidatos_pcd = models.IntegerField(
         verbose_name="Candidatos PCD",
         default=0,
-        help_text="Quantidade de candidatos habilitados pessoas com deficiência",
+        help_text="Quantidade de candidatos habilitados pessoas \
+            com deficiência",
     )
     candidatos_nna = models.IntegerField(
         verbose_name="Candidatos NNA",

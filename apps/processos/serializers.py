@@ -6,9 +6,8 @@ from uuid import UUID
 
 from cargos.repository import CargoProcessoRepository
 from cargos.serializers import CargoProcessoSerializer
-from rest_framework import serializers
-
 from processos.models import ProcessoConvocacao
+from rest_framework import serializers
 
 
 class ProcessoConvocacaoSerializer(serializers.ModelSerializer):

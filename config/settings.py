@@ -1,6 +1,4 @@
-"""
-Django settings for convocacao_processes project.
-"""
+"""Django settings for convocacao_processes project."""
 
 import os
 import sys
@@ -113,16 +111,27 @@ else:
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        "NAME": (
+            "django.contrib.auth.password_validation."
+            "UserAttributeSimilarityValidator"
+        ),
     },
     {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "NAME": (
+            "django.contrib.auth.password_validation." "MinimumLengthValidator"
+        ),
     },
     {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
+        "NAME": (
+            "django.contrib.auth.password_validation."
+            "CommonPasswordValidator"
+        ),
     },
     {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+        "NAME": (
+            "django.contrib.auth.password_validation."
+            "NumericPasswordValidator"
+        ),
     },
 ]
 
@@ -158,7 +167,9 @@ CORS_ALLOW_CREDENTIALS = True
 
 # DRF settings
 REST_FRAMEWORK = {
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "DEFAULT_PAGINATION_CLASS": (
+        "rest_framework.pagination.PageNumberPagination"
+    ),
     "PAGE_SIZE": 20,
     "DEFAULT_FILTER_BACKENDS": [
         "django_filters.rest_framework.DjangoFilterBackend",
@@ -187,7 +198,10 @@ LOGGING = {
         "json": {
             "()": "sigla_sdk.logging.json_formatter.CustomJsonFormatter",
             # Estes campos do logging padrão virarão chaves no JSON
-            "format": "%(levelname)s %(asctime)s %(module)s %(filename)s %(lineno)d %(funcName)s %(message)s",
+            "format": (
+                "%(levelname)s %(asctime)s %(module)s %(filename)s "
+                "%(lineno)d %(funcName)s %(message)s"
+            ),
         },
     },
     "handlers": {
@@ -222,7 +236,8 @@ LOGGING = {
         },
         "django.server": {
             "handlers": ["console"],
-            "level": "ERROR",  # Alterando para ERROR, ele para de mostrar os GET/POST/OPTIONS de rotina (INFO)
+            "level": "ERROR",
+            # Suprime logs INFO de GET/POST/OPTIONS de rotina do runserver
             "propagate": False,
         },
     },
@@ -258,7 +273,7 @@ CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "America/Sao_Paulo"
 CELERY_TASK_TIME_LIMIT = 5 * 60
 CELERY_TASK_SOFT_TIME_LIMIT = 60
-# Fila dedicada para isolar mensagens no Redis compartilhado (outros projetos usam a fila "celery")
+# Fila dedicada no Redis compartilhado (outros projetos usam a fila "celery")
 CELERY_TASK_DEFAULT_QUEUE = "processos_convocacao"
 
 

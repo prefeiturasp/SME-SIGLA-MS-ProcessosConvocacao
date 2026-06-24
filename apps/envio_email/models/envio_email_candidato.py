@@ -1,9 +1,8 @@
 """Modelo de envio de e-mail por candidato."""
 
 from auditlog.registry import auditlog
-from django.db import models
-
 from core.models import BaseModel
+from django.db import models
 
 ENVIO_STATUS_PENDENTE = "PENDENTE"
 ENVIO_STATUS_SUCESSO = "SUCESSO"

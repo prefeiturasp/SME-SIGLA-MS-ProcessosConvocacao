@@ -4,7 +4,6 @@ from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 import pytest
-
 from envio_email.models import EnvioEmail, EnvioEmailCandidato
 from envio_email.models.envio_email import TIPO_CONVOCACAO
 from envio_email.models.envio_email_candidato import (
@@ -13,8 +12,8 @@ from envio_email.models.envio_email_candidato import (
     ENVIO_STATUS_SUCESSO,
 )
 from envio_email.tasks.enviar_email_task import (
-    CID_LOGO_SIGLA,
     CAMINHO_LOGO_EMAIL,
+    CID_LOGO_SIGLA,
     enviar_email_candidato_task,
 )
 

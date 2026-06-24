@@ -5,15 +5,14 @@ from __future__ import annotations
 import logging
 from uuid import UUID
 
+from envio_email.repository import EnvioEmailRepository
+from envio_email.serializers import EnvioEmailEnvioSerializer
+from envio_email.services import iniciar_processamento_envio
 from rest_framework import mixins, status, viewsets
 from rest_framework.exceptions import NotFound
 from rest_framework.request import Request
 from rest_framework.response import Response
 from sigla_sdk.context import get_correlation_id
-
-from envio_email.repository import EnvioEmailRepository
-from envio_email.serializers import EnvioEmailEnvioSerializer
-from envio_email.services.envio_email_service import iniciar_processamento_envio
 
 logger = logging.getLogger(__name__)
 
@@ -29,10 +28,14 @@ class EnvioEmailViewSet(
     lookup_field = "uuid"
     lookup_url_kwarg = "uuid"
 
-    def list(self, request: Request, *args, **kwargs) -> Response:
+    def list(  # type: ignore[no-untyped-def]
+        self, request: Request, *args, **kwargs
+    ) -> Response:
         return Response(EnvioEmailRepository.listar_todos())
 
-    def retrieve(self, request: Request, *args, **kwargs) -> Response:
+    def retrieve(  # type: ignore[no-untyped-def]
+        self, request: Request, *args, **kwargs
+    ) -> Response:
         envio = EnvioEmailRepository.obter_por_uuid(
             UUID(self.kwargs[self.lookup_url_kwarg])
         )

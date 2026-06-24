@@ -4,18 +4,17 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from rest_framework import mixins, viewsets
-from rest_framework.exceptions import NotFound
-from rest_framework.request import Request
-from rest_framework.response import Response
-from rest_framework.serializers import BaseSerializer
-
 from envio_email.models import EnvioEmailConteudo
 from envio_email.repository import EnvioEmailConteudoRepository
 from envio_email.serializers import (
     EnvioEmailConteudoSerializer,
     EnvioEmailConteudoUpdateSerializer,
 )
+from rest_framework import mixins, viewsets
+from rest_framework.exceptions import NotFound
+from rest_framework.request import Request
+from rest_framework.response import Response
+from rest_framework.serializers import BaseSerializer
 
 
 class EnvioEmailConteudoViewSet(
@@ -44,14 +43,18 @@ class EnvioEmailConteudoViewSet(
             raise NotFound()
         return conteudo
 
-    def list(self, request: Request, *args, **kwargs) -> Response:
+    def list(  # type: ignore[no-untyped-def]
+        self, request: Request, *args, **kwargs
+    ) -> Response:
         return Response(
             EnvioEmailConteudoRepository.listar(
                 tipo=request.query_params.get("tipo")
             )
         )
 
-    def retrieve(self, request: Request, *args, **kwargs) -> Response:
+    def retrieve(  # type: ignore[no-untyped-def]
+        self, request: Request, *args, **kwargs
+    ) -> Response:
         conteudo = EnvioEmailConteudoRepository.obter_por_uuid(
             UUID(self.kwargs[self.lookup_url_kwarg])
         )

@@ -5,10 +5,9 @@ from typing import Any
 from urllib.parse import urlencode
 
 from django.conf import settings
+from processos.services.exceptions import CandidatosServiceError
 from sigla_sdk.context import get_correlation_id
 from sigla_sdk.http.api_client import http_client
-
-from processos.services.exceptions import CandidatosServiceError
 
 logger = logging.getLogger(__name__)
 

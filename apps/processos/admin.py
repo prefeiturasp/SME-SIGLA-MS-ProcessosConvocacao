@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
+from cargos.admin import CargoProcessoInline
 from django.contrib import admin
 from django.db.models import QuerySet
 from django.http import HttpRequest
-
-from cargos.admin import CargoProcessoInline
 from processos.models import ProcessoConvocacao
 
 

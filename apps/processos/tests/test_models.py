@@ -3,12 +3,14 @@
 import uuid
 
 import pytest
+from cargos.models import CargoProcesso
 from django.contrib.auth.models import User
 from django.utils import timezone
-
-from cargos.models import CargoProcesso
+from processos.constants import (
+    PROCESSO_STATUS_CHOICES,
+    TIPO_ESCOLHA_CHOICES,
+)
 from processos.models import ProcessoConvocacao
-from processos.models.constants import PROCESSO_STATUS_CHOICES, TIPO_ESCOLHA_CHOICES
 
 pytestmark = pytest.mark.django_db
 

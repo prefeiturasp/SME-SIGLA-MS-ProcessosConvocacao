@@ -1,9 +1,8 @@
 """Modelo de lote de envio de e-mails."""
 
 from auditlog.registry import auditlog
-from django.db import models
-
 from core.models import BaseModel
+from django.db import models
 
 TIPO_CONVOCACAO = "CONVOCACAO"
 TIPO_VAGAS = "VAGAS"

@@ -2,9 +2,8 @@
 
 import pytest
 from django.urls import reverse
-from rest_framework import status
-
 from envio_email.models.envio_email import TIPO_CONVOCACAO
+from rest_framework import status
 
 pytestmark = pytest.mark.django_db
 
@@ -14,7 +13,8 @@ def test_envio_email_conteudo_list(authenticated_client, conteudo_convocacao):
     url = reverse("envio-email-conteudo-list")
     resposta = authenticated_client.get(url)
     assert resposta.status_code == status.HTTP_200_OK
-    dados = (resposta.data["results"]  # noqa: SIM401
+    dados = (
+        resposta.data["results"]  # noqa: SIM401
         if "results" in resposta.data
         else resposta.data
     )
@@ -30,7 +30,8 @@ def test_envio_email_conteudo_list_filtrar_por_tipo(
     url = reverse("envio-email-conteudo-list")
     resposta = authenticated_client.get(url, {"tipo": TIPO_CONVOCACAO})
     assert resposta.status_code == status.HTTP_200_OK
-    dados = (resposta.data["results"]  # noqa: SIM401
+    dados = (
+        resposta.data["results"]  # noqa: SIM401
         if "results" in resposta.data
         else resposta.data
     )
@@ -86,7 +87,7 @@ def test_envio_email_conteudo_patch_conteudo_gabarito(
 def test_envio_email_conteudo_retorna_assunto_vazio_quando_nao_salvo(
     authenticated_client, conteudo_convocacao
 ):
-    """Verifica GET retorna assunto vazio quando não há valor salvo no template."""
+    """Verify GET returns empty subject when template has no saved value."""
     conteudo_convocacao.assunto = ""
     conteudo_convocacao.save(update_fields=["assunto", "atualizado_em"])
 
@@ -99,7 +100,9 @@ def test_envio_email_conteudo_retorna_assunto_vazio_quando_nao_salvo(
     assert resposta.data["assunto"] == ""
 
 
-def test_envio_email_conteudo_patch_assunto(authenticated_client, conteudo_convocacao):
+def test_envio_email_conteudo_patch_assunto(
+    authenticated_client, conteudo_convocacao
+):
     """Verifica envio email conteudo patch assunto."""
     url = reverse(
         "envio-email-conteudo-detail", args=[conteudo_convocacao.uuid]

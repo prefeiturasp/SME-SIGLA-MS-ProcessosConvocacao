@@ -4,7 +4,6 @@ from unittest.mock import Mock, patch
 
 import pytest
 from django.test import override_settings
-
 from processos.services.agenda_api_service import AgendaApiService
 from processos.services.exceptions import AgendaServiceError
 

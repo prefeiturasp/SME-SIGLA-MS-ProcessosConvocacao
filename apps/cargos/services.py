@@ -5,13 +5,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from django.db import transaction
-
 from cargos.repository import CargoProcessoRepository
 from cargos.serializers import (
     CargoProcessoCreateSerializer,
     CargoProcessoSerializer,
 )
+from django.db import transaction
 from processos.models import ProcessoConvocacao
 from processos.repository import ProcessoConvocacaoRepository
 
@@ -90,16 +89,15 @@ class CargosProcessoService:
 
                 if uuid_cargo:
                     uuid_cargo_str = str(uuid_cargo)
-                    cargo_existente = (
-                        CargoProcessoRepository.carregar_instancia_por_processo_e_uuid(
-                            processo, uuid_cargo_str
-                        )
+                    cargo_existente = CargoProcessoRepository.carregar_instancia_por_processo_e_uuid(  # noqa: E501
+                        processo, uuid_cargo_str
                     )
                     if not cargo_existente:
                         erros.append(
                             {
                                 "uuid": uuid_cargo_str,
-                                "erros": "Cargo não encontrado para este processo",
+                                "erros": "Cargo não encontrado para este\
+                                    processo",
                             }
                         )
                         continue

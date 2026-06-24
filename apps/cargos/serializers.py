@@ -1,8 +1,7 @@
 """Serializers do app cargos."""
 
-from rest_framework import serializers
-
 from cargos.models import CargoProcesso
+from rest_framework import serializers
 
 
 class CargoProcessoSerializer(serializers.ModelSerializer):

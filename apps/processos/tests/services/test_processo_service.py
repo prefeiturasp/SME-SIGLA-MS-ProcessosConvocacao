@@ -3,7 +3,6 @@
 from unittest.mock import Mock
 
 import pytest
-
 from processos.services.agenda_api_service import AgendaApiService
 from processos.services.candidatos_api_url import CandidatosApiService
 from processos.services.escolhas_service import EscolhasApiService
