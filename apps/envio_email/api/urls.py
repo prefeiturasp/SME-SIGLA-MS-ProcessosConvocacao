@@ -1,9 +1,8 @@
 """URLs da API de envio de e-mail."""
 
 from django.urls import include, path
-from rest_framework.routers import DefaultRouter
-
 from envio_email.api.views import EnvioEmailConteudoViewSet, EnvioEmailViewSet
+from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter()
 router.register(r"envio-email", EnvioEmailViewSet, basename="envio-email")

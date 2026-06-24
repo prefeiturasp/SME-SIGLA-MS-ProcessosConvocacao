@@ -4,22 +4,21 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import status, viewsets
-from rest_framework.filters import OrderingFilter, SearchFilter
-from rest_framework.request import Request
-from rest_framework.response import Response
-
 from cargos.models import CargoProcesso
 from cargos.repository import CargoProcessoRepository
 from cargos.serializers import (
     CargoProcessoSerializer,
     ProcessoCargosDadosSerializer,
 )
-from cargos.services.cargos_service import CargosProcessoService
+from cargos.services import CargosProcessoService
+from django_filters.rest_framework import DjangoFilterBackend
+from processos.constants import ERROR_PROCESSO_NAO_PODE_EDITAR
 from processos.models import ProcessoConvocacao
-from processos.models.constants import ERROR_PROCESSO_NAO_PODE_EDITAR
 from processos.repository import ProcessoConvocacaoRepository
+from rest_framework import status, viewsets
+from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework.request import Request
+from rest_framework.response import Response
 
 STATUS_FINALIZADO = "FINALIZADO"
 
@@ -81,7 +80,9 @@ class CargoProcessoViewSet(viewsets.ModelViewSet):
             dados_validados=serializador_corpo.validated_data,
         )
         if "erros" in corpo_resposta:
-            return Response(corpo_resposta, status=status.HTTP_207_MULTI_STATUS)
+            return Response(
+                corpo_resposta, status=status.HTTP_207_MULTI_STATUS
+            )
 
         return Response(corpo_resposta, status=status.HTTP_200_OK)
 

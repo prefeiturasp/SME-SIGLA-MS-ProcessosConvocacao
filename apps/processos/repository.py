@@ -7,7 +7,6 @@ from typing import Any
 from uuid import UUID
 
 from django.db.models import QuerySet
-
 from processos.models import ProcessoConvocacao
 from processos.serializers import (
     ProcessoConvocacaoListSerializer,
@@ -20,14 +19,14 @@ class ProcessoConvocacaoRepository:
 
     @staticmethod
     def serializar(processo: ProcessoConvocacao) -> dict[str, Any]:
-        """Converte um processo em dicionário."""
+        """Serialize a process to a dictionary."""
         return ProcessoConvocacaoSerializer(processo).data
 
     @classmethod
     def serializar_lista(
         cls, processos: list[ProcessoConvocacao]
     ) -> list[dict[str, Any]]:
-        """Converte uma lista de processos em dicionários."""
+        """Serialize a list of processes to dictionaries."""
         return ProcessoConvocacaoListSerializer(processos, many=True).data
 
     @classmethod
@@ -60,7 +59,7 @@ class ProcessoConvocacaoRepository:
     def serializar_queryset(
         cls, queryset: QuerySet[ProcessoConvocacao]
     ) -> list[dict[str, Any]]:
-        """Converte um queryset de processos em dicionários."""
+        """Serialize a queryset of processes to dictionaries."""
         return cls.serializar_lista(list(queryset))
 
     @classmethod

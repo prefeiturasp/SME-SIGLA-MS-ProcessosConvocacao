@@ -1,8 +1,7 @@
 """Django management command to clear all processos and cargos."""
 
-from django.core.management.base import BaseCommand
-
 from cargos.repository import CargoProcessoRepository
+from django.core.management.base import BaseCommand
 from processos.repository import ProcessoConvocacaoRepository
 
 

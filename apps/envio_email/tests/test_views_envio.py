@@ -5,10 +5,9 @@ from unittest.mock import patch
 
 import pytest
 from django.urls import reverse
-from rest_framework import status
-
 from envio_email.models import EnvioEmail, EnvioEmailCandidato
 from envio_email.models.envio_email import TIPO_CONVOCACAO
+from rest_framework import status
 
 pytestmark = pytest.mark.django_db
 

@@ -15,12 +15,14 @@ class CargoProcessoRepository:
 
     @staticmethod
     def _serializar(cargo: CargoProcesso) -> dict[str, Any]:
-        """Converte um cargo em dicionário."""
+        """Converta um cargo em dicionário."""
         return CargoProcessoSerializer(cargo).data
 
     @classmethod
-    def _serializar_lista(cls, cargos: list[CargoProcesso]) -> list[dict[str, Any]]:
-        """Converte uma lista de cargos em dicionários."""
+    def _serializar_lista(
+        cls, cargos: list[CargoProcesso]
+    ) -> list[dict[str, Any]]:
+        """Converta uma lista de cargos em dicionários."""
         return CargoProcessoSerializer(cargos, many=True).data
 
     @classmethod
@@ -76,7 +78,16 @@ class CargoProcessoRepository:
         processo: ProcessoConvocacao,
         uuids: set[str],
     ) -> int:
-        """Exclui cargos do processo cujo UUID não está no conjunto informado."""
+        """
+        Exclua cargos do processo cujo UUID não está no conjunto informado.
+
+        Args:
+            processo: Processo de convocação.
+            uuids: Conjunto de UUIDs dos cargos a serem excluídos.
+
+        Returns:
+            Quantidade de cargos excluídos.
+        """
         queryset = CargoProcesso.objects.filter(processo=processo).exclude(
             uuid__in=uuids
         )
@@ -90,28 +101,28 @@ class CargoProcessoRepository:
         processo: ProcessoConvocacao,
         cargo_uuid: str | UUID,
     ) -> None:
-        """Exclui um cargo do processo pelo UUID."""
+        """Exclua um cargo do processo pelo UUID."""
         CargoProcesso.objects.filter(
             processo=processo, uuid=cargo_uuid
         ).delete()
 
     @classmethod
     def excluir_por_processo(cls, processo: ProcessoConvocacao) -> None:
-        """Exclui todos os cargos do processo."""
+        """Exclua todos os cargos do processo."""
         CargoProcesso.objects.filter(processo=processo).delete()
 
     @classmethod
     def criar(cls, **dados: Any) -> dict[str, Any]:
-        """Cria um cargo."""
+        """Crie um cargo."""
         cargo = CargoProcesso.objects.create(**dados)
         return cls._serializar(cargo)
 
     @classmethod
     def contar(cls) -> int:
-        """Conta todos os cargos."""
+        """Conte todos os cargos."""
         return CargoProcesso.objects.count()
 
     @classmethod
     def excluir_todos(cls) -> None:
-        """Exclui todos os cargos."""
+        """Exclua todos os cargos."""
         CargoProcesso.objects.all().delete()

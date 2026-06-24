@@ -3,7 +3,6 @@
 import uuid
 
 import pytest
-
 from cargos.serializers import (
     CargoProcessoCreateSerializer,
     CargoProcessoSerializer,

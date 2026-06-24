@@ -1,30 +1,76 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "SME-IntegracaoEOL-Pedagogico-MS"
+version = "0.1.0"
+description = "Microsserviço mock de Pedagogico - EOL"
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [{ name = "SME" }]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["apps*", "config*"]
+
+[tool.black]
+line-length = 79
+target-version = ["py312"]
+exclude = "/migrations/"
+
 [tool.ruff]
 line-length = 79
 target-version = "py312"
-extend-exclude = ["migrations", ".venv", "venv", "htmlcov", "__pycache__"]
+exclude = ["migrations", "config/settings_test.py"]
 
 [tool.ruff.lint]
-select = ["E", "W", "F", "I", "UP", "B", "SIM"]
-ignore = [
-    "E203",
-    "B008",
-    "SIM401",
-]
+select = ["E", "F", "W", "I", "N", "UP", "B", "C4", "SIM", "D"]
+ignore = ["D203", "D212", "D104", "D105", "D106", "D107", "D102"]
 
 [tool.ruff.lint.per-file-ignores]
-"**/gerar_relatorio_pep*.py" = ["D"]
-"__init__.py" = ["F401", "F403", "F405", "D104"]
-"config/settings*.py" = ["F401", "F403", "F405", "E501", "E402"]
-"*/settings*.py" = ["F401", "F403", "F405", "E501", "E402"]
-
-[tool.ruff.lint.isort]
-known-first-party = ["core", "processos", "cargos", "envio_email"]
-
-[tool.ruff.format]
-quote-style = "double"
-indent-style = "space"
-line-ending = "lf"
+"**/admin.py" = ["D100", "D101"]
+"**/apps.py" = ["D101"]
+"**/tests.py" = ["D100"]
+"**/tests/**/*.py" = ["D100", "D101"]
+"**/testes/**/*.py" = ["D100", "D101"]
 
 [tool.ruff.lint.pydocstyle]
-convention = "google"
-ignore-decorators = ["pytest.fixture", "extend_schema", "action"]
+convention = "pep257"
+
+[tool.ruff.lint.pycodestyle]
+max-doc-length = 120
+
+[tool.isort]
+profile = "black"
+line_length = 79
+
+[tool.mypy]
+python_version = "3.12"
+exclude = ".*/migrations/.*"
+warn_return_any = false
+warn_unused_configs = true
+disallow_untyped_defs = true
+ignore_missing_imports = true
+disable_error_code = ["return-value", "no-any-return"]
+
+[[tool.mypy.overrides]]
+module = [
+    "*.tests.*",
+    "*.migrations.*",
+    "*.commands.*",
+    "config.settings_test",
+]
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = false
+ignore_errors = true
+
+[tool.coverage.run]
+source = ["apps"]
+
+[tool.coverage.report]
+show_missing = true

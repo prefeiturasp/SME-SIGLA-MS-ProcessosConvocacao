@@ -5,8 +5,6 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from rest_framework import serializers
-
 from envio_email.models import (
     ENVIO_EMAIL_TIPO_CHOICES,
     EnvioEmail,
@@ -15,6 +13,7 @@ from envio_email.models import (
 )
 from envio_email.utils.conteudo_html import normalizar_conteudo_html
 from processos.repository import ProcessoConvocacaoRepository
+from rest_framework import serializers
 
 
 class EnvioEmailEnvioSerializer(serializers.Serializer):
@@ -30,12 +29,14 @@ class EnvioEmailEnvioSerializer(serializers.Serializer):
     conteudo = serializers.CharField(
         required=False,
         allow_blank=True,
-        help_text="Conteúdo do e-mail (HTML); se vazio, usa conteúdo salvo ou gabarito",
+        help_text="Conteúdo do e-mail (HTML); se vazio, usa conteúdo\
+             salvo ou gabarito",
     )
     assunto = serializers.CharField(
         required=False,
         allow_blank=True,
-        help_text="Assunto do e-mail; se vazio, usa assunto salvo ou padrão do tipo",
+        help_text="Assunto do e-mail; se vazio, usa assunto salvo ou\
+             padrão do tipo",
     )
 
     def validate_processo_uuid(self, value: UUID) -> UUID:

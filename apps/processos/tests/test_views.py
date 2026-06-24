@@ -5,19 +5,18 @@ from datetime import timedelta
 from unittest.mock import patch
 
 import pytest
+from cargos.models import CargoProcesso
 from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils import timezone
-from rest_framework import status
-
-from cargos.models import CargoProcesso
-from processos.models import ProcessoConvocacao
-from processos.models.constants import (
+from processos.constants import (
     ERROR_CANDIDATOS_PENDENTES_ESCOLHA,
     ERROR_PROCESSO_JA_CANCELADO,
     ERROR_PROCESSO_JA_FINALIZADO,
     ERROR_PROCESSO_NAO_PODE_EDITAR,
 )
+from processos.models import ProcessoConvocacao
+from rest_framework import status
 
 pytestmark = pytest.mark.django_db
 
@@ -171,7 +170,9 @@ def test_processo_convocacao_detalhe(
     assert resposta.data["uuid"] == str(processo_convocacao.uuid)
 
 
-def test_processo_convocacao_atualizacao(authenticated_client, processo_convocacao):
+def test_processo_convocacao_atualizacao(
+    authenticated_client, processo_convocacao
+):
     """Testa a atualização de um processo."""
     url = reverse("processoconvocacao-detail", args=[processo_convocacao.uuid])
     dados = {
@@ -189,7 +190,8 @@ def test_processo_convocacao_atualizacao(authenticated_client, processo_convocac
 
 
 @patch(
-    "processos.api.views.ProcessoConvocacaoService.excluir_processo_e_dependencias"
+    "processos.api.views.ProcessoConvocacaoService"
+    ".excluir_processo_e_dependencias"
 )
 def test_processo_convocacao_exclusao(
     mock_excluir_dependencias,
@@ -453,7 +455,7 @@ def test_cargos_create_processo_finalizado(
 def test_cargos_create_corpo_nao_e_lista(
     authenticated_client, processo_convocacao
 ):
-    """POST retorna 400 quando o corpo é lista (espera dict com chave cargos)."""
+    """POST returns 400 when body is a list (expects dict with cargos key)."""
     url = reverse(
         "processo-cargos-list",
         kwargs={"processo_pk": processo_convocacao.uuid},
@@ -786,9 +788,7 @@ def test_endpoint_filtros_tipos_escolha(authenticated_client):
 
 
 # Testes para a action finalizar
-@patch(
-    "processos.api.views.EscolhasApiService.buscar_candidatos_com_escolha"
-)
+@patch("processos.api.views.EscolhasApiService.buscar_candidatos_com_escolha")
 def test_finalizar_sucesso_todos_com_escolha(
     mock_buscar, authenticated_client, processo_convocacao
 ):
@@ -815,9 +815,7 @@ def test_finalizar_sucesso_todos_com_escolha(
     mock_buscar.assert_called_once_with(str(processo_convocacao.concurso_uuid))
 
 
-@patch(
-    "processos.api.views.EscolhasApiService.buscar_candidatos_com_escolha"
-)
+@patch("processos.api.views.EscolhasApiService.buscar_candidatos_com_escolha")
 def test_finalizar_sucesso_sem_candidatos(
     mock_buscar, authenticated_client, processo_convocacao
 ):
@@ -893,9 +891,7 @@ def test_finalizar_status_nao_em_andamento(
     )
 
 
-@patch(
-    "processos.api.views.EscolhasApiService.buscar_candidatos_com_escolha"
-)
+@patch("processos.api.views.EscolhasApiService.buscar_candidatos_com_escolha")
 def test_finalizar_candidatos_pendentes(
     mock_buscar, authenticated_client, processo_convocacao
 ):
@@ -922,9 +918,7 @@ def test_finalizar_candidatos_pendentes(
     assert processo_convocacao.status == "EM_ANDAMENTO"
 
 
-@patch(
-    "processos.api.views.EscolhasApiService.buscar_candidatos_com_escolha"
-)
+@patch("processos.api.views.EscolhasApiService.buscar_candidatos_com_escolha")
 def test_finalizar_erro_ao_buscar_escolhas(
     mock_buscar, authenticated_client, processo_convocacao
 ):
@@ -950,9 +944,7 @@ def test_finalizar_erro_ao_buscar_escolhas(
     assert processo_convocacao.status == "EM_ANDAMENTO"
 
 
-@patch(
-    "processos.api.views.EscolhasApiService.buscar_candidatos_com_escolha"
-)
+@patch("processos.api.views.EscolhasApiService.buscar_candidatos_com_escolha")
 def test_finalizar_multiplos_cargos_todos_com_escolha(
     mock_buscar, authenticated_client, processo_convocacao
 ):
@@ -985,9 +977,7 @@ def test_finalizar_multiplos_cargos_todos_com_escolha(
     assert processo_convocacao.status == "FINALIZADO"
 
 
-@patch(
-    "processos.api.views.EscolhasApiService.buscar_candidatos_com_escolha"
-)
+@patch("processos.api.views.EscolhasApiService.buscar_candidatos_com_escolha")
 def test_finalizar_multiplos_cargos_um_pendente(
     mock_buscar, authenticated_client, processo_convocacao
 ):

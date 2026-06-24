@@ -1,9 +1,8 @@
 """Módulo tests/test_admin."""
 
 import pytest
-from django.contrib.admin.sites import site
-
 from cargos.admin import CargoProcessoInline
+from django.contrib.admin.sites import site
 from processos.admin import ProcessoConvocacaoAdmin
 from processos.models import ProcessoConvocacao
 

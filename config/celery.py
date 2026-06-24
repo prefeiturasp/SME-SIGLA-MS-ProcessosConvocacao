@@ -1,3 +1,5 @@
+"""Celery application configuration for processos de convocação."""
+
 import os
 
 from celery import Celery

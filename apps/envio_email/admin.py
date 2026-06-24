@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from django.contrib import admin
 from django.http import HttpRequest
-
 from envio_email.models import (
     EnvioEmail,
     EnvioEmailCandidato,
