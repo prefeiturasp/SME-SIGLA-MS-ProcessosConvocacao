@@ -1,7 +1,7 @@
 # Makefile para o projeto SME-SIGLA-MS-Convocacao
 # Comandos úteis para desenvolvimento Django
 
-.PHONY: help pep257 makemigrations migrate runserver coverage test clean install format lint check
+.PHONY: help pep257 makemigrations migrate runserver coverage test clean install format lint check docs
 
 PEP_APP_DIRS = processos cargos envio_email
 
@@ -16,6 +16,7 @@ help:
 	@echo "  make test            - Executa todos os testes"
 	@echo "  make clean           - Remove arquivos temporários"
 	@echo "  make install         - Instala dependências"
+	@echo "  make docs            - Gera documentação HTML (Sphinx)"
 
 # Cria migrações do Django
 makemigrations:
@@ -76,3 +77,8 @@ check: lint test
 pep257:
 	@echo "Verificando PEP 257 (docstrings)..."
 	python -m ruff check $(PEP_APP_DIRS) --select D
+
+# Gera documentação HTML com Sphinx
+docs:
+	@echo "Gerando documentação Sphinx..."
+	sphinx-build -b html docs/ docs/_build/html
