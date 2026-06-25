@@ -96,8 +96,9 @@ class CargosProcessoService:
                         erros.append(
                             {
                                 "uuid": uuid_cargo_str,
-                                "erros": "Cargo não encontrado para este\
-                                    processo",
+                                "erros": (
+                                    "Cargo não encontrado para este processo"
+                                ),
                             }
                         )
                         continue
