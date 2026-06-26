@@ -1,3 +1,5 @@
+"""Settings de test."""
+
 from .settings import *
 
 DATABASES = {

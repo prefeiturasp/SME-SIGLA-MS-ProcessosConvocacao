@@ -1,8 +1,7 @@
-"""
-Django settings for convocacao_processes project.
-"""
+"""Django settings for convocacao_processes project."""
 
 import os
+import sys
 from datetime import timedelta
 from pathlib import Path
 
@@ -14,6 +13,9 @@ DJANGO_ENVIRONMENT = os.environ.get("DJANGO_ENVIRONMENT", "local")
 MS_PATH = os.environ.get("MS_PATH", "/ms-processos-convocacao")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+# Adiciona a pasta 'apps' ao sys.path do Python
+sys.path.insert(0, os.path.join(BASE_DIR, "apps"))
+
 SECRET_KEY = os.environ.get(
     "SECRET_KEY", "django-insecure-your-secret-key-here"
 )
@@ -38,12 +40,17 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "rest_framework",
+    # Third-party
+    "auditlog",
     "corsheaders",
     "django_filters",
-    "auditlog",
     "drf_spectacular",
+    "rest_framework",
+    # Local
+    "core",
     "processos",
+    "cargos",
+    "envio_email",
 ]
 
 MIDDLEWARE = [
@@ -104,16 +111,27 @@ else:
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        "NAME": (
+            "django.contrib.auth.password_validation."
+            "UserAttributeSimilarityValidator"
+        ),
     },
     {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "NAME": (
+            "django.contrib.auth.password_validation." "MinimumLengthValidator"
+        ),
     },
     {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
+        "NAME": (
+            "django.contrib.auth.password_validation."
+            "CommonPasswordValidator"
+        ),
     },
     {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+        "NAME": (
+            "django.contrib.auth.password_validation."
+            "NumericPasswordValidator"
+        ),
     },
 ]
 
@@ -149,7 +167,9 @@ CORS_ALLOW_CREDENTIALS = True
 
 # DRF settings
 REST_FRAMEWORK = {
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "DEFAULT_PAGINATION_CLASS": (
+        "rest_framework.pagination.PageNumberPagination"
+    ),
     "PAGE_SIZE": 20,
     "DEFAULT_FILTER_BACKENDS": [
         "django_filters.rest_framework.DjangoFilterBackend",
@@ -178,7 +198,10 @@ LOGGING = {
         "json": {
             "()": "sigla_sdk.logging.json_formatter.CustomJsonFormatter",
             # Estes campos do logging padrão virarão chaves no JSON
-            "format": "%(levelname)s %(asctime)s %(module)s %(filename)s %(lineno)d %(funcName)s %(message)s",
+            "format": (
+                "%(levelname)s %(asctime)s %(module)s %(filename)s "
+                "%(lineno)d %(funcName)s %(message)s"
+            ),
         },
     },
     "handlers": {
@@ -201,9 +224,20 @@ LOGGING = {
             "level": "DEBUG",
             "propagate": False,
         },
+        "envio_email": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        "cargos": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
         "django.server": {
             "handlers": ["console"],
-            "level": "ERROR",  # Alterando para ERROR, ele para de mostrar os GET/POST/OPTIONS de rotina (INFO)
+            "level": "ERROR",
+            # Suprime logs INFO de GET/POST/OPTIONS de rotina do runserver
             "propagate": False,
         },
     },
@@ -216,7 +250,7 @@ SPECTACULAR_SETTINGS = {
     "SERVE_INCLUDE_SCHEMA": False,
 }
 
-# E-mail
+# E-mail config
 EMAIL_BACKEND = os.environ.get(
     "DJANGO_EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
 )
@@ -239,18 +273,14 @@ CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "America/Sao_Paulo"
 CELERY_TASK_TIME_LIMIT = 5 * 60
 CELERY_TASK_SOFT_TIME_LIMIT = 60
-# Fila dedicada para isolar mensagens no Redis compartilhado (outros projetos usam a fila "celery")
+# Fila dedicada no Redis compartilhado (outros projetos usam a fila "celery")
 CELERY_TASK_DEFAULT_QUEUE = "processos_convocacao"
 
-# MS-Candidatos (API de habilitados)
+
+# MS URLs
 CANDIDATOS_API_URL = os.environ.get("CANDIDATOS_API_URL", "").rstrip("/")
-
-# MS-Agenda (exclusão de agendas por processo)
 AGENDA_API_URL = os.environ.get("AGENDAS_API_URL", "").rstrip("/")
-
-# MS-Escolha (API para validar se convocados fizeram escolha na finalização)
 ESCOLHAS_API_URL = os.environ.get("ESCOLHAS_API_URL", "").rstrip("/")
-
 MS_URL = os.environ.get("MS_URL", "").rstrip("/")
 
 JWT_SIGNING_KEY = os.environ.get(

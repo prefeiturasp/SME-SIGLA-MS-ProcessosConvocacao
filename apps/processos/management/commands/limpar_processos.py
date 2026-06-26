@@ -1,0 +1,83 @@
+"""Django management command to clear all processos and cargos."""
+
+from cargos.repository import CargoProcessoRepository
+from django.core.management.base import BaseCommand
+from processos.repository import ProcessoConvocacaoRepository
+
+
+class Command(BaseCommand):
+    """Define Command."""
+
+    help = "Remove todos os registros das tabelas de processos e cargos"
+
+    def handle(self, *args, **options):
+        # Contar registros existentes
+        """Executa a lógica principal do comando.
+
+        Args:
+            self: Instância do objeto.
+            *args: Argumentos posicionais variáveis.
+            **options: Parâmetro options da operação.
+
+        Returns:
+            Não retorna valor; executa a operação do comando.
+
+        Raises:
+            Nenhuma exceção específica documentada.
+        """
+        total_processos = ProcessoConvocacaoRepository.contar()
+        total_cargos = CargoProcessoRepository.contar()
+        total_registros = total_processos + total_cargos
+
+        self.stdout.write(
+            self.style.SUCCESS(f"Removendo {total_registros} registros...")
+        )
+        self.stdout.write(f"  - Processos: {total_processos}")
+        self.stdout.write(f"  - Cargos: {total_cargos}")
+
+        try:
+            # Remover cargos primeiro (devido à dependência FK)
+            if total_cargos > 0:
+                self.stdout.write("🗑️  Removendo cargos...")
+                CargoProcessoRepository.excluir_todos()
+                self.stdout.write(
+                    self.style.SUCCESS(f"✅ {total_cargos} cargos removidos!")
+                )
+
+            # Remover processos
+            if total_processos > 0:
+                self.stdout.write("🗑️  Removendo processos...")
+                ProcessoConvocacaoRepository.excluir_todos()
+                self.stdout.write(
+                    self.style.SUCCESS(
+                        f"✅ {total_processos} processos removidos!"
+                    )
+                )
+
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"✅ {total_registros} registros removidos com sucesso!"
+                )
+            )
+
+            # Verificar se realmente foi limpo
+            processos_restantes = ProcessoConvocacaoRepository.contar()
+            cargos_restantes = CargoProcessoRepository.contar()
+
+            if processos_restantes == 0 and cargos_restantes == 0:
+                self.stdout.write(
+                    self.style.SUCCESS(
+                        "✅ Todas as tabelas completamente limpas!"
+                    )
+                )
+            else:
+                self.stdout.write(
+                    self.style.WARNING(
+                        f"⚠️  Ainda restam {processos_restantes} processos e {cargos_restantes} cargos."  # noqa: E501
+                    )
+                )
+
+        except Exception as e:
+            self.stdout.write(
+                self.style.ERROR(f"❌ Erro ao remover registros: {e}")
+            )
