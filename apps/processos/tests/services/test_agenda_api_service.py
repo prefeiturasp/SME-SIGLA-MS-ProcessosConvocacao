@@ -32,8 +32,35 @@ def test_excluir_agendas_por_processo_sucesso_retorna_json():
     kwargs_chamada = mock_delete.call_args.kwargs
     assert url_chamada == "http://ms-agenda/api/v1/agendas/por-processo/"
     assert kwargs_chamada["params"] == {"processo_uuid": processo_uuid}
-    assert kwargs_chamada["headers"] == {"Accept": "application/json"}
-    assert kwargs_chamada["timeout"] == service.TIMEOUT_SEGUNDOS
+    assert kwargs_chamada["headers"] == service.headers
+    assert kwargs_chamada["timeout"] == service.timeout_seconds
+
+
+@override_settings(
+    AGENDA_API_URL="http://ms-agenda",
+    AGENDA_API_KEY="test-key",
+    API_KEY_HEADER="X-API-Key",
+)
+def test_excluir_agendas_por_processo_envia_api_key():
+    """Verifica envio do header X-API-Key quando AGENDA_API_KEY está configurada."""
+    service = AgendaApiService()
+    processo_uuid = "55555555-5555-5555-5555-555555555555"
+
+    resposta = Mock()
+    resposta.status_code = 200
+    resposta.content = b"{}"
+    resposta.json.return_value = {}
+
+    with patch(
+        "processos.services.agenda_api_service.http_client.delete",
+        return_value=resposta,
+    ) as mock_delete:
+        service.excluir_agendas_por_processo(processo_uuid)
+
+    assert mock_delete.call_args.kwargs["headers"] == {
+        "Accept": "application/json",
+        "X-API-Key": "test-key",
+    }
 
 
 @override_settings(AGENDA_API_URL="http://ms-agenda")

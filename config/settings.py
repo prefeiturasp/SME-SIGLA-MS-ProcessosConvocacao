@@ -180,6 +180,7 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.SessionAuthentication",
         "rest_framework.authentication.BasicAuthentication",
         "rest_framework_simplejwt.authentication.JWTAuthentication",
+       # "sigla_sdk.autenticacao.authentication.ApiKeyAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         # 'rest_framework.permissions.IsAuthenticated',
@@ -248,6 +249,16 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "API para o sistema de processos de convocação de sigla",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
+    # "APPEND_COMPONENTS": {
+    #     "securitySchemes": {
+    #         "ApiKeyAuth": {
+    #             "type": "apiKey",
+    #             "in": "header",
+    #             "name": "X-API-Key",
+    #         }
+    #     }
+    # },
+    # "SECURITY": [{"ApiKeyAuth": []}],
 }
 
 # E-mail config
@@ -277,10 +288,19 @@ CELERY_TASK_SOFT_TIME_LIMIT = 60
 CELERY_TASK_DEFAULT_QUEUE = "processos_convocacao"
 
 
-# MS URLs
+# MS URLs e API Keys
+API_KEY = os.environ.get("API_KEY", "api-key-processos-convocacao")
+API_KEY_HEADER = os.environ.get("API_KEY_HEADER", "X-API-Key")
+
 CANDIDATOS_API_URL = os.environ.get("CANDIDATOS_API_URL", "").rstrip("/")
+CANDIDATOS_API_KEY = os.environ.get("CANDIDATOS_API_KEY", "api-key-candidatos")
+
 AGENDA_API_URL = os.environ.get("AGENDAS_API_URL", "").rstrip("/")
+AGENDA_API_KEY = os.environ.get("AGENDA_API_KEY", "api-key-agenda")
+
 ESCOLHAS_API_URL = os.environ.get("ESCOLHAS_API_URL", "").rstrip("/")
+ESCOLHAS_API_KEY = os.environ.get("ESCOLHAS_API_KEY", "api-key-escolhas")
+
 MS_URL = os.environ.get("MS_URL", "").rstrip("/")
 
 JWT_SIGNING_KEY = os.environ.get(

@@ -25,20 +25,23 @@ class EscolhasApiService:
     SITUACOES_COM_ESCOLHA = "escolha,reconvocacao,nao-escolha"
     TAMANHO_PAGINA = 10000
 
-    def _obter_url_base(self) -> str:
-        """Obtém a URL base do MS-Escolha a partir das configurações."""
-        url_base = getattr(settings, "ESCOLHAS_API_URL", "") or ""
-        if not url_base.strip():
-            logger.warning(
-                "ESCOLHAS_API_URL não configurada; chamadas ao MS-Escolha podem falhar."  # noqa: E501
-            )
-            return ""
-        return url_base.rstrip("/")
+    def __init__(
+        self,
+    ) -> None:
+        """Inicializa cliente HTTP do MS-Escolha."""
+        self.base_url = settings.ESCOLHAS_API_URL.rstrip("/")
+        self.timeout_seconds = self.TIMEOUT_SEGUNDOS
+        self.headers: dict[str, str] = {
+            "Accept": "application/json",
+            settings.API_KEY_HEADER: settings.ESCOLHAS_API_KEY,
+        }
 
     def buscar_candidatos_com_escolha(self, concurso_uuid: str) -> list[str]:
         """Lista candidatos com escolha registrada no MS-Escolha."""
-        url_base = self._obter_url_base()
-        if not url_base:
+        if not self.base_url:
+            logger.warning(
+                "ESCOLHAS_API_URL não configurada; retornando lista vazia."
+            )
             return []
         parametros = {
             "concurso_uuid": concurso_uuid,
@@ -46,7 +49,7 @@ class EscolhasApiService:
             "page_size": self.TAMANHO_PAGINA,
         }
         consulta = urlencode(parametros)
-        url = f"{url_base}{self.CAMINHO_ESCOLHAS.rstrip('/')}/?{consulta}"
+        url = f"{self.base_url}{self.CAMINHO_ESCOLHAS.rstrip('/')}/?{consulta}"
 
         logger.info(
             "Buscando candidatos com escolha",
@@ -61,8 +64,8 @@ class EscolhasApiService:
         try:
             resposta = http_client.get(
                 url,
-                timeout=self.TIMEOUT_SEGUNDOS,
-                headers={"Accept": "application/json"},
+                timeout=self.timeout_seconds,
+                headers=self.headers,
             )
             resposta.raise_for_status()
             dados = resposta.json()
@@ -106,13 +109,11 @@ class EscolhasApiService:
 
     def excluir_lotes_vagas_por_processo(self, processo_uuid: str) -> dict:
         """Remove lotes de vagas do processo no MS-Escolha."""
-        url_base = self._obter_url_base()
-        if not url_base:
+        if not self.base_url:
             raise ValueError("ESCOLHAS_API_URL não configurada")
 
-        url = f"{url_base}/api/v1/vagas-escolas/por-processo/"
+        url = f"{self.base_url}/api/v1/vagas-escolas/por-processo/"
         parametros = {"processo_uuid": processo_uuid}
-        cabecalhos = {"Accept": "application/json"}
         logger.info(
             "Excluindo lotes de vagas no MS-Escolha",
             extra={
@@ -120,7 +121,7 @@ class EscolhasApiService:
                 "method": "DELETE",
                 "url": url,
                 "params": parametros,
-                "headers": cabecalhos,
+                "headers": self.headers.keys(),
                 "processo_uuid": processo_uuid,
             },
         )
@@ -128,8 +129,8 @@ class EscolhasApiService:
             resposta = http_client.delete(
                 url,
                 params=parametros,
-                headers=cabecalhos,
-                timeout=self.TIMEOUT_SEGUNDOS,
+                headers=self.headers,
+                timeout=self.timeout_seconds,
             )
         except Exception as exc:
             raise EscolhasServiceError(
@@ -150,7 +151,7 @@ class EscolhasApiService:
                 "method": "DELETE",
                 "url": url,
                 "params": parametros,
-                "headers": cabecalhos,
+                "headers": self.headers.keys(),
             },
         )
         return resposta.json() if resposta.content else {}
