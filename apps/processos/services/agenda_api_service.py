@@ -15,11 +15,21 @@ class AgendaApiService:
 
     TIMEOUT_SEGUNDOS = 30
 
+    def __init__(
+        self,
+    ) -> None:
+        """Inicializa cliente HTTP do MS-Agenda."""
+        self.base_url = settings.AGENDA_API_URL.rstrip("/")
+        self.timeout_seconds = self.TIMEOUT_SEGUNDOS
+        self.headers: dict[str, str] = {
+            "Accept": "application/json",
+            settings.API_KEY_HEADER: settings.AGENDA_API_KEY,
+        }
+
     def excluir_agendas_por_processo(self, processo_uuid: str) -> dict:
         """DELETE /api/v1/agendas/por-processo/?processo_uuid=<uuid>."""
-        url = f"{settings.AGENDA_API_URL}/api/v1/agendas/por-processo/"
+        url = f"{self.base_url}/api/v1/agendas/por-processo/"
         parametros = {"processo_uuid": processo_uuid}
-        cabecalhos = {"Accept": "application/json"}
         logger.info(
             "Excluindo agendas no MS-Agenda",
             extra={
@@ -27,7 +37,7 @@ class AgendaApiService:
                 "method": "DELETE",
                 "url": url,
                 "params": parametros,
-                "headers": cabecalhos,
+                "headers": self.headers.keys(),
                 "processo_uuid": processo_uuid,
             },
         )
@@ -35,8 +45,8 @@ class AgendaApiService:
             resposta = http_client.delete(
                 url,
                 params=parametros,
-                headers=cabecalhos,
-                timeout=self.TIMEOUT_SEGUNDOS,
+                headers=self.headers,
+                timeout=self.timeout_seconds,
             )
         except Exception as exc:
             raise AgendaServiceError(

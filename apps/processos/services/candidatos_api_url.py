@@ -24,10 +24,17 @@ class CandidatosApiService:
     )
     TIMEOUT_SEGUNDOS = 30
 
-    @property
-    def _candidatos_api_url(self) -> str:
-        """Retorna a URL base do MS-Candidatos."""
-        return getattr(settings, "CANDIDATOS_API_URL", "").rstrip("/")
+    def __init__(
+        self,
+    ) -> None:
+        """Inicializa cliente HTTP do MS-Candidatos."""
+        self.base_url = settings.CANDIDATOS_API_URL.rstrip("/")
+        self.timeout_seconds = self.TIMEOUT_SEGUNDOS
+        self.headers: dict[str, str] = {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            settings.API_KEY_HEADER: settings.CANDIDATOS_API_KEY,
+        }
 
     def _url_habilitados_por_processo(self, processo_uuid: str) -> str:
         """Monta a URL para buscar habilitados do processo no MS-Candidatos."""
@@ -35,38 +42,36 @@ class CandidatosApiService:
             "processo_uuid": processo_uuid,
             "foi_convocado": "true",
         }
-        url_base = self._candidatos_api_url or ""
         caminho = self.CAMINHO_HABILITADOS.rstrip("/")
         consulta = urlencode(parametros)
-        return f"{url_base}{caminho}/?{consulta}"
+        return f"{self.base_url}{caminho}/?{consulta}"
 
     def buscar_habilitados_por_processo(
         self, processo_uuid: str
     ) -> list[dict[str, Any]]:
         """Busca habilitados do processo no MS-Candidatos."""
-        if not self._candidatos_api_url:
+        if not self.base_url:
             logger.warning(
                 "CANDIDATOS_API_URL não configurado; retornando lista vazia."
             )
             return []
 
         url = self._url_habilitados_por_processo(processo_uuid)
-        cabecalhos = {"Accept": "application/json"}
         logger.info(
             "Buscando habilitados por processo",
             extra={
                 "processo_uuid": processo_uuid,
                 "correlation_id": get_correlation_id(),
                 "url": url,
-                "headers": cabecalhos,
+                "headers": self.headers.keys(),
                 "method": "GET",
             },
         )
         try:
             resposta = http_client.get(
                 url,
-                headers=cabecalhos,
-                timeout=self.TIMEOUT_SEGUNDOS,
+                headers=self.headers,
+                timeout=self.timeout_seconds,
             )
             resposta.raise_for_status()
         except Exception as exc:
@@ -83,7 +88,7 @@ class CandidatosApiService:
                 "processo_uuid": processo_uuid,
                 "correlation_id": get_correlation_id(),
                 "url": url,
-                "headers": cabecalhos,
+                "headers": self.headers.keys(),
                 "method": "GET",
                 "data": str(dados)[:200],
             },
@@ -98,15 +103,11 @@ class CandidatosApiService:
 
     def desconvocar_por_processo(self, processo_uuid: str) -> dict:
         """PATCH /api/v1/habilitados/desconvocar."""
-        if not settings.CANDIDATOS_API_URL:
+        if not self.base_url:
             raise ValueError("CANDIDATOS_API_URL não configurada")
 
-        url = f"{settings.CANDIDATOS_API_URL}/api/v1/habilitados/desconvocar/"
+        url = f"{self.base_url}/api/v1/habilitados/desconvocar/"
         corpo_requisicao = {"processo_uuid": str(processo_uuid)}
-        cabecalhos = {
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-        }
         logger.info(
             "Desconvocando candidatos no MS-Candidatos",
             extra={
@@ -114,7 +115,7 @@ class CandidatosApiService:
                 "method": "PATCH",
                 "url": url,
                 "payload": corpo_requisicao,
-                "headers": cabecalhos,
+                "headers": self.headers.keys(),
                 "processo_uuid": str(processo_uuid),
             },
         )
@@ -122,8 +123,8 @@ class CandidatosApiService:
             resposta = http_client.patch(
                 url,
                 json=corpo_requisicao,
-                headers=cabecalhos,
-                timeout=self.TIMEOUT_SEGUNDOS,
+                headers=self.headers,
+                timeout=self.timeout_seconds,
             )
         except Exception as exc:
             raise CandidatosServiceError(
@@ -141,7 +142,7 @@ class CandidatosApiService:
                 "method": "PATCH",
                 "url": url,
                 "payload": corpo_requisicao,
-                "headers": cabecalhos,
+                "headers": self.headers.keys(),
                 "processo_uuid": str(processo_uuid),
                 "status_code": resposta.status_code,
                 "response": resposta.json(),

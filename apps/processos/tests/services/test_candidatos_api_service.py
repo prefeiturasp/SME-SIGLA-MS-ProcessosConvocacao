@@ -10,8 +10,8 @@ from processos.services.exceptions import CandidatosServiceError
 
 def test_buscar_habilitados_por_processo_sem_config_retorna_lista_vazia():
     """Sem config, buscar habilitados por processo retorna lista vazia."""
-    service = CandidatosApiService()
     with override_settings(CANDIDATOS_API_URL=""):
+        service = CandidatosApiService()
         assert service.buscar_habilitados_por_processo("uuid") == []
 
 
@@ -38,8 +38,35 @@ def test_buscar_habilitados_por_processo_retorna_lista_quando_json_lista():
     assert url_chamada.startswith("http://ms-candidatos/api/v1/habilitados/?")
     assert "processo_uuid=" in url_chamada
     assert "foi_convocado=true" in url_chamada
-    assert kwargs_chamada["headers"] == {"Accept": "application/json"}
-    assert kwargs_chamada["timeout"] == service.TIMEOUT_SEGUNDOS
+    assert kwargs_chamada["headers"] == service.headers
+    assert kwargs_chamada["timeout"] == service.timeout_seconds
+
+
+@override_settings(
+    CANDIDATOS_API_URL="http://ms-candidatos",
+    CANDIDATOS_API_KEY="test-key",
+    API_KEY_HEADER="X-API-Key",
+)
+def test_buscar_habilitados_por_processo_envia_api_key():
+    """Verifica envio do header X-API-Key quando CANDIDATOS_API_KEY está configurada."""
+    service = CandidatosApiService()
+    processo_uuid = "55555555-5555-5555-5555-555555555555"
+
+    resposta = Mock()
+    resposta.raise_for_status.return_value = None
+    resposta.json.return_value = []
+
+    with patch(
+        "processos.services.candidatos_api_url.http_client.get",
+        return_value=resposta,
+    ) as mock_get:
+        service.buscar_habilitados_por_processo(processo_uuid)
+
+    assert mock_get.call_args.kwargs["headers"] == {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "X-API-Key": "test-key",
+    }
 
 
 @override_settings(CANDIDATOS_API_URL="http://ms-candidatos")
@@ -95,8 +122,8 @@ def test_buscar_habilitados_por_processo_propagada_erro_do_client():
 
 def test_desconvocar_por_processo_sem_config_gera_value_error():
     """Verifica desconvocar por processo sem config gera value error."""
-    service = CandidatosApiService()
-    with override_settings(CANDIDATOS_API_URL=""):  # noqa: SIM117
+    with override_settings(CANDIDATOS_API_URL=""):
+        service = CandidatosApiService()
         with pytest.raises(ValueError):
             service.desconvocar_por_processo("uuid")
 
@@ -127,11 +154,8 @@ def test_desconvocar_por_processo_sucesso_retorna_json():
         url_chamada == "http://ms-candidatos/api/v1/habilitados/desconvocar/"
     )
     assert kwargs_chamada["json"] == {"processo_uuid": processo_uuid}
-    assert kwargs_chamada["headers"] == {
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-    }
-    assert kwargs_chamada["timeout"] == service.TIMEOUT_SEGUNDOS
+    assert kwargs_chamada["headers"] == service.headers
+    assert kwargs_chamada["timeout"] == service.timeout_seconds
 
 
 @override_settings(CANDIDATOS_API_URL="http://ms-candidatos")
