@@ -10,8 +10,8 @@ from processos.services.exceptions import EscolhasServiceError
 
 def test_buscar_candidatos_com_escolha_sem_config_retorna_lista_vazia():
     """Sem config, buscar candidatos com escolha retorna lista vazia."""
-    service = EscolhasApiService()
     with override_settings(ESCOLHAS_API_URL=""):
+        service = EscolhasApiService()
         assert service.buscar_candidatos_com_escolha("concurso") == []
 
 
@@ -44,8 +44,34 @@ def test_buscar_candidatos_com_escolha_json_lista_mapeia_candidato_uuid():
     assert "concurso_uuid=" in url_chamada
     assert "situacao__in=" in url_chamada
     assert "page_size=" in url_chamada
-    assert kwargs_chamada["timeout"] == service.TIMEOUT_SEGUNDOS
-    assert kwargs_chamada["headers"] == {"Accept": "application/json"}
+    assert kwargs_chamada["timeout"] == service.timeout_seconds
+    assert kwargs_chamada["headers"] == service.headers
+
+
+@override_settings(
+    ESCOLHAS_API_URL="http://ms-escolha",
+    ESCOLHAS_API_KEY="test-key",
+    API_KEY_HEADER="X-API-Key",
+)
+def test_buscar_candidatos_com_escolha_envia_api_key():
+    """Verifica envio do header X-API-Key quando ESCOLHAS_API_KEY está configurada."""
+    service = EscolhasApiService()
+    concurso_uuid = "cccccccc-cccc-cccc-cccc-cccccccccccc"
+
+    resposta = Mock()
+    resposta.raise_for_status.return_value = None
+    resposta.json.return_value = []
+
+    with patch(
+        "processos.services.escolhas_service.http_client.get",
+        return_value=resposta,
+    ) as mock_get:
+        service.buscar_candidatos_com_escolha(concurso_uuid)
+
+    assert mock_get.call_args.kwargs["headers"] == {
+        "Accept": "application/json",
+        "X-API-Key": "test-key",
+    }
 
 
 @override_settings(ESCOLHAS_API_URL="http://ms-escolha")
@@ -98,9 +124,10 @@ def test_buscar_candidatos_com_escolha_erro_do_client_e_propagado():
 
 def test_excluir_lotes_vagas_por_processo_sem_config_gera_value_error():
     """Sem config, excluir lotes vagas por processo levanta ValueError."""
-    service = EscolhasApiService()
-    with override_settings(ESCOLHAS_API_URL=""), pytest.raises(ValueError):
-        service.excluir_lotes_vagas_por_processo("processo")
+    with override_settings(ESCOLHAS_API_URL=""):
+        service = EscolhasApiService()
+        with pytest.raises(ValueError):
+            service.excluir_lotes_vagas_por_processo("processo")
 
 
 @override_settings(ESCOLHAS_API_URL="http://ms-escolha")
@@ -129,8 +156,8 @@ def test_excluir_lotes_vagas_por_processo_sucesso_retorna_json():
         url_chamada == "http://ms-escolha/api/v1/vagas-escolas/por-processo/"
     )
     assert kwargs_chamada["params"] == {"processo_uuid": processo_uuid}
-    assert kwargs_chamada["headers"] == {"Accept": "application/json"}
-    assert kwargs_chamada["timeout"] == service.TIMEOUT_SEGUNDOS
+    assert kwargs_chamada["headers"] == service.headers
+    assert kwargs_chamada["timeout"] == service.timeout_seconds
 
 
 @override_settings(ESCOLHAS_API_URL="http://ms-escolha")
