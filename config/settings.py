@@ -180,7 +180,7 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.SessionAuthentication",
         "rest_framework.authentication.BasicAuthentication",
         "rest_framework_simplejwt.authentication.JWTAuthentication",
-       # "sigla_sdk.autenticacao.authentication.ApiKeyAuthentication",
+        # "sigla_sdk.autenticacao.authentication.ApiKeyAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         # 'rest_framework.permissions.IsAuthenticated',
