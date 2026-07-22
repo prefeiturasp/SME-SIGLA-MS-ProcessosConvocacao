@@ -14,6 +14,7 @@ from processos.constants import (
     ERROR_PROCESSO_JA_CANCELADO,
     ERROR_PROCESSO_JA_FINALIZADO,
     ERROR_PROCESSO_NAO_PODE_EDITAR,
+    TIPO_ESCOLHA_CHOICES,
 )
 from processos.models import ProcessoConvocacao
 from rest_framework import status
@@ -602,16 +603,13 @@ def test_endpoint_filtros_basico(
 
     # Verificar estrutura dos tipos de escolha
     tipos_escolha = resposta.data["tipos_escolha"]
-    assert len(tipos_escolha) == 3
+    tipos_esperados = dict(TIPO_ESCOLHA_CHOICES)
+    assert len(tipos_escolha) == len(tipos_esperados)
     for tipo in tipos_escolha:
         assert "value" in tipo
         assert "label" in tipo
-        assert tipo["value"] in ["NOVA_AUTORIZACAO", "REPOSICAO", "RECONVOCAO"]
-        assert tipo["label"] in [
-            "Nova Autorização",
-            "Reposição",
-            "Reconvocação",
-        ]
+        assert tipo["value"] in tipos_esperados
+        assert tipo["label"] == tipos_esperados[tipo["value"]]
 
 
 def test_endpoint_filtros_multiplos_processos(authenticated_client, usuario):
@@ -660,7 +658,7 @@ def test_endpoint_filtros_multiplos_processos(authenticated_client, usuario):
 
     # Verificar tipos de escolha
     tipos_escolha = resposta.data["tipos_escolha"]
-    assert len(tipos_escolha) == 3
+    assert len(tipos_escolha) == len(TIPO_ESCOLHA_CHOICES)
 
 
 def test_endpoint_filtros_concurso_duplicado(authenticated_client, usuario):
@@ -759,7 +757,7 @@ def test_endpoint_filtros_sem_dados(authenticated_client):
     assert len(resposta.data["cargos"]) == 0
 
     # Tipos de escolha devem sempre estar presentes (vêm dos choices)
-    assert len(resposta.data["tipos_escolha"]) == 3
+    assert len(resposta.data["tipos_escolha"]) == len(TIPO_ESCOLHA_CHOICES)
 
 
 def test_endpoint_filtros_tipos_escolha(authenticated_client):
@@ -771,14 +769,10 @@ def test_endpoint_filtros_tipos_escolha(authenticated_client):
     assert "tipos_escolha" in resposta.data
 
     tipos_escolha = resposta.data["tipos_escolha"]
-    assert len(tipos_escolha) == 3
 
     # Verificar que todos os tipos esperados estão presentes
-    tipos_esperados = {
-        "NOVA_AUTORIZACAO": "Nova Autorização",
-        "REPOSICAO": "Reposição",
-        "RECONVOCAO": "Reconvocação",
-    }
+    tipos_esperados = dict(TIPO_ESCOLHA_CHOICES)
+    assert len(tipos_escolha) == len(tipos_esperados)
 
     for tipo in tipos_escolha:
         assert tipo["value"] in tipos_esperados
