@@ -13,6 +13,7 @@ TIPO_ESCOLHA_CHOICES = [
     ("NOVA_AUTORIZACAO", "Nova Autorização"),
     ("REPOSICAO", "Reposição"),
     ("RECONVOCAO", "Reconvocação"),
+    ("MANDADO_JUDICIAL", "Mandado Judicial"),
 ]
 
 # Constantes para validação

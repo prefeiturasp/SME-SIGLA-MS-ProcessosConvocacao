@@ -14,6 +14,7 @@ from processos.constants import (
     ERROR_PROCESSO_JA_CANCELADO,
     ERROR_PROCESSO_JA_FINALIZADO,
     ERROR_PROCESSO_NAO_PODE_EDITAR,
+    TIPO_ESCOLHA_CHOICES,
 )
 from processos.models import ProcessoConvocacao
 from rest_framework import status
@@ -199,7 +200,6 @@ def test_processo_convocacao_exclusao(
     processo_convocacao,
 ):
     """Testa a exclusão lógica de um processo."""
-    # Para poder deletar, o status não pode ser EM_ANDAMENTO nem FINALIZADO
     processo_convocacao.status = "CANCELADO"
     processo_convocacao.save(update_fields=["status"])
 
@@ -223,7 +223,6 @@ def test_filtro_data_convocacao_inicio(
     """Testa filtro por data de convocação início."""
     url = reverse("processoconvocacao-list")
 
-    # Data de início antes da data de convocação do processo
     data_inicio = (
         processo_convocacao.data_convocacao - timedelta(days=5)
     ).strftime("%Y-%m-%d")
@@ -239,7 +238,6 @@ def test_filtro_data_convocacao_fim(authenticated_client, processo_convocacao):
     """Testa filtro por data de convocação fim."""
     url = reverse("processoconvocacao-list")
 
-    # Data de fim após a data de convocação do processo
     data_fim = (
         processo_convocacao.data_convocacao + timedelta(days=5)
     ).strftime("%Y-%m-%d")
@@ -255,7 +253,6 @@ def test_filtro_data_convocacao_intervalo(
     """Testa filtro por intervalo de datas de convocação."""
     url = reverse("processoconvocacao-list")
 
-    # Range que inclui a data de convocação do processo
     data_inicio = (
         processo_convocacao.data_convocacao - timedelta(days=5)
     ).strftime("%Y-%m-%d")
@@ -281,7 +278,6 @@ def test_filtro_cargo_uuid(
     """Testa filtro por cargo_uuid."""
     url = reverse("processoconvocacao-list")
 
-    # Usar o UUID do primeiro cargo
     cargo_uuid = cargos_processo[0].cargo_uuid
 
     resposta = authenticated_client.get(url, {"cargo_uuid": str(cargo_uuid)})
@@ -299,7 +295,6 @@ def test_filtro_data_invalida(authenticated_client):
     )
 
     assert resposta.status_code == status.HTTP_200_OK
-    # Deve retornar lista vazia devido ao tratamento de erro
     assert len(resposta.data["results"]) == 0
 
 
@@ -310,11 +305,9 @@ def test_filtro_cargo_uuid_invalido(authenticated_client):
     resposta = authenticated_client.get(url, {"cargo_uuid": "uuid-invalido"})
 
     assert resposta.status_code == status.HTTP_200_OK
-    # Deve retornar lista vazia devido ao tratamento de erro
     assert len(resposta.data["results"]) == 0
 
 
-# Testes para CargoProcessoViewSet
 def test_cargos_list_sucesso(
     authenticated_client, processo_convocacao, cargos_processo
 ):
@@ -570,7 +563,6 @@ def test_cargos_destroy_cargo_nao_encontrado(
     assert resposta.data["error"] == "Cargo não encontrado para este processo"
 
 
-# Testes para o endpoint /filtros/
 def test_endpoint_filtros_basico(
     authenticated_client, processo_convocacao, cargos_processo
 ):
@@ -583,7 +575,6 @@ def test_endpoint_filtros_basico(
     assert "cargos" in resposta.data
     assert "tipos_escolha" in resposta.data
 
-    # Verificar estrutura dos concursos
     concursos = resposta.data["concursos"]
     assert len(concursos) == 1
     assert "value" in concursos[0]
@@ -591,7 +582,6 @@ def test_endpoint_filtros_basico(
     assert concursos[0]["value"] == str(processo_convocacao.concurso_uuid)
     assert concursos[0]["label"] == processo_convocacao.concurso_nome
 
-    # Verificar estrutura dos cargos
     cargos = resposta.data["cargos"]
     assert len(cargos) == 2
     for cargo in cargos:
@@ -600,23 +590,18 @@ def test_endpoint_filtros_basico(
         assert cargo["value"] is not None
         assert cargo["label"] is not None
 
-    # Verificar estrutura dos tipos de escolha
     tipos_escolha = resposta.data["tipos_escolha"]
-    assert len(tipos_escolha) == 3
+    tipos_esperados = dict(TIPO_ESCOLHA_CHOICES)
+    assert len(tipos_escolha) == len(tipos_esperados)
     for tipo in tipos_escolha:
         assert "value" in tipo
         assert "label" in tipo
-        assert tipo["value"] in ["NOVA_AUTORIZACAO", "REPOSICAO", "RECONVOCAO"]
-        assert tipo["label"] in [
-            "Nova Autorização",
-            "Reposição",
-            "Reconvocação",
-        ]
+        assert tipo["value"] in tipos_esperados
+        assert tipo["label"] == tipos_esperados[tipo["value"]]
 
 
 def test_endpoint_filtros_multiplos_processos(authenticated_client, usuario):
     """Testa o endpoint /filtros/ com múltiplos processos."""
-    # Criar múltiplos processos com concursos diferentes
     processo1 = ProcessoConvocacao.objects.create(
         concurso_uuid=uuid.uuid4(),
         concurso_nome="Concurso A",
@@ -650,22 +635,19 @@ def test_endpoint_filtros_multiplos_processos(authenticated_client, usuario):
     assert resposta.status_code == status.HTTP_200_OK
     assert "tipos_escolha" in resposta.data
 
-    # Verificar que há 2 concursos únicos
     concursos = resposta.data["concursos"]
     assert len(concursos) == 2
 
-    # Verificar que há 2 cargos únicos
     cargos = resposta.data["cargos"]
     assert len(cargos) == 2
 
-    # Verificar tipos de escolha
     tipos_escolha = resposta.data["tipos_escolha"]
-    assert len(tipos_escolha) == 3
+    assert len(tipos_escolha) == len(TIPO_ESCOLHA_CHOICES)
 
 
 def test_endpoint_filtros_concurso_duplicado(authenticated_client, usuario):
     """Testa que concursos duplicados são removidos no endpoint /filtros/."""
-    # Criar dois processos com o mesmo concurso
+
     concurso_uuid = uuid.uuid4()
     concurso_nome = "Concurso Duplicado"
 
@@ -679,8 +661,8 @@ def test_endpoint_filtros_concurso_duplicado(authenticated_client, usuario):
     )
 
     ProcessoConvocacao.objects.create(
-        concurso_uuid=concurso_uuid,  # Mesmo UUID
-        concurso_nome=concurso_nome,  # Mesmo nome
+        concurso_uuid=concurso_uuid,  
+        concurso_nome=concurso_nome,  
         descricao="Descrição 2",
         tipo_escolha="NOVA_AUTORIZACAO",
         status="EM_ANDAMENTO",
@@ -692,7 +674,6 @@ def test_endpoint_filtros_concurso_duplicado(authenticated_client, usuario):
 
     assert resposta.status_code == status.HTTP_200_OK
 
-    # Deve haver apenas 1 concurso único
     concursos = resposta.data["concursos"]
     assert len(concursos) == 1
     assert concursos[0]["value"] == str(concurso_uuid)
@@ -701,7 +682,6 @@ def test_endpoint_filtros_concurso_duplicado(authenticated_client, usuario):
 
 def test_endpoint_filtros_cargo_duplicado(authenticated_client, usuario):
     """Testa que cargos com nomes duplicados são removidos no endpoint."""
-    # Criar dois processos
     processo1 = ProcessoConvocacao.objects.create(
         concurso_uuid=uuid.uuid4(),
         concurso_nome="Concurso 1",
@@ -720,7 +700,6 @@ def test_endpoint_filtros_cargo_duplicado(authenticated_client, usuario):
         data_convocacao=timezone.now() + timedelta(days=15),
     )
 
-    # Criar cargos com o mesmo nome em processos diferentes
     cargo_nome = "Analista"
 
     CargoProcesso.objects.create(
@@ -737,8 +716,6 @@ def test_endpoint_filtros_cargo_duplicado(authenticated_client, usuario):
     resposta = authenticated_client.get(url)
 
     assert resposta.status_code == status.HTTP_200_OK
-
-    # Deve haver apenas 1 cargo único (por nome)
     cargos = resposta.data["cargos"]
     assert len(cargos) == 1
     assert cargos[0]["label"] == cargo_nome
@@ -754,12 +731,10 @@ def test_endpoint_filtros_sem_dados(authenticated_client):
     assert "cargos" in resposta.data
     assert "tipos_escolha" in resposta.data
 
-    # Deve retornar listas vazias para concursos e cargos
     assert len(resposta.data["concursos"]) == 0
     assert len(resposta.data["cargos"]) == 0
 
-    # Tipos de escolha devem sempre estar presentes (vêm dos choices)
-    assert len(resposta.data["tipos_escolha"]) == 3
+    assert len(resposta.data["tipos_escolha"]) == len(TIPO_ESCOLHA_CHOICES)
 
 
 def test_endpoint_filtros_tipos_escolha(authenticated_client):
@@ -771,14 +746,9 @@ def test_endpoint_filtros_tipos_escolha(authenticated_client):
     assert "tipos_escolha" in resposta.data
 
     tipos_escolha = resposta.data["tipos_escolha"]
-    assert len(tipos_escolha) == 3
 
-    # Verificar que todos os tipos esperados estão presentes
-    tipos_esperados = {
-        "NOVA_AUTORIZACAO": "Nova Autorização",
-        "REPOSICAO": "Reposição",
-        "RECONVOCAO": "Reconvocação",
-    }
+    tipos_esperados = dict(TIPO_ESCOLHA_CHOICES)
+    assert len(tipos_escolha) == len(tipos_esperados)
 
     for tipo in tipos_escolha:
         assert tipo["value"] in tipos_esperados
@@ -787,7 +757,6 @@ def test_endpoint_filtros_tipos_escolha(authenticated_client):
         assert "label" in tipo
 
 
-# Testes para a action finalizar
 @patch("processos.api.views.EscolhasApiService.buscar_candidatos_com_escolha")
 def test_finalizar_sucesso_todos_com_escolha(
     mock_buscar, authenticated_client, processo_convocacao
@@ -1007,7 +976,6 @@ def test_finalizar_multiplos_cargos_um_pendente(
     assert resposta.data["detail"] == ERROR_CANDIDATOS_PENDENTES_ESCOLHA
 
 
-# Testes de Filtros e Ordenação
 def test_processo_convocacao_filtros(
     authenticated_client, processo_convocacao
 ):
@@ -1019,7 +987,6 @@ def test_processo_convocacao_filtros(
     assert resposta.status_code == status.HTTP_200_OK
     assert len(resposta.data["results"]) == 1
 
-    # Filtro por tipo_escolha
     resposta = authenticated_client.get(
         url, {"tipo_escolha": "NOVA_AUTORIZACAO"}
     )
@@ -1090,7 +1057,6 @@ def test_atualizar_passo_processo_finalizado(
     assert processo_convocacao.passo == 2
 
 
-# Testes de Busca
 def test_processo_convocacao_busca(authenticated_client, processo_convocacao):
     """Testa busca por texto nos processos."""
     url = reverse("processoconvocacao-list")
