@@ -10,8 +10,15 @@ from typing import Any
 from cargos.repository import CargoProcessoRepository
 from django.db.models import QuerySet
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework.request import Request
+from rest_framework.response import Response
+from rest_framework.serializers import BaseSerializer
+from sigla_sdk.context import get_correlation_id
+
 from processos.constants import (
-    CONCURSO_SITUACAO_EM_ANDAMENTO,
     ERROR_CANDIDATOS_PENDENTES_ESCOLHA,
     ERROR_PROCESSO_JA_CANCELADO,
     ERROR_PROCESSO_JA_FINALIZADO,
@@ -28,20 +35,12 @@ from processos.serializers import (
     ProcessoConvocacaoSerializer,
     ProcessoConvocacaoUpdateSerializer,
 )
-from processos.services import ConcursosApiService, EscolhasApiService
-from processos.services.exceptions import ConcursoServiceError
+from processos.services import EscolhasApiService
 from processos.services.processo_service import (
     ProcessoConvocacaoService,
     ProcessoServiceError,
 )
 from processos.utils import CustomPagination
-from rest_framework import status, viewsets
-from rest_framework.decorators import action
-from rest_framework.filters import OrderingFilter, SearchFilter
-from rest_framework.request import Request
-from rest_framework.response import Response
-from rest_framework.serializers import BaseSerializer
-from sigla_sdk.context import get_correlation_id
 
 logger = logging.getLogger(__name__)
 
@@ -115,24 +114,6 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
         elif self.action in ["update", "partial_update"]:
             return ProcessoConvocacaoUpdateSerializer
         return ProcessoConvocacaoSerializer
-
-    def perform_create(self, serializer: BaseSerializer) -> None:
-        """Salva o processo e sinaliza EM_ANDAMENTO para o concurso."""
-        processo = serializer.save()
-        try:
-            ConcursosApiService().atualizar_situacao(
-                concurso_uuid=str(processo.concurso_uuid),
-                situacao=CONCURSO_SITUACAO_EM_ANDAMENTO,
-            )
-        except ConcursoServiceError:
-            logger.exception(
-                "Falha ao atualizar situação do concurso para EM_ANDAMENTO",
-                extra={
-                    "concurso_uuid": str(processo.concurso_uuid),
-                    "processo_uuid": str(processo.uuid),
-                    "correlation_id": get_correlation_id(),
-                },
-            )
 
     def list(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         """Lista processos paginados ou em formato select."""
