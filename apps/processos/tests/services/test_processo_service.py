@@ -1,14 +1,16 @@
 """Módulo tests/services/test_processo_service."""
 
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 from processos.services.agenda_api_service import AgendaApiService
 from processos.services.candidatos_api_url import CandidatosApiService
+from processos.services.concursos_api_service import ConcursosApiService
 from processos.services.escolhas_service import EscolhasApiService
 from processos.services.exceptions import (
     AgendaServiceError,
     CandidatosServiceError,
+    ConcursoServiceError,
     EscolhasServiceError,
     ProcessoServiceError,
 )
@@ -38,7 +40,12 @@ def test_excluir_processo_e_dependencias_sucesso_chama_integracoes_e_inativa():
         escolhas_api=escolhas,
     )
 
-    service.excluir_processo_e_dependencias(processo=processo)
+    with patch(
+        "processos.services.processo_service.ProcessoConvocacaoRepository"
+        ".contar_ativos_por_concurso",
+        return_value=1,
+    ):
+        service.excluir_processo_e_dependencias(processo=processo)
 
     agenda.excluir_agendas_por_processo.assert_called_once_with(
         "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
@@ -128,3 +135,85 @@ def test_excluir_processo_e_dependencias_quando_escolhas_falha_retorna_processo_
     agenda.excluir_agendas_por_processo.assert_called_once()
     candidatos.desconvocar_por_processo.assert_called_once()
     processo.inativar.assert_not_called()
+
+
+def test_excluir_processo_sem_convocacoes_ativas_restantes_atualiza_concurso_para_completo():  # noqa: E501
+    """Reverte concurso para COMPLETO quando não sobra convocação ativa."""
+    agenda = Mock(spec=AgendaApiService)
+    candidatos = Mock(spec=CandidatosApiService)
+    escolhas = Mock(spec=EscolhasApiService)
+    concursos = Mock(spec=ConcursosApiService)
+    processo = _processo_mock("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+    processo.concurso_uuid = "cccccccc-cccc-cccc-cccc-cccccccccccc"
+
+    service = ProcessoConvocacaoService(
+        agenda_api=agenda,
+        candidatos_api=candidatos,
+        escolhas_api=escolhas,
+        concursos_api=concursos,
+    )
+
+    with patch(
+        "processos.services.processo_service.ProcessoConvocacaoRepository"
+        ".contar_ativos_por_concurso",
+        return_value=0,
+    ):
+        service.excluir_processo_e_dependencias(processo=processo)
+
+    concursos.atualizar_situacao.assert_called_once_with(
+        concurso_uuid="cccccccc-cccc-cccc-cccc-cccccccccccc",
+        situacao="COMPLETO",
+    )
+
+
+def test_excluir_processo_com_convocacoes_ativas_restantes_nao_atualiza_concurso():  # noqa: E501
+    """Não altera o concurso quando ainda há convocação ativa restante."""
+    agenda = Mock(spec=AgendaApiService)
+    candidatos = Mock(spec=CandidatosApiService)
+    escolhas = Mock(spec=EscolhasApiService)
+    concursos = Mock(spec=ConcursosApiService)
+    processo = _processo_mock()
+    processo.concurso_uuid = "cccccccc-cccc-cccc-cccc-cccccccccccc"
+
+    service = ProcessoConvocacaoService(
+        agenda_api=agenda,
+        candidatos_api=candidatos,
+        escolhas_api=escolhas,
+        concursos_api=concursos,
+    )
+
+    with patch(
+        "processos.services.processo_service.ProcessoConvocacaoRepository"
+        ".contar_ativos_por_concurso",
+        return_value=1,
+    ):
+        service.excluir_processo_e_dependencias(processo=processo)
+
+    concursos.atualizar_situacao.assert_not_called()
+
+
+def test_excluir_processo_quando_atualizar_situacao_concurso_falha_nao_propaga_erro():  # noqa: E501
+    """Falha ao atualizar situação do concurso não aborta a exclusão."""
+    agenda = Mock(spec=AgendaApiService)
+    candidatos = Mock(spec=CandidatosApiService)
+    escolhas = Mock(spec=EscolhasApiService)
+    concursos = Mock(spec=ConcursosApiService)
+    concursos.atualizar_situacao.side_effect = ConcursoServiceError("falhou")
+    processo = _processo_mock()
+    processo.concurso_uuid = "cccccccc-cccc-cccc-cccc-cccccccccccc"
+
+    service = ProcessoConvocacaoService(
+        agenda_api=agenda,
+        candidatos_api=candidatos,
+        escolhas_api=escolhas,
+        concursos_api=concursos,
+    )
+
+    with patch(
+        "processos.services.processo_service.ProcessoConvocacaoRepository"
+        ".contar_ativos_por_concurso",
+        return_value=0,
+    ):
+        service.excluir_processo_e_dependencias(processo=processo)
+
+    processo.inativar.assert_called_once_with()

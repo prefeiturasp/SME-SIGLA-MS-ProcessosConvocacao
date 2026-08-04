@@ -2,7 +2,7 @@
 
 import uuid
 from datetime import timedelta
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 from cargos.models import CargoProcesso
@@ -17,6 +17,7 @@ from processos.constants import (
     TIPO_ESCOLHA_CHOICES,
 )
 from processos.models import ProcessoConvocacao
+from processos.services.exceptions import ConcursoServiceError
 from rest_framework import status
 
 pytestmark = pytest.mark.django_db
@@ -157,6 +158,68 @@ def test_processo_convocacao_criacao(authenticated_client):
 
     processo = ProcessoConvocacao.objects.first()
     assert processo.concurso_nome == "Novo Concurso"
+
+
+def test_criar_processo_chama_atualizacao_situacao_concurso_em_andamento(
+    authenticated_client,
+):
+    """Verifica que criar processo dispara atualização de situação."""
+    url = reverse("processoconvocacao-list")
+    concurso_uuid_str = str(uuid.uuid4())
+    dados = {
+        "concurso_uuid": concurso_uuid_str,
+        "concurso_nome": "Novo Concurso",
+        "descricao": "Descrição do novo processo",
+        "tipo_escolha": "NOVA_AUTORIZACAO",
+        "status": "EM_ANDAMENTO",
+        "data_convocacao": (timezone.now() + timedelta(days=30)).isoformat(),
+        "data_corte_vagas": (timezone.now() + timedelta(days=5)).isoformat(),
+    }
+
+    with patch(
+        "processos.api.views.ConcursosApiService"
+    ) as mock_service_cls:
+        mock_service = Mock()
+        mock_service_cls.return_value = mock_service
+
+        resposta = authenticated_client.post(url, dados, format="json")
+
+    assert resposta.status_code == status.HTTP_201_CREATED
+    mock_service.atualizar_situacao.assert_called_once_with(
+        concurso_uuid=concurso_uuid_str, situacao="EM_ANDAMENTO"
+    )
+
+
+def test_criar_processo_nao_falha_quando_atualizacao_situacao_da_erro(
+    authenticated_client,
+):
+    """Verifica que falha na chamada a Concursos não impede a criação."""
+    url = reverse("processoconvocacao-list")
+    dados = {
+        "concurso_uuid": str(uuid.uuid4()),
+        "concurso_nome": "Novo Concurso 2",
+        "descricao": "Descrição do novo processo 2",
+        "tipo_escolha": "NOVA_AUTORIZACAO",
+        "status": "EM_ANDAMENTO",
+        "data_convocacao": (timezone.now() + timedelta(days=30)).isoformat(),
+        "data_corte_vagas": (timezone.now() + timedelta(days=5)).isoformat(),
+    }
+
+    with patch(
+        "processos.api.views.ConcursosApiService"
+    ) as mock_service_cls:
+        mock_service = Mock()
+        mock_service.atualizar_situacao.side_effect = ConcursoServiceError(
+            "falhou"
+        )
+        mock_service_cls.return_value = mock_service
+
+        resposta = authenticated_client.post(url, dados, format="json")
+
+    assert resposta.status_code == status.HTTP_201_CREATED
+    assert ProcessoConvocacao.objects.filter(
+        concurso_nome="Novo Concurso 2"
+    ).exists()
 
 
 def test_processo_convocacao_detalhe(
