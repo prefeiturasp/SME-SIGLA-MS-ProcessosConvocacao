@@ -132,3 +132,10 @@ class ProcessoConvocacaoRepository:
         CargoProcessoRepository.excluir_por_processo(processo)
         processo.esta_ativo = False
         cls.salvar(processo, campos_atualizacao=["esta_ativo"])
+
+    @classmethod
+    def contar_ativos_por_concurso(cls, concurso_uuid: str | UUID) -> int:
+        """Conta convocações ativas restantes para um concurso."""
+        return ProcessoConvocacao.objects.filter(
+            concurso_uuid=concurso_uuid, esta_ativo=True
+        ).count()

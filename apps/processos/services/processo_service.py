@@ -10,12 +10,16 @@ from sigla_sdk.context import get_correlation_id
 if TYPE_CHECKING:
     from processos.models import ProcessoConvocacao
 
+from processos.constants import CONCURSO_SITUACAO_COMPLETO
+from processos.repository import ProcessoConvocacaoRepository
 from processos.services.agenda_api_service import AgendaApiService
 from processos.services.candidatos_api_url import CandidatosApiService
+from processos.services.concursos_api_service import ConcursosApiService
 from processos.services.escolhas_service import EscolhasApiService
 from processos.services.exceptions import (
     AgendaServiceError,
     CandidatosServiceError,
+    ConcursoServiceError,
     EscolhasServiceError,
     ProcessoServiceError,
 )
@@ -32,6 +36,7 @@ class ProcessoConvocacaoService:
         agenda_api: AgendaApiService | None = None,
         candidatos_api: CandidatosApiService | None = None,
         escolhas_api: EscolhasApiService | None = None,
+        concursos_api: ConcursosApiService | None = None,
     ) -> None:
         """Inicializa a instância com dependências configuráveis.
 
@@ -40,6 +45,7 @@ class ProcessoConvocacaoService:
             agenda_api: Cliente do MS-Agenda (opcional).
             candidatos_api: Cliente do MS-Candidatos (opcional).
             escolhas_api: Cliente do MS-Escolhas (opcional).
+            concursos_api: Cliente do MS-Concursos (opcional).
 
         Raises:
             Nenhuma exceção específica documentada.
@@ -47,6 +53,7 @@ class ProcessoConvocacaoService:
         self._agenda = agenda_api or AgendaApiService()
         self._candidatos = candidatos_api or CandidatosApiService()
         self._escolhas = escolhas_api or EscolhasApiService()
+        self._concursos = concursos_api or ConcursosApiService()
 
     def excluir_processo_e_dependencias(
         self,
@@ -107,3 +114,22 @@ class ProcessoConvocacaoService:
             raise ProcessoServiceError(str(exc)) from exc
 
         processo.inativar()
+
+        restantes = ProcessoConvocacaoRepository.contar_ativos_por_concurso(
+            processo.concurso_uuid
+        )
+        if restantes == 0:
+            try:
+                self._concursos.atualizar_situacao(
+                    concurso_uuid=str(processo.concurso_uuid),
+                    situacao=CONCURSO_SITUACAO_COMPLETO,
+                )
+            except ConcursoServiceError:
+                logger.exception(
+                    "Falha ao atualizar situação do concurso para COMPLETO",
+                    extra={
+                        "concurso_uuid": str(processo.concurso_uuid),
+                        "processo_uuid": processo_uuid,
+                        "correlation_id": get_correlation_id(),
+                    },
+                )

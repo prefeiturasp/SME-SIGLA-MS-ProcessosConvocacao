@@ -9,6 +9,8 @@ from cargos.models import CargoProcesso
 from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils import timezone
+from rest_framework import status
+
 from processos.constants import (
     ERROR_CANDIDATOS_PENDENTES_ESCOLHA,
     ERROR_PROCESSO_JA_CANCELADO,
@@ -17,7 +19,6 @@ from processos.constants import (
     TIPO_ESCOLHA_CHOICES,
 )
 from processos.models import ProcessoConvocacao
-from rest_framework import status
 
 pytestmark = pytest.mark.django_db
 
@@ -647,7 +648,6 @@ def test_endpoint_filtros_multiplos_processos(authenticated_client, usuario):
 
 def test_endpoint_filtros_concurso_duplicado(authenticated_client, usuario):
     """Testa que concursos duplicados são removidos no endpoint /filtros/."""
-
     concurso_uuid = uuid.uuid4()
     concurso_nome = "Concurso Duplicado"
 
@@ -661,8 +661,8 @@ def test_endpoint_filtros_concurso_duplicado(authenticated_client, usuario):
     )
 
     ProcessoConvocacao.objects.create(
-        concurso_uuid=concurso_uuid,  
-        concurso_nome=concurso_nome,  
+        concurso_uuid=concurso_uuid,
+        concurso_nome=concurso_nome,
         descricao="Descrição 2",
         tipo_escolha="NOVA_AUTORIZACAO",
         status="EM_ANDAMENTO",

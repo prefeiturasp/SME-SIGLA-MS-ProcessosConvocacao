@@ -35,3 +35,6 @@ ERROR_CANDIDATOS_PENDENTES_ESCOLHA = (
     "Existem candidatos convocados que ainda não fizeram escolha."
 )
 ERROR_PROCESSO_NAO_PODE_EDITAR = "Processo finalizado não pode ser alterado."
+
+CONCURSO_SITUACAO_EM_ANDAMENTO = "EM_ANDAMENTO"
+CONCURSO_SITUACAO_COMPLETO = "COMPLETO"

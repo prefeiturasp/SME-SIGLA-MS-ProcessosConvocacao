@@ -10,6 +10,14 @@ from typing import Any
 from cargos.repository import CargoProcessoRepository
 from django.db.models import QuerySet
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework.request import Request
+from rest_framework.response import Response
+from rest_framework.serializers import BaseSerializer
+from sigla_sdk.context import get_correlation_id
+
 from processos.constants import (
     ERROR_CANDIDATOS_PENDENTES_ESCOLHA,
     ERROR_PROCESSO_JA_CANCELADO,
@@ -33,13 +41,6 @@ from processos.services.processo_service import (
     ProcessoServiceError,
 )
 from processos.utils import CustomPagination
-from rest_framework import status, viewsets
-from rest_framework.decorators import action
-from rest_framework.filters import OrderingFilter, SearchFilter
-from rest_framework.request import Request
-from rest_framework.response import Response
-from rest_framework.serializers import BaseSerializer
-from sigla_sdk.context import get_correlation_id
 
 logger = logging.getLogger(__name__)
 
