@@ -10,8 +10,9 @@ class ProcessosConfig(AppConfig):
     name = "processos"
 
     def ready(self) -> None:
-        """Importa Celery na inicialização do Django."""
+        """Importa Celery e signals na inicialização do Django."""
         try:  # noqa: SIM105
-            from config import celery_app  # noqa: F401
+            from config import celery_app 
         except Exception:
             pass
+        import processos.signals

@@ -301,6 +301,9 @@ AGENDA_API_KEY = os.environ.get("AGENDA_API_KEY", "api-key-agenda")
 ESCOLHAS_API_URL = os.environ.get("ESCOLHAS_API_URL", "").rstrip("/")
 ESCOLHAS_API_KEY = os.environ.get("ESCOLHAS_API_KEY", "api-key-escolhas")
 
+CONCURSOS_API_URL = os.environ.get("CONCURSOS_API_URL", "").rstrip("/")
+CONCURSOS_API_KEY = os.environ.get("CONCURSOS_API_KEY", "api-key-concursos")
+
 MS_URL = os.environ.get("MS_URL", "").rstrip("/")
 
 JWT_SIGNING_KEY = os.environ.get(

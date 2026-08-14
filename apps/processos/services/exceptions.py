@@ -9,6 +9,10 @@ class CandidatosServiceError(Exception):
     """Erro ao chamar o MS-Candidatos."""
 
 
+class ConcursoServiceError(Exception):
+    """Erro ao chamar o MS-Concursos."""
+
+
 class EscolhasServiceError(Exception):
     """Erro ao chamar o MS-Escolha."""
 
