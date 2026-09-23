@@ -48,7 +48,7 @@ def test_buscar_habilitados_por_processo_retorna_lista_quando_json_lista():
     API_KEY_HEADER="X-API-Key",
 )
 def test_buscar_habilitados_por_processo_envia_api_key():
-    """Verifica envio do header X-API-Key quando CANDIDATOS_API_KEY está configurada."""
+    """Verifica envio do header X-API-Key com CANDIDATOS_API_KEY."""
     service = CandidatosApiService()
     processo_uuid = "55555555-5555-5555-5555-555555555555"
 
@@ -209,3 +209,93 @@ def test_desconvocar_por_processo_excecao_do_client_gera_erro():
             service.desconvocar_por_processo("uuid")
 
     assert "Falha ao conectar no MS-Candidatos" in str(exc.value)
+
+
+def test_buscar_habilitados_por_processos_sem_config_retorna_vazio():
+    """Sem config, retorna dict vazio."""
+    with override_settings(CANDIDATOS_API_URL=""):
+        service = CandidatosApiService()
+        assert (
+            service.buscar_habilitados_por_processos_e_tipo_vaga(["uuid"])
+            == {}
+        )
+
+
+@override_settings(CANDIDATOS_API_URL="http://ms-candidatos")
+def test_buscar_habilitados_por_processos_e_tipo_vaga_sucesso():
+    """POST por-processos-e-tipo-vaga retorna o JSON do MS-Candidatos."""
+    service = CandidatosApiService()
+    processos_uuids = [
+        "11111111-1111-1111-1111-111111111111",
+        "22222222-2222-2222-2222-222222222222",
+    ]
+    payload_esperado = {
+        "processo_uuids": processos_uuids,
+    }
+    resposta_json = {
+        processos_uuids[0]: {
+            "GERAL": {"total": 1, "candidatos_uuids": ["a"]},
+            "NNA": {"total": 0, "candidatos_uuids": []},
+            "PCD": {"total": 0, "candidatos_uuids": []},
+        }
+    }
+
+    resposta = Mock()
+    resposta.raise_for_status.return_value = None
+    resposta.content = b'{"ok": true}'
+    resposta.json.return_value = resposta_json
+
+    with patch(
+        "processos.services.candidatos_api_url.http_client.post",
+        return_value=resposta,
+    ) as mock_post:
+        resultado = service.buscar_habilitados_por_processos_e_tipo_vaga(
+            processos_uuids
+        )
+
+    assert resultado == resposta_json
+    mock_post.assert_called_once()
+    url_chamada = mock_post.call_args[0][0]
+    kwargs_chamada = mock_post.call_args.kwargs
+    assert (
+        url_chamada
+        == "http://ms-candidatos/api/v1/habilitados/por-processos-e-tipo-vaga/"
+    )
+    assert kwargs_chamada["json"] == payload_esperado
+    assert kwargs_chamada["headers"] == service.headers
+    assert kwargs_chamada["timeout"] == service.timeout_seconds
+
+
+@override_settings(CANDIDATOS_API_URL="http://ms-candidatos")
+def test_buscar_habilitados_por_processos_e_tipo_vaga_json_nao_dict_retorna_vazio():  # noqa: E501
+    """Resposta que não é dict vira dict vazio."""
+    service = CandidatosApiService()
+
+    resposta = Mock()
+    resposta.raise_for_status.return_value = None
+    resposta.content = b"[]"
+    resposta.json.return_value = []
+
+    with patch(
+        "processos.services.candidatos_api_url.http_client.post",
+        return_value=resposta,
+    ):
+        assert (
+            service.buscar_habilitados_por_processos_e_tipo_vaga(["uuid"])
+            == {}
+        )
+
+
+@override_settings(CANDIDATOS_API_URL="http://ms-candidatos")
+def test_buscar_habilitados_por_processos_erro_gera_service_error():
+    """Falha HTTP vira CandidatosServiceError."""
+    service = CandidatosApiService()
+
+    with patch(  # noqa: SIM117
+        "processos.services.candidatos_api_url.http_client.post",
+        side_effect=Exception("boom"),
+    ):
+        with pytest.raises(CandidatosServiceError) as exc:
+            service.buscar_habilitados_por_processos_e_tipo_vaga(["uuid"])
+
+    assert "Falha ao buscar habilitados no MS-Candidatos" in str(exc.value)

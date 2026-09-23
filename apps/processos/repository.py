@@ -139,3 +139,28 @@ class ProcessoConvocacaoRepository:
         return ProcessoConvocacao.objects.filter(
             concurso_uuid=concurso_uuid, esta_ativo=True
         ).count()
+
+    @classmethod
+    def buscar_por_uuids(
+        cls, processo_uuids: list[UUID | str]
+    ) -> list[ProcessoConvocacao]:
+        """Busca processos ativos pelos UUIDs informados.
+
+        Mantém a ordem dos UUIDs recebidos quando possível.
+
+        Args:
+            processo_uuids: Lista de UUIDs de processos.
+
+        Returns:
+            Lista de ``ProcessoConvocacao`` encontrados e ativos.
+        """
+        if not processo_uuids:
+            return []
+        uuids_str = [str(pid) for pid in processo_uuids]
+        processos = {
+            str(p.uuid): p
+            for p in ProcessoConvocacao.objects.filter(
+                uuid__in=uuids_str, esta_ativo=True
+            )
+        }
+        return [processos[pid] for pid in uuids_str if pid in processos]

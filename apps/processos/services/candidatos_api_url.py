@@ -63,7 +63,6 @@ class CandidatosApiService:
                 "processo_uuid": processo_uuid,
                 "correlation_id": get_correlation_id(),
                 "url": url,
-                "headers": self.headers.keys(),
                 "method": "GET",
             },
         )
@@ -88,7 +87,6 @@ class CandidatosApiService:
                 "processo_uuid": processo_uuid,
                 "correlation_id": get_correlation_id(),
                 "url": url,
-                "headers": self.headers.keys(),
                 "method": "GET",
                 "data": str(dados)[:200],
             },
@@ -115,7 +113,6 @@ class CandidatosApiService:
                 "method": "PATCH",
                 "url": url,
                 "payload": corpo_requisicao,
-                "headers": self.headers.keys(),
                 "processo_uuid": str(processo_uuid),
             },
         )
@@ -142,10 +139,56 @@ class CandidatosApiService:
                 "method": "PATCH",
                 "url": url,
                 "payload": corpo_requisicao,
-                "headers": self.headers.keys(),
                 "processo_uuid": str(processo_uuid),
                 "status_code": resposta.status_code,
                 "response": resposta.json(),
             },
         )
         return resposta.json() if resposta.content else {}
+
+    def buscar_habilitados_por_processos_e_tipo_vaga(
+        self, processos_uuids: list[str]
+    ) -> dict[str, Any]:
+        """POST /api/v1/habilitados/por-processos-e-tipo-vaga/."""
+        if not self.base_url:
+            logger.warning(
+                "CANDIDATOS_API_URL não configurado; retornando dict vazio."
+            )
+            return {}
+
+        url = (
+            f"{self.base_url}"
+            f"{self.CAMINHO_HABILITADOS.rstrip('/')}/por-processos-e-tipo-vaga/"
+        )
+        payload = {"processo_uuids": [str(pid) for pid in processos_uuids]}
+        logger.info(
+            "Buscando habilitados por processos e tipo de vaga",
+            extra={
+                "correlation_id": get_correlation_id(),
+                "method": "POST",
+                "url": url,
+                "payload": payload,
+            },
+        )
+        try:
+            resposta = http_client.post(
+                url,
+                json=payload,
+                headers=self.headers,
+                timeout=self.timeout_seconds,
+            )
+            resposta.raise_for_status()
+        except Exception as exc:
+            logger.exception(
+                "Erro ao buscar habilitados por processos "
+                "no MS-Candidatos: %s",
+                exc,
+            )
+            raise CandidatosServiceError(
+                f"Falha ao buscar habilitados no MS-Candidatos: {str(exc)}"
+            ) from exc
+
+        dados = resposta.json() if resposta.content else {}
+        if not isinstance(dados, dict):
+            return {}
+        return dados

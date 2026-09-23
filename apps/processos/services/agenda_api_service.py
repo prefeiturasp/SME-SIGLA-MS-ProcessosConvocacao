@@ -37,7 +37,6 @@ class AgendaApiService:
                 "method": "DELETE",
                 "url": url,
                 "params": parametros,
-                "headers": self.headers.keys(),
                 "processo_uuid": processo_uuid,
             },
         )
