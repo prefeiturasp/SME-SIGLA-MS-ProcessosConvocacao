@@ -12,4 +12,4 @@ redis==5.2.1
 python-json-logger==4.0.0
 djangorestframework_simplejwt==5.5.1
 elastic-apm>=6.0,<7
-git+https://github.com/prefeiturasp/SME-SIGLA-SDK-Microsservico.git@1.1.0#egg=sigla-sdk
+git+https://github.com/prefeiturasp/SME-SIGLA-SDK-Microsservico.git@1.1.1#egg=sigla-sdk
