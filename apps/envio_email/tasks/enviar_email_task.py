@@ -44,12 +44,9 @@ def enviar_email_candidato_task(
     texto_plano = strip_tags(conteudo) if conteudo else ""
 
     logger.info(
-        "Enviando e-mail",
-        extra={
-            "email": email,
-            "candidato_uuid": str(candidato_uuid),
-            "correlation_id": correlation_id,
-        },
+        "Enviando e-mail | "
+        f"correlation_id={correlation_id} email={email} "
+        f"candidato_uuid={candidato_uuid}"
     )
     if "example.com" not in email:
         try:

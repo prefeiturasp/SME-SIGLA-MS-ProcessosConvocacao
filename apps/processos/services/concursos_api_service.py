@@ -32,14 +32,10 @@ class ConcursosApiService:
         )
         payload = {"situacao": situacao}
         logger.info(
-            "Atualizando situação do concurso no MS-Concursos",
-            extra={
-                "correlation_id": get_correlation_id(),
-                "method": "PATCH",
-                "url": url,
-                "concurso_uuid": concurso_uuid,
-                "situacao": situacao,
-            },
+            "Atualizando situação do concurso no MS-Concursos | "
+            f"correlation_id={get_correlation_id()} method=PATCH "
+            f"url={url} concurso_uuid={concurso_uuid} "
+            f"situacao={situacao}"
         )
         try:
             resposta = http_client.patch(
@@ -59,12 +55,9 @@ class ConcursosApiService:
                 f"ao atualizar situação: {resposta.text}"
             )
         logger.info(
-            "Situação do concurso atualizada",
-            extra={
-                "correlation_id": get_correlation_id(),
-                "concurso_uuid": concurso_uuid,
-                "situacao": situacao,
-                "status_code": resposta.status_code,
-            },
+            "Situação do concurso atualizada | "
+            f"correlation_id={get_correlation_id()} "
+            f"concurso_uuid={concurso_uuid} situacao={situacao} "
+            f"status_code={resposta.status_code}"
         )
         return resposta.json() if resposta.content else {}

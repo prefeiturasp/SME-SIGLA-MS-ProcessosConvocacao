@@ -124,14 +124,10 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
     def list(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         """Lista processos paginados ou em formato select."""
         logger.info(
-            "Iniciando lista de processos de convocação",
-            extra={
-                "params": request.query_params,
-                "correlation_id": get_correlation_id(),
-                "user": request.user,
-                "path": request.path,
-                "method": request.method,
-            },
+            "Iniciando lista de processos de convocação | "
+            f"correlation_id={get_correlation_id()} "
+            f"method={request.method} path={request.path} "
+            f"user={request.user} params={request.query_params}"
         )
         queryset = self.filter_queryset(self.get_queryset())
         if request.query_params.get("formato") == "select":
@@ -200,14 +196,10 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
             )
 
         logger.info(
-            "Iniciando histórico de candidatos por convocação",
-            extra={
-                "processo_uuids": processos_uuids,
-                "correlation_id": get_correlation_id(),
-                "user": request.user,
-                "path": request.path,
-                "method": request.method,
-            },
+            "Iniciando histórico de candidatos por convocação | "
+            f"correlation_id={get_correlation_id()} "
+            f"method={request.method} path={request.path} "
+            f"user={request.user} processo_uuids={processos_uuids}"
         )
         try:
             service = HistoricoCandidatosService()
@@ -236,15 +228,11 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
         """Finaliza processo após validar escolhas no MS-Escolhas."""
         processo = self.get_object()
         logger.info(
-            "Iniciando finalização de processo de convocação",
-            extra={
-                "processo_uuid": processo.uuid,
-                "processo_status": processo.status,
-                "correlation_id": get_correlation_id(),
-                "user": request.user,
-                "path": request.path,
-                "method": request.method,
-            },
+            "Iniciando finalização de processo de convocação | "
+            f"correlation_id={get_correlation_id()} "
+            f"method={request.method} path={request.path} "
+            f"user={request.user} processo_uuid={processo.uuid} "
+            f"processo_status={processo.status}"
         )
 
         if processo.status == STATUS_FINALIZADO:
@@ -292,14 +280,12 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
         pendentes = habilitados_uuids - com_escolha
         if pendentes:
             logger.info(
-                "Candidatos pendentes de escolha",
-                extra={
-                    "processo_uuid": processo.uuid,
-                    "correlation_id": get_correlation_id(),
-                    "pendentes": len(pendentes),
-                    "habilitados_uuids": len(habilitados_uuids),
-                    "com_escolha": len(com_escolha),
-                },
+                "Candidatos pendentes de escolha | "
+                f"correlation_id={get_correlation_id()} "
+                f"processo_uuid={processo.uuid} "
+                f"pendentes={len(pendentes)} "
+                f"habilitados_uuids={len(habilitados_uuids)} "
+                f"com_escolha={len(com_escolha)}"
             )
             return Response(
                 {"detail": ERROR_CANDIDATOS_PENDENTES_ESCOLHA},

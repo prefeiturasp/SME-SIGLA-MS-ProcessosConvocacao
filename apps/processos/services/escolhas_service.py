@@ -53,14 +53,10 @@ class EscolhasApiService:
         url = f"{self.base_url}{self.CAMINHO_ESCOLHAS.rstrip('/')}/?{consulta}"
 
         logger.info(
-            "Buscando candidatos com escolha",
-            extra={
-                "concurso_uuid": concurso_uuid,
-                "correlation_id": get_correlation_id(),
-                "url": url,
-                "params": parametros,
-                "method": "GET",
-            },
+            "Buscando candidatos com escolha | "
+            f"concurso_uuid={concurso_uuid} "
+            f"correlation_id={get_correlation_id()} "
+            f"method=GET url={url} params={parametros}"
         )
         try:
             resposta = http_client.get(
@@ -97,14 +93,10 @@ class EscolhasApiService:
             if candidato_uuid is not None:
                 candidato_uuids.append(str(candidato_uuid))
         logger.info(
-            "Candidatos com escolha encontrados",
-            extra={
-                "concurso_uuid": concurso_uuid,
-                "correlation_id": get_correlation_id(),
-                "url": url,
-                "params": parametros,
-                "method": "GET",
-            },
+            "Candidatos com escolha encontrados | "
+            f"concurso_uuid={concurso_uuid} "
+            f"correlation_id={get_correlation_id()} "
+            f"method=GET url={url} params={parametros}"
         )
         return candidato_uuids
 
@@ -116,14 +108,10 @@ class EscolhasApiService:
         url = f"{self.base_url}/api/v1/vagas-escolas/por-processo/"
         parametros = {"processo_uuid": processo_uuid}
         logger.info(
-            "Excluindo lotes de vagas no MS-Escolha",
-            extra={
-                "correlation_id": get_correlation_id(),
-                "method": "DELETE",
-                "url": url,
-                "params": parametros,
-                "processo_uuid": processo_uuid,
-            },
+            "Excluindo lotes de vagas no MS-Escolha | "
+            f"correlation_id={get_correlation_id()} method=DELETE "
+            f"url={url} params={parametros} "
+            f"processo_uuid={processo_uuid}"
         )
         try:
             resposta = http_client.delete(
@@ -142,16 +130,12 @@ class EscolhasApiService:
                 f"MS-Escolha retornou status {resposta.status_code} ao excluir lotes de vagas: {resposta.text}"  # noqa: E501
             )
         logger.info(
-            "Lotes de vagas excluídos por processo",
-            extra={
-                "correlation_id": get_correlation_id(),
-                "processo_uuid": processo_uuid,
-                "status_code": resposta.status_code,
-                "response": resposta.json(),
-                "method": "DELETE",
-                "url": url,
-                "params": parametros,
-            },
+            "Lotes de vagas excluídos por processo | "
+            f"correlation_id={get_correlation_id()} method=DELETE "
+            f"url={url} params={parametros} "
+            f"processo_uuid={processo_uuid} "
+            f"status_code={resposta.status_code} "
+            f"response={resposta.json()}"
         )
         return resposta.json() if resposta.content else {}
 
@@ -171,13 +155,9 @@ class EscolhasApiService:
         )
         payload = {"processo_uuids": [str(pid) for pid in processos_uuids]}
         logger.info(
-            "Buscando escolhas por convocação",
-            extra={
-                "correlation_id": get_correlation_id(),
-                "method": "POST",
-                "url": url,
-                "payload": payload,
-            },
+            "Buscando escolhas por convocação | "
+            f"correlation_id={get_correlation_id()} method=POST "
+            f"url={url} payload={payload}"
         )
         try:
             resposta = http_client.post(

@@ -58,13 +58,9 @@ class CandidatosApiService:
 
         url = self._url_habilitados_por_processo(processo_uuid)
         logger.info(
-            "Buscando habilitados por processo",
-            extra={
-                "processo_uuid": processo_uuid,
-                "correlation_id": get_correlation_id(),
-                "url": url,
-                "method": "GET",
-            },
+            "Buscando habilitados por processo | "
+            f"correlation_id={get_correlation_id()} method=GET "
+            f"url={url} processo_uuid={processo_uuid}"
         )
         try:
             resposta = http_client.get(
@@ -82,14 +78,10 @@ class CandidatosApiService:
             raise
         dados = resposta.json()
         logger.info(
-            "Habilitados encontrados",
-            extra={
-                "processo_uuid": processo_uuid,
-                "correlation_id": get_correlation_id(),
-                "url": url,
-                "method": "GET",
-                "data": str(dados)[:200],
-            },
+            "Habilitados encontrados | "
+            f"correlation_id={get_correlation_id()} method=GET "
+            f"url={url} processo_uuid={processo_uuid} "
+            f"data={str(dados)[:200]}"
         )
         if isinstance(dados, list):
             return dados
@@ -107,14 +99,10 @@ class CandidatosApiService:
         url = f"{self.base_url}/api/v1/habilitados/desconvocar/"
         corpo_requisicao = {"processo_uuid": str(processo_uuid)}
         logger.info(
-            "Desconvocando candidatos no MS-Candidatos",
-            extra={
-                "correlation_id": get_correlation_id(),
-                "method": "PATCH",
-                "url": url,
-                "payload": corpo_requisicao,
-                "processo_uuid": str(processo_uuid),
-            },
+            "Desconvocando candidatos no MS-Candidatos | "
+            f"correlation_id={get_correlation_id()} method=PATCH "
+            f"url={url} processo_uuid={processo_uuid} "
+            f"payload={corpo_requisicao}"
         )
         try:
             resposta = http_client.patch(
@@ -133,16 +121,12 @@ class CandidatosApiService:
                 f"MS-Candidatos retornou status {resposta.status_code} ao desconvocar: {resposta.text}"  # noqa: E501
             )
         logger.info(
-            "Candidatos desconvocados",
-            extra={
-                "correlation_id": get_correlation_id(),
-                "method": "PATCH",
-                "url": url,
-                "payload": corpo_requisicao,
-                "processo_uuid": str(processo_uuid),
-                "status_code": resposta.status_code,
-                "response": resposta.json(),
-            },
+            "Candidatos desconvocados | "
+            f"correlation_id={get_correlation_id()} method=PATCH "
+            f"url={url} processo_uuid={processo_uuid} "
+            f"status_code={resposta.status_code} "
+            f"payload={corpo_requisicao} "
+            f"response={resposta.json()}"
         )
         return resposta.json() if resposta.content else {}
 
@@ -162,13 +146,9 @@ class CandidatosApiService:
         )
         payload = {"processo_uuids": [str(pid) for pid in processos_uuids]}
         logger.info(
-            "Buscando habilitados por processos e tipo de vaga",
-            extra={
-                "correlation_id": get_correlation_id(),
-                "method": "POST",
-                "url": url,
-                "payload": payload,
-            },
+            "Buscando habilitados por processos e tipo de vaga | "
+            f"correlation_id={get_correlation_id()} method=POST "
+            f"url={url} payload={payload}"
         )
         try:
             resposta = http_client.post(

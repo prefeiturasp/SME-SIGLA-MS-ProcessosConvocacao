@@ -98,11 +98,9 @@ class HistoricoCandidatosService:
 
         uuids_encontrados = [str(p.uuid) for p in processos]
         logger.info(
-            "Montando histórico de candidatos por convocação",
-            extra={
-                "correlation_id": get_correlation_id(),
-                "processo_uuids": uuids_encontrados,
-            },
+            "Montando histórico de candidatos por convocação | "
+            f"correlation_id={get_correlation_id()} "
+            f"processo_uuids={uuids_encontrados}"
         )
 
         habilitados_por_processo = (
