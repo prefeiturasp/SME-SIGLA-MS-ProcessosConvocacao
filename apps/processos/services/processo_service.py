@@ -78,12 +78,9 @@ class ProcessoConvocacaoService:
             self._agenda.excluir_agendas_por_processo(processo_uuid)
         except AgendaServiceError as exc:
             logger.exception(
-                "Falha ao excluir agendas do processo",
-                extra={
-                    "processo_uuid": processo_uuid,
-                    "correlation_id": get_correlation_id(),
-                    "error": str(exc),
-                },
+                "Falha ao excluir agendas do processo | "
+                f"correlation_id={get_correlation_id()} "
+                f"processo_uuid={processo_uuid} error={exc}"
             )
             raise ProcessoServiceError(str(exc)) from exc
 
@@ -93,11 +90,9 @@ class ProcessoConvocacaoService:
             )
         except CandidatosServiceError as exc:
             logger.exception(
-                "Falha ao desconvocar candidatos do processo",
-                extra={
-                    "processo_uuid": processo_uuid,
-                    "correlation_id": get_correlation_id(),
-                },
+                "Falha ao desconvocar candidatos do processo | "
+                f"correlation_id={get_correlation_id()} "
+                f"processo_uuid={processo_uuid}"
             )
             raise ProcessoServiceError(str(exc)) from exc
 
@@ -105,11 +100,9 @@ class ProcessoConvocacaoService:
             self._escolhas.excluir_lotes_vagas_por_processo(processo_uuid)
         except EscolhasServiceError as exc:
             logger.exception(
-                "Falha ao excluir lotes de vagas do processo",
-                extra={
-                    "processo_uuid": processo_uuid,
-                    "correlation_id": get_correlation_id(),
-                },
+                "Falha ao excluir lotes de vagas do processo | "
+                f"correlation_id={get_correlation_id()} "
+                f"processo_uuid={processo_uuid}"
             )
             raise ProcessoServiceError(str(exc)) from exc
 
@@ -126,10 +119,8 @@ class ProcessoConvocacaoService:
                 )
             except ConcursoServiceError:
                 logger.exception(
-                    "Falha ao atualizar situação do concurso para COMPLETO",
-                    extra={
-                        "concurso_uuid": str(processo.concurso_uuid),
-                        "processo_uuid": processo_uuid,
-                        "correlation_id": get_correlation_id(),
-                    },
+                    "Falha ao atualizar situação do concurso para COMPLETO | "
+                    f"correlation_id={get_correlation_id()} "
+                    f"concurso_uuid={processo.concurso_uuid} "
+                    f"processo_uuid={processo_uuid}"
                 )

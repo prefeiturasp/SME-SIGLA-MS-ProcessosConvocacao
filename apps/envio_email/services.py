@@ -148,13 +148,10 @@ def iniciar_processamento_envio(
         Nenhuma exceção específica documentada.
     """
     logger.info(
-        "Iniciando processamento de envio de e-mail",
-        extra={
-            "processo_uuid": str(processo_uuid),
-            "processo_nome": processo_nome,
-            "tipo": tipo,
-            "correlation_id": get_correlation_id(),
-        },
+        "Iniciando processamento de envio de e-mail | "
+        f"correlation_id={get_correlation_id()} tipo={tipo} "
+        f"processo_uuid={processo_uuid} "
+        f"processo_nome={processo_nome}"
     )
     processo_uuid_str = str(processo_uuid)
     assunto = _resolver_assunto_envio(tipo, assunto)
@@ -204,16 +201,12 @@ def iniciar_processamento_envio(
         )
 
         logger.info(
-            "Adicionando candidato na fila",
-            extra={
-                "envio_email_uuid": str(envio["uuid"]),
-                "processo_uuid": processo_uuid_str,
-                "processo_nome": processo_nome,
-                "correlation_id": get_correlation_id(),
-                "nome": nome,
-                "rf": rf,
-                "email": email,
-            },
+            "Adicionando candidato na fila | "
+            f"correlation_id={get_correlation_id()} "
+            f"envio_email_uuid={envio['uuid']} "
+            f"processo_uuid={processo_uuid_str} "
+            f"processo_nome={processo_nome} "
+            f"nome={nome} rf={rf} email={email}"
         )
 
         from config.celery import app as celery_app

@@ -7,12 +7,11 @@ from typing import Any
 
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from sigla_sdk.context import get_correlation_id
-
 from processos.constants import CONCURSO_SITUACAO_EM_ANDAMENTO
 from processos.models import ProcessoConvocacao
 from processos.services import ConcursosApiService
 from processos.services.exceptions import ConcursoServiceError
+from sigla_sdk.context import get_correlation_id
 
 logger = logging.getLogger(__name__)
 
@@ -31,10 +30,8 @@ def processo_convocacao_post_save(
         )
     except ConcursoServiceError:
         logger.exception(
-            "Falha ao atualizar situação do concurso para EM_ANDAMENTO",
-            extra={
-                "concurso_uuid": str(instance.concurso_uuid),
-                "processo_uuid": str(instance.uuid),
-                "correlation_id": get_correlation_id(),
-            },
+            "Falha ao atualizar situação do concurso para EM_ANDAMENTO | "
+            f"correlation_id={get_correlation_id()} "
+            f"concurso_uuid={instance.concurso_uuid} "
+            f"processo_uuid={instance.uuid}"
         )
