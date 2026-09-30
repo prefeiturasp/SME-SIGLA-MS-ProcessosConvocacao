@@ -54,7 +54,7 @@ def test_buscar_candidatos_com_escolha_json_lista_mapeia_candidato_uuid():
     API_KEY_HEADER="X-API-Key",
 )
 def test_buscar_candidatos_com_escolha_envia_api_key():
-    """Verifica envio do header X-API-Key quando ESCOLHAS_API_KEY está configurada."""
+    """Verifica envio do header X-API-Key com ESCOLHAS_API_KEY."""
     service = EscolhasApiService()
     concurso_uuid = "cccccccc-cccc-cccc-cccc-cccccccccccc"
 
@@ -70,6 +70,7 @@ def test_buscar_candidatos_com_escolha_envia_api_key():
 
     assert mock_get.call_args.kwargs["headers"] == {
         "Accept": "application/json",
+        "Content-Type": "application/json",
         "X-API-Key": "test-key",
     }
 
@@ -211,3 +212,79 @@ def test_excluir_lotes_vagas_por_processo_excecao_do_client_gera_erro():
             service.excluir_lotes_vagas_por_processo("processo")
 
     assert "Falha ao conectar no MS-Escolha" in str(exc.value)
+
+
+def test_buscar_escolhas_por_convocacao_sem_config_retorna_vazio():
+    """Sem config, retorna dict vazio."""
+    with override_settings(ESCOLHAS_API_URL=""):
+        service = EscolhasApiService()
+        assert service.buscar_escolhas_por_convocacao(["uuid"]) == {}
+
+
+@override_settings(ESCOLHAS_API_URL="http://ms-escolha")
+def test_buscar_escolhas_por_convocacao_sucesso():
+    """POST busca-por-convocacao retorna o JSON do MS-Escolha."""
+    service = EscolhasApiService()
+    processos_uuids = ["aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"]
+    resposta_json = {
+        processos_uuids[0]: {
+            "escolha": {"total": 1, "candidatos_uuids": ["c1"]},
+            "nao-escolha": {"total": 0, "candidatos_uuids": []},
+            "reconvocacao": {"total": 0, "candidatos_uuids": []},
+        }
+    }
+
+    resposta = Mock()
+    resposta.raise_for_status.return_value = None
+    resposta.content = b'{"ok": true}'
+    resposta.json.return_value = resposta_json
+
+    with patch(
+        "processos.services.escolhas_service.http_client.post",
+        return_value=resposta,
+    ) as mock_post:
+        resultado = service.buscar_escolhas_por_convocacao(processos_uuids)
+
+    assert resultado == resposta_json
+    mock_post.assert_called_once()
+    url_chamada = mock_post.call_args[0][0]
+    kwargs_chamada = mock_post.call_args.kwargs
+    assert (
+        url_chamada
+        == "http://ms-escolha/api/v1/escolhas/busca-por-convocacao/"
+    )
+    assert kwargs_chamada["json"] == {"processo_uuids": processos_uuids}
+    assert kwargs_chamada["headers"] == service.headers
+    assert kwargs_chamada["timeout"] == service.timeout_seconds
+
+
+@override_settings(ESCOLHAS_API_URL="http://ms-escolha")
+def test_buscar_escolhas_por_convocacao_json_nao_dict_retorna_vazio():
+    """Resposta que não é dict vira dict vazio."""
+    service = EscolhasApiService()
+
+    resposta = Mock()
+    resposta.raise_for_status.return_value = None
+    resposta.content = b"[]"
+    resposta.json.return_value = []
+
+    with patch(
+        "processos.services.escolhas_service.http_client.post",
+        return_value=resposta,
+    ):
+        assert service.buscar_escolhas_por_convocacao(["uuid"]) == {}
+
+
+@override_settings(ESCOLHAS_API_URL="http://ms-escolha")
+def test_buscar_escolhas_por_convocacao_erro_gera_service_error():
+    """Falha HTTP vira EscolhasServiceError."""
+    service = EscolhasApiService()
+
+    with patch(  # noqa: SIM117
+        "processos.services.escolhas_service.http_client.post",
+        side_effect=Exception("boom"),
+    ):
+        with pytest.raises(EscolhasServiceError) as exc:
+            service.buscar_escolhas_por_convocacao(["uuid"])
+
+    assert "Falha ao buscar escolhas no MS-Escolha" in str(exc.value)

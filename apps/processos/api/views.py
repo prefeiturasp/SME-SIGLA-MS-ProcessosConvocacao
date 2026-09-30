@@ -10,14 +10,6 @@ from typing import Any
 from cargos.repository import CargoProcessoRepository
 from django.db.models import QuerySet
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import status, viewsets
-from rest_framework.decorators import action
-from rest_framework.filters import OrderingFilter, SearchFilter
-from rest_framework.request import Request
-from rest_framework.response import Response
-from rest_framework.serializers import BaseSerializer
-from sigla_sdk.context import get_correlation_id
-
 from processos.constants import (
     ERROR_CANDIDATOS_PENDENTES_ESCOLHA,
     ERROR_PROCESSO_JA_CANCELADO,
@@ -36,11 +28,25 @@ from processos.serializers import (
     ProcessoConvocacaoUpdateSerializer,
 )
 from processos.services import EscolhasApiService
+from processos.services.exceptions import (
+    CandidatosServiceError,
+    EscolhasServiceError,
+)
+from processos.services.historico_candidatos_service import (
+    HistoricoCandidatosService,
+)
 from processos.services.processo_service import (
     ProcessoConvocacaoService,
     ProcessoServiceError,
 )
 from processos.utils import CustomPagination
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework.request import Request
+from rest_framework.response import Response
+from rest_framework.serializers import BaseSerializer
+from sigla_sdk.context import get_correlation_id
 
 logger = logging.getLogger(__name__)
 
@@ -118,14 +124,10 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
     def list(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         """Lista processos paginados ou em formato select."""
         logger.info(
-            "Iniciando lista de processos de convocação",
-            extra={
-                "params": request.query_params,
-                "correlation_id": get_correlation_id(),
-                "user": request.user,
-                "path": request.path,
-                "method": request.method,
-            },
+            "Iniciando lista de processos de convocação | "
+            f"correlation_id={get_correlation_id()} "
+            f"method={request.method} path={request.path} "
+            f"user={request.user} params={request.query_params}"
         )
         queryset = self.filter_queryset(self.get_queryset())
         if request.query_params.get("formato") == "select":
@@ -174,20 +176,63 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
 
         return Response(resultado)
 
+    @action(detail=False, methods=["post"], url_path="historico-candidatos")
+    def historico_candidatos(self, request: Request) -> Response:
+        """Monta histórico de candidatos cruzando MS-Candidatos e MS-Escolhas.
+
+        Body::
+
+            {"processos_uuids": ["<uuid>", ...]}
+        """
+        processos_uuids = request.data.get("processos_uuids")
+        if not isinstance(processos_uuids, list) or not processos_uuids:
+            return Response(
+                {
+                    "detail": (
+                        "processos_uuids é obrigatório e deve ser uma lista"
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        logger.info(
+            "Iniciando histórico de candidatos por convocação | "
+            f"correlation_id={get_correlation_id()} "
+            f"method={request.method} path={request.path} "
+            f"user={request.user} processo_uuids={processos_uuids}"
+        )
+        try:
+            service = HistoricoCandidatosService()
+            resultado = service.historico_candidatos_por_processos(
+                processos_uuids
+            )
+        except (CandidatosServiceError, EscolhasServiceError) as exc:
+            logger.exception("Erro ao montar histórico de candidatos: %s", exc)
+            return Response(
+                {"detail": str(exc)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except Exception as exc:
+            logger.exception(
+                "Erro inesperado ao montar histórico de candidatos: %s", exc
+            )
+            return Response(
+                {"detail": "Erro ao montar histórico de candidatos."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response(resultado)
+
     @action(detail=True, methods=["post"], url_path="finalizar")
     def finalizar(self, request: Request, pk: str | None = None) -> Response:
         """Finaliza processo após validar escolhas no MS-Escolhas."""
         processo = self.get_object()
         logger.info(
-            "Iniciando finalização de processo de convocação",
-            extra={
-                "processo_uuid": processo.uuid,
-                "processo_status": processo.status,
-                "correlation_id": get_correlation_id(),
-                "user": request.user,
-                "path": request.path,
-                "method": request.method,
-            },
+            "Iniciando finalização de processo de convocação | "
+            f"correlation_id={get_correlation_id()} "
+            f"method={request.method} path={request.path} "
+            f"user={request.user} processo_uuid={processo.uuid} "
+            f"processo_status={processo.status}"
         )
 
         if processo.status == STATUS_FINALIZADO:
@@ -235,14 +280,12 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
         pendentes = habilitados_uuids - com_escolha
         if pendentes:
             logger.info(
-                "Candidatos pendentes de escolha",
-                extra={
-                    "processo_uuid": processo.uuid,
-                    "correlation_id": get_correlation_id(),
-                    "pendentes": len(pendentes),
-                    "habilitados_uuids": len(habilitados_uuids),
-                    "com_escolha": len(com_escolha),
-                },
+                "Candidatos pendentes de escolha | "
+                f"correlation_id={get_correlation_id()} "
+                f"processo_uuid={processo.uuid} "
+                f"pendentes={len(pendentes)} "
+                f"habilitados_uuids={len(habilitados_uuids)} "
+                f"com_escolha={len(com_escolha)}"
             )
             return Response(
                 {"detail": ERROR_CANDIDATOS_PENDENTES_ESCOLHA},

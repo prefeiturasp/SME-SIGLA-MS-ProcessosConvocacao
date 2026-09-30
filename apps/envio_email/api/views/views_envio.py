@@ -45,16 +45,12 @@ class EnvioEmailViewSet(
 
     def create(self, request: Request) -> Response:
         logger.info(
-            "Iniciando processamento de envio de e-mail",
-            extra={
-                "processo_uuid": request.data.get("processo_uuid"),
-                "processo_nome": request.data.get("processo_nome"),
-                "tipo": request.data.get("tipo"),
-                "correlation_id": get_correlation_id(),
-                "user": request.user,
-                "path": request.path,
-                "method": request.method,
-            },
+            "Iniciando processamento de envio de e-mail | "
+            f"correlation_id={get_correlation_id()} "
+            f"method={request.method} path={request.path} "
+            f"user={request.user} tipo={request.data.get('tipo')} "
+            f"processo_uuid={request.data.get('processo_uuid')} "
+            f"processo_nome={request.data.get('processo_nome')}"
         )
         serializer = EnvioEmailEnvioSerializer(data=request.data)
         if not serializer.is_valid():

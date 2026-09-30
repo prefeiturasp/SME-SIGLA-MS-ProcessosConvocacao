@@ -1,6 +1,11 @@
 """Settings de test."""
 
-from .settings import *
+import os
+
+from .settings import *  # noqa: F403
+from .settings import ELASTIC_APM as _ELASTIC_APM
+
+ELASTIC_APM = {**_ELASTIC_APM, "ENABLED": False}
 
 DATABASES = {
     "default": {

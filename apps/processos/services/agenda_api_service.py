@@ -31,15 +31,10 @@ class AgendaApiService:
         url = f"{self.base_url}/api/v1/agendas/por-processo/"
         parametros = {"processo_uuid": processo_uuid}
         logger.info(
-            "Excluindo agendas no MS-Agenda",
-            extra={
-                "correlation_id": get_correlation_id(),
-                "method": "DELETE",
-                "url": url,
-                "params": parametros,
-                "headers": self.headers.keys(),
-                "processo_uuid": processo_uuid,
-            },
+            "Excluindo agendas no MS-Agenda | "
+            f"correlation_id={get_correlation_id()} method=DELETE "
+            f"url={url} params={parametros} "
+            f"processo_uuid={processo_uuid}"
         )
         try:
             resposta = http_client.delete(
@@ -58,15 +53,11 @@ class AgendaApiService:
                 f"MS-Agenda retornou status {resposta.status_code} ao excluir agendas: {resposta.text}"  # noqa: E501
             )
         logger.info(
-            "Agendas excluídas por processo",
-            extra={
-                "correlation_id": get_correlation_id(),
-                "method": "DELETE",
-                "url": url,
-                "params": parametros,
-                "processo_uuid": processo_uuid,
-                "status_code": resposta.status_code,
-                "response": resposta.json(),
-            },
+            "Agendas excluídas por processo | "
+            f"correlation_id={get_correlation_id()} method=DELETE "
+            f"url={url} params={parametros} "
+            f"processo_uuid={processo_uuid} "
+            f"status_code={resposta.status_code} "
+            f"response={resposta.json()}"
         )
         return resposta.json() if resposta.content else {}

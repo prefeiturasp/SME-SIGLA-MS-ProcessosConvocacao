@@ -33,6 +33,7 @@ class EscolhasApiService:
         self.timeout_seconds = self.TIMEOUT_SEGUNDOS
         self.headers: dict[str, str] = {
             "Accept": "application/json",
+            "Content-Type": "application/json",
             settings.API_KEY_HEADER: settings.ESCOLHAS_API_KEY,
         }
 
@@ -52,14 +53,10 @@ class EscolhasApiService:
         url = f"{self.base_url}{self.CAMINHO_ESCOLHAS.rstrip('/')}/?{consulta}"
 
         logger.info(
-            "Buscando candidatos com escolha",
-            extra={
-                "concurso_uuid": concurso_uuid,
-                "correlation_id": get_correlation_id(),
-                "url": url,
-                "params": parametros,
-                "method": "GET",
-            },
+            "Buscando candidatos com escolha | "
+            f"concurso_uuid={concurso_uuid} "
+            f"correlation_id={get_correlation_id()} "
+            f"method=GET url={url} params={parametros}"
         )
         try:
             resposta = http_client.get(
@@ -96,14 +93,10 @@ class EscolhasApiService:
             if candidato_uuid is not None:
                 candidato_uuids.append(str(candidato_uuid))
         logger.info(
-            "Candidatos com escolha encontrados",
-            extra={
-                "concurso_uuid": concurso_uuid,
-                "correlation_id": get_correlation_id(),
-                "url": url,
-                "params": parametros,
-                "method": "GET",
-            },
+            "Candidatos com escolha encontrados | "
+            f"concurso_uuid={concurso_uuid} "
+            f"correlation_id={get_correlation_id()} "
+            f"method=GET url={url} params={parametros}"
         )
         return candidato_uuids
 
@@ -115,15 +108,10 @@ class EscolhasApiService:
         url = f"{self.base_url}/api/v1/vagas-escolas/por-processo/"
         parametros = {"processo_uuid": processo_uuid}
         logger.info(
-            "Excluindo lotes de vagas no MS-Escolha",
-            extra={
-                "correlation_id": get_correlation_id(),
-                "method": "DELETE",
-                "url": url,
-                "params": parametros,
-                "headers": self.headers.keys(),
-                "processo_uuid": processo_uuid,
-            },
+            "Excluindo lotes de vagas no MS-Escolha | "
+            f"correlation_id={get_correlation_id()} method=DELETE "
+            f"url={url} params={parametros} "
+            f"processo_uuid={processo_uuid}"
         )
         try:
             resposta = http_client.delete(
@@ -142,16 +130,53 @@ class EscolhasApiService:
                 f"MS-Escolha retornou status {resposta.status_code} ao excluir lotes de vagas: {resposta.text}"  # noqa: E501
             )
         logger.info(
-            "Lotes de vagas excluídos por processo",
-            extra={
-                "correlation_id": get_correlation_id(),
-                "processo_uuid": processo_uuid,
-                "status_code": resposta.status_code,
-                "response": resposta.json(),
-                "method": "DELETE",
-                "url": url,
-                "params": parametros,
-                "headers": self.headers.keys(),
-            },
+            "Lotes de vagas excluídos por processo | "
+            f"correlation_id={get_correlation_id()} method=DELETE "
+            f"url={url} params={parametros} "
+            f"processo_uuid={processo_uuid} "
+            f"status_code={resposta.status_code} "
+            f"response={resposta.json()}"
         )
         return resposta.json() if resposta.content else {}
+
+    def buscar_escolhas_por_convocacao(
+        self, processos_uuids: list[str]
+    ) -> dict:
+        """POST /api/v1/escolhas/busca-por-convocacao/."""
+        if not self.base_url:
+            logger.warning(
+                "ESCOLHAS_API_URL não configurada; retornando dict vazio."
+            )
+            return {}
+
+        url = (
+            f"{self.base_url}"
+            f"{self.CAMINHO_ESCOLHAS.rstrip('/')}/busca-por-convocacao/"
+        )
+        payload = {"processo_uuids": [str(pid) for pid in processos_uuids]}
+        logger.info(
+            "Buscando escolhas por convocação | "
+            f"correlation_id={get_correlation_id()} method=POST "
+            f"url={url} payload={payload}"
+        )
+        try:
+            resposta = http_client.post(
+                url,
+                json=payload,
+                headers=self.headers,
+                timeout=self.timeout_seconds,
+            )
+            resposta.raise_for_status()
+        except Exception as exc:
+            logger.exception(
+                "Erro ao buscar escolhas por convocação no MS-Escolha: %s",
+                exc,
+            )
+            raise EscolhasServiceError(
+                f"Falha ao buscar escolhas no MS-Escolha: {str(exc)}"
+            ) from exc
+
+        dados = resposta.json() if resposta.content else {}
+        if not isinstance(dados, dict):
+            return {}
+        return dados

@@ -69,6 +69,10 @@ disallow_incomplete_defs = false
 check_untyped_defs = false
 ignore_errors = true
 
+[[tool.mypy.overrides]]
+module = ["elasticapm.*"]
+ignore_missing_imports = true
+
 [tool.coverage.run]
 source = ["apps"]
 
