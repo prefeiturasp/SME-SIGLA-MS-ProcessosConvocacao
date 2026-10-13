@@ -10,6 +10,8 @@ from typing import Any
 from cargos.repository import CargoProcessoRepository
 from django.db.models import QuerySet
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.utils import extend_schema, extend_schema_view
+from processos.api.schemas import OPERACOES_PROCESSOS, TAG_PROCESSOS
 from processos.constants import (
     ERROR_CANDIDATOS_PENDENTES_ESCOLHA,
     ERROR_PROCESSO_JA_CANCELADO,
@@ -55,6 +57,8 @@ STATUS_FINALIZADO = "FINALIZADO"
 STATUS_CANCELADO = "CANCELADO"
 
 
+@extend_schema(tags=[TAG_PROCESSOS])
+@extend_schema_view(**OPERACOES_PROCESSOS)
 class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
     """ViewSet para gerenciar processos de convocação."""
 
@@ -176,7 +180,12 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
 
         return Response(resultado)
 
-    @action(detail=False, methods=["post"], url_path="historico-candidatos")
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="historico-candidatos",
+        pagination_class=None,
+    )
     def historico_candidatos(self, request: Request) -> Response:
         """Monta histórico de candidatos cruzando MS-Candidatos e MS-Escolhas.
 

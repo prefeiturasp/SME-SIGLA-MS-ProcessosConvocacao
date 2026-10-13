@@ -5,6 +5,8 @@ from __future__ import annotations
 import logging
 from uuid import UUID
 
+from drf_spectacular.utils import extend_schema, extend_schema_view
+from envio_email.api.schemas import OPERACOES_ENVIO_EMAIL, TAG_ENVIO_EMAIL
 from envio_email.repository import EnvioEmailRepository
 from envio_email.serializers import EnvioEmailEnvioSerializer
 from envio_email.services import iniciar_processamento_envio
@@ -17,6 +19,8 @@ from sigla_sdk.context import get_correlation_id
 logger = logging.getLogger(__name__)
 
 
+@extend_schema(tags=[TAG_ENVIO_EMAIL])
+@extend_schema_view(**OPERACOES_ENVIO_EMAIL)
 class EnvioEmailViewSet(
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin,
