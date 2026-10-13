@@ -303,20 +303,96 @@ ELASTIC_APM = {
     "CAPTURE_TRANSACTION_STACKTRACES_LIMIT": 10,
 }
 
+DESCRICAO_API = """
+API do microsserviço de **processos de convocação** do SIGLA (SME-SP).
+Mantém os processos de convocação de candidatos habilitados em concursos,
+os cargos e quantitativos de cada processo e o envio de e-mails aos
+convocados.
+
+## Autenticação
+
+Envie o token **JWT** emitido pelo microsserviço de usuários no header
+`Authorization: Bearer <token>`. Também são aceitos HTTP Basic e a sessão
+do Django Admin. As rotas atendem chamadas sem credencial, mas uma
+credencial **inválida** é recusada com **403**: o serviço não responde 401.
+
+## Erros
+
+- **400** com `{"detail": "..."}`: regra de negócio violada.
+- **400** com `{"<campo>": ["..."]}`: dados enviados inválidos.
+- **403** com `{"detail": "...", "code": "..."}`: credencial recusada.
+- **404** com `{"detail": "..."}`: registro não encontrado. Listar,
+  substituir e excluir cargos respondem `{"error": "..."}` quando o
+  processo ou o cargo não existe.
+- **500**: erro inesperado, sem corpo JSON padronizado.
+
+## Paginação
+
+Só a listagem de processos é paginada, com `page` e `page_size` (padrão
+10). A resposta traz `links`, `count`, `page`, `page_size` e `results`.
+As demais listagens retornam um array simples.
+"""
+
 SPECTACULAR_SETTINGS = {
     "TITLE": "Processos Convocação Sigla API",
-    "DESCRIPTION": "API para o sistema de processos de convocação de sigla",
+    "DESCRIPTION": DESCRICAO_API,
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
-    # "APPEND_COMPONENTS": {
-    #     "securitySchemes": {
-    #         "ApiKeyAuth": {
-    #             "type": "apiKey",
-    #             "in": "header",
-    #             "name": "X-API-Key",
-    #         }
-    #     }
-    # },
+    "TAGS": [
+        {
+            "name": "Processos de convocação",
+            "description": (
+                "Criação, consulta e ciclo de vida dos processos de "
+                "convocação."
+            ),
+        },
+        {
+            "name": "Cargos do processo",
+            "description": (
+                "Cargos, vagas e quantitativos de candidatos de um processo."
+            ),
+        },
+        {
+            "name": "Envio de e-mail",
+            "description": (
+                "Disparo de e-mails aos convocados e histórico dos envios."
+            ),
+        },
+        {
+            "name": "Conteúdo de e-mail",
+            "description": (
+                "Assunto e corpo padrão dos e-mails, por tipo de envio."
+            ),
+        },
+    ],
+    "ENUM_NAME_OVERRIDES": {
+        "StatusProcessoEnum": "processos.constants.PROCESSO_STATUS_CHOICES",
+        "TipoEscolhaEnum": "processos.constants.TIPO_ESCOLHA_CHOICES",
+        "StatusEnvioEmailEnum": (
+            "envio_email.models.envio_email_candidato.ENVIO_STATUS_CHOICES"
+        ),
+        "TipoEnvioEmailEnum": (
+            "envio_email.models.envio_email.ENVIO_EMAIL_TIPO_CHOICES"
+        ),
+    },
+    "APPEND_COMPONENTS": {
+        "securitySchemes": {
+            "jwtAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+                "description": (
+                    "Token JWT emitido pelo microsserviço de usuários do "
+                    "SIGLA, enviado em `Authorization: Bearer <token>`."
+                ),
+            },
+            # "ApiKeyAuth": {
+            #     "type": "apiKey",
+            #     "in": "header",
+            #     "name": "X-API-Key",
+            # },
+        }
+    },
     # "SECURITY": [{"ApiKeyAuth": []}],
 }
 

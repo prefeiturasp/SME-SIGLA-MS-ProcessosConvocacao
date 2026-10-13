@@ -4,6 +4,11 @@ from __future__ import annotations
 
 from uuid import UUID
 
+from drf_spectacular.utils import extend_schema, extend_schema_view
+from envio_email.api.schemas import (
+    OPERACOES_CONTEUDO_EMAIL,
+    TAG_CONTEUDO_EMAIL,
+)
 from envio_email.models import EnvioEmailConteudo
 from envio_email.repository import EnvioEmailConteudoRepository
 from envio_email.serializers import (
@@ -17,6 +22,8 @@ from rest_framework.response import Response
 from rest_framework.serializers import BaseSerializer
 
 
+@extend_schema(tags=[TAG_CONTEUDO_EMAIL])
+@extend_schema_view(**OPERACOES_CONTEUDO_EMAIL)
 class EnvioEmailConteudoViewSet(
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin,

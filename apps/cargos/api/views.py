@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
+from cargos.api.schemas import OPERACOES_CARGOS, PARAMETRO_PROCESSO, TAG_CARGOS
 from cargos.models import CargoProcesso
 from cargos.repository import CargoProcessoRepository
 from cargos.serializers import (
@@ -12,6 +13,7 @@ from cargos.serializers import (
 )
 from cargos.services import CargosProcessoService
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from processos.constants import ERROR_PROCESSO_NAO_PODE_EDITAR
 from processos.models import ProcessoConvocacao
 from processos.repository import ProcessoConvocacaoRepository
@@ -23,6 +25,8 @@ from rest_framework.response import Response
 STATUS_FINALIZADO = "FINALIZADO"
 
 
+@extend_schema(tags=[TAG_CARGOS], parameters=[PARAMETRO_PROCESSO])
+@extend_schema_view(**OPERACOES_CARGOS)
 class CargoProcessoViewSet(viewsets.ModelViewSet):
     """Lista, substitui e remove cargos de um processo de convocação."""
 
@@ -33,6 +37,7 @@ class CargoProcessoViewSet(viewsets.ModelViewSet):
     search_fields = ["cargo_nome"]
     ordering_fields = ["cargo_nome", "cargo_codigo", "vagas"]
     lookup_url_kwarg = "cargo_uuid"
+    pagination_class = None
 
     def _get_processo(
         self, pk: str | UUID | None
