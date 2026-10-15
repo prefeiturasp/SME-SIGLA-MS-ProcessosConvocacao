@@ -36,7 +36,7 @@ runserver:
 # Executa testes com relatório de cobertura
 coverage:
 	@echo "Executando testes com cobertura..."
-	pytest --ds=config.settings_test --cov=processos --cov=cargos --cov=envio_email --cov-report=term-missing --cov-report=html
+	pytest --ds=config.settings_test --cov=apps --cov-report=term-missing --cov-report=html
 
 # Executa todos os testes
 test:
