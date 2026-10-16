@@ -4,6 +4,7 @@ import logging
 
 from django.conf import settings
 from processos.services.exceptions import ConcursoServiceError
+from processos.services.http_log import mascarar_headers
 from sigla_sdk.context import get_correlation_id
 from sigla_sdk.http.api_client import http_client
 
@@ -35,7 +36,9 @@ class ConcursosApiService:
             "Atualizando situação do concurso no MS-Concursos | "
             f"correlation_id={get_correlation_id()} method=PATCH "
             f"url={url} concurso_uuid={concurso_uuid} "
-            f"situacao={situacao}"
+            f"situacao={situacao} "
+            f"headers={mascarar_headers(self.headers)} "
+            f"timeout_seconds={self.timeout_seconds}"
         )
         try:
             resposta = http_client.patch(
@@ -58,6 +61,8 @@ class ConcursosApiService:
             "Situação do concurso atualizada | "
             f"correlation_id={get_correlation_id()} "
             f"concurso_uuid={concurso_uuid} situacao={situacao} "
-            f"status_code={resposta.status_code}"
+            f"status_code={resposta.status_code} "
+            f"headers={mascarar_headers(self.headers)} "
+            f"timeout_seconds={self.timeout_seconds}"
         )
         return resposta.json() if resposta.content else {}
