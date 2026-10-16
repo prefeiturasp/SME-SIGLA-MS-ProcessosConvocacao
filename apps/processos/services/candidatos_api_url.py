@@ -6,6 +6,7 @@ from urllib.parse import urlencode
 
 from django.conf import settings
 from processos.services.exceptions import CandidatosServiceError
+from processos.services.http_log import mascarar_headers
 from sigla_sdk.context import get_correlation_id
 from sigla_sdk.http.api_client import http_client
 
@@ -52,7 +53,10 @@ class CandidatosApiService:
         """Busca habilitados do processo no MS-Candidatos."""
         if not self.base_url:
             logger.warning(
-                "CANDIDATOS_API_URL não configurado; retornando lista vazia."
+                "CANDIDATOS_API_URL não configurado; "
+                "retornando lista vazia. "
+                f"headers={mascarar_headers(self.headers)} "
+                f"timeout_seconds={self.timeout_seconds}"
             )
             return []
 
@@ -60,7 +64,9 @@ class CandidatosApiService:
         logger.info(
             "Buscando habilitados por processo | "
             f"correlation_id={get_correlation_id()} method=GET "
-            f"url={url} processo_uuid={processo_uuid}"
+            f"url={url} processo_uuid={processo_uuid} "
+            f"headers={mascarar_headers(self.headers)} "
+            f"timeout_seconds={self.timeout_seconds}"
         )
         try:
             resposta = http_client.get(
@@ -71,9 +77,12 @@ class CandidatosApiService:
             resposta.raise_for_status()
         except Exception as exc:
             logger.exception(
-                "Erro ao buscar habilitados no MS-Candidatos (processo_uuid=%s): %s",  # noqa: E501
+                "Erro ao buscar habilitados no MS-Candidatos "
+                "(processo_uuid=%s): %s | headers=%s timeout_seconds=%s",
                 processo_uuid,
                 exc,
+                mascarar_headers(self.headers),
+                self.timeout_seconds,
             )
             raise
         dados = resposta.json()
@@ -81,7 +90,9 @@ class CandidatosApiService:
             "Habilitados encontrados | "
             f"correlation_id={get_correlation_id()} method=GET "
             f"url={url} processo_uuid={processo_uuid} "
-            f"data={str(dados)[:200]}"
+            f"data={str(dados)[:200]} "
+            f"headers={mascarar_headers(self.headers)} "
+            f"timeout_seconds={self.timeout_seconds}"
         )
         if isinstance(dados, list):
             return dados
@@ -102,7 +113,9 @@ class CandidatosApiService:
             "Desconvocando candidatos no MS-Candidatos | "
             f"correlation_id={get_correlation_id()} method=PATCH "
             f"url={url} processo_uuid={processo_uuid} "
-            f"payload={corpo_requisicao}"
+            f"payload={corpo_requisicao} "
+            f"headers={mascarar_headers(self.headers)} "
+            f"timeout_seconds={self.timeout_seconds}"
         )
         try:
             resposta = http_client.patch(
@@ -126,7 +139,9 @@ class CandidatosApiService:
             f"url={url} processo_uuid={processo_uuid} "
             f"status_code={resposta.status_code} "
             f"payload={corpo_requisicao} "
-            f"response={resposta.json()}"
+            f"response={resposta.json()} "
+            f"headers={mascarar_headers(self.headers)} "
+            f"timeout_seconds={self.timeout_seconds}"
         )
         return resposta.json() if resposta.content else {}
 
@@ -136,7 +151,10 @@ class CandidatosApiService:
         """POST /api/v1/habilitados/por-processos-e-tipo-vaga/."""
         if not self.base_url:
             logger.warning(
-                "CANDIDATOS_API_URL não configurado; retornando dict vazio."
+                "CANDIDATOS_API_URL não configurado; "
+                "retornando dict vazio. "
+                f"headers={mascarar_headers(self.headers)} "
+                f"timeout_seconds={self.timeout_seconds}"
             )
             return {}
 
@@ -148,7 +166,9 @@ class CandidatosApiService:
         logger.info(
             "Buscando habilitados por processos e tipo de vaga | "
             f"correlation_id={get_correlation_id()} method=POST "
-            f"url={url} payload={payload}"
+            f"url={url} payload={payload} "
+            f"headers={mascarar_headers(self.headers)} "
+            f"timeout_seconds={self.timeout_seconds}"
         )
         try:
             resposta = http_client.post(
@@ -161,8 +181,10 @@ class CandidatosApiService:
         except Exception as exc:
             logger.exception(
                 "Erro ao buscar habilitados por processos "
-                "no MS-Candidatos: %s",
+                "no MS-Candidatos: %s | headers=%s timeout_seconds=%s",
                 exc,
+                mascarar_headers(self.headers),
+                self.timeout_seconds,
             )
             raise CandidatosServiceError(
                 f"Falha ao buscar habilitados no MS-Candidatos: {str(exc)}"

@@ -4,6 +4,7 @@ import logging
 
 from django.conf import settings
 from processos.services.exceptions import AgendaServiceError
+from processos.services.http_log import mascarar_headers
 from sigla_sdk.context import get_correlation_id
 from sigla_sdk.http.api_client import http_client
 
@@ -34,7 +35,9 @@ class AgendaApiService:
             "Excluindo agendas no MS-Agenda | "
             f"correlation_id={get_correlation_id()} method=DELETE "
             f"url={url} params={parametros} "
-            f"processo_uuid={processo_uuid}"
+            f"processo_uuid={processo_uuid} "
+            f"headers={mascarar_headers(self.headers)} "
+            f"timeout_seconds={self.timeout_seconds}"
         )
         try:
             resposta = http_client.delete(
@@ -58,6 +61,8 @@ class AgendaApiService:
             f"url={url} params={parametros} "
             f"processo_uuid={processo_uuid} "
             f"status_code={resposta.status_code} "
-            f"response={resposta.json()}"
+            f"response={resposta.json()} "
+            f"headers={mascarar_headers(self.headers)} "
+            f"timeout_seconds={self.timeout_seconds}"
         )
         return resposta.json() if resposta.content else {}

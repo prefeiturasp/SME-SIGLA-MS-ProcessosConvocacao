@@ -9,6 +9,7 @@ from urllib.parse import urlencode
 
 from django.conf import settings
 from processos.services.exceptions import EscolhasServiceError
+from processos.services.http_log import mascarar_headers
 from sigla_sdk.context import get_correlation_id
 from sigla_sdk.http.api_client import http_client
 
@@ -41,7 +42,9 @@ class EscolhasApiService:
         """Lista candidatos com escolha registrada no MS-Escolha."""
         if not self.base_url:
             logger.warning(
-                "ESCOLHAS_API_URL não configurada; retornando lista vazia."
+                "ESCOLHAS_API_URL não configurada; retornando lista vazia. "
+                f"headers={mascarar_headers(self.headers)} "
+                f"timeout_seconds={self.timeout_seconds}"
             )
             return []
         parametros = {
@@ -56,7 +59,9 @@ class EscolhasApiService:
             "Buscando candidatos com escolha | "
             f"concurso_uuid={concurso_uuid} "
             f"correlation_id={get_correlation_id()} "
-            f"method=GET url={url} params={parametros}"
+            f"method=GET url={url} params={parametros} "
+            f"headers={mascarar_headers(self.headers)} "
+            f"timeout_seconds={self.timeout_seconds}"
         )
         try:
             resposta = http_client.get(
@@ -68,9 +73,12 @@ class EscolhasApiService:
             dados = resposta.json()
         except Exception as exc:
             logger.exception(
-                "Erro ao buscar escolhas no MS-Escolha (concurso_uuid=%s): %s",
+                "Erro ao buscar escolhas no MS-Escolha "
+                "(concurso_uuid=%s): %s | headers=%s timeout_seconds=%s",
                 concurso_uuid,
                 exc,
+                mascarar_headers(self.headers),
+                self.timeout_seconds,
             )
             raise
 
@@ -81,8 +89,12 @@ class EscolhasApiService:
             proxima_pagina = dados.get("next")
             if proxima_pagina:
                 logger.warning(
-                    "MS-Escolha retornou paginação; apenas primeira página considerada (concurso_uuid=%s)",  # noqa: E501
+                    "MS-Escolha retornou paginação; apenas primeira "
+                    "página considerada (concurso_uuid=%s) | "
+                    "headers=%s timeout_seconds=%s",
                     concurso_uuid,
+                    mascarar_headers(self.headers),
+                    self.timeout_seconds,
                 )
         else:
             registros = []
@@ -96,7 +108,9 @@ class EscolhasApiService:
             "Candidatos com escolha encontrados | "
             f"concurso_uuid={concurso_uuid} "
             f"correlation_id={get_correlation_id()} "
-            f"method=GET url={url} params={parametros}"
+            f"method=GET url={url} params={parametros} "
+            f"headers={mascarar_headers(self.headers)} "
+            f"timeout_seconds={self.timeout_seconds}"
         )
         return candidato_uuids
 
@@ -111,7 +125,9 @@ class EscolhasApiService:
             "Excluindo lotes de vagas no MS-Escolha | "
             f"correlation_id={get_correlation_id()} method=DELETE "
             f"url={url} params={parametros} "
-            f"processo_uuid={processo_uuid}"
+            f"processo_uuid={processo_uuid} "
+            f"headers={mascarar_headers(self.headers)} "
+            f"timeout_seconds={self.timeout_seconds}"
         )
         try:
             resposta = http_client.delete(
@@ -135,7 +151,9 @@ class EscolhasApiService:
             f"url={url} params={parametros} "
             f"processo_uuid={processo_uuid} "
             f"status_code={resposta.status_code} "
-            f"response={resposta.json()}"
+            f"response={resposta.json()} "
+            f"headers={mascarar_headers(self.headers)} "
+            f"timeout_seconds={self.timeout_seconds}"
         )
         return resposta.json() if resposta.content else {}
 
@@ -145,7 +163,9 @@ class EscolhasApiService:
         """POST /api/v1/escolhas/busca-por-convocacao/."""
         if not self.base_url:
             logger.warning(
-                "ESCOLHAS_API_URL não configurada; retornando dict vazio."
+                "ESCOLHAS_API_URL não configurada; retornando dict vazio. "
+                f"headers={mascarar_headers(self.headers)} "
+                f"timeout_seconds={self.timeout_seconds}"
             )
             return {}
 
@@ -157,7 +177,9 @@ class EscolhasApiService:
         logger.info(
             "Buscando escolhas por convocação | "
             f"correlation_id={get_correlation_id()} method=POST "
-            f"url={url} payload={payload}"
+            f"url={url} payload={payload} "
+            f"headers={mascarar_headers(self.headers)} "
+            f"timeout_seconds={self.timeout_seconds}"
         )
         try:
             resposta = http_client.post(
@@ -169,8 +191,11 @@ class EscolhasApiService:
             resposta.raise_for_status()
         except Exception as exc:
             logger.exception(
-                "Erro ao buscar escolhas por convocação no MS-Escolha: %s",
+                "Erro ao buscar escolhas por convocação no "
+                "MS-Escolha: %s | headers=%s timeout_seconds=%s",
                 exc,
+                mascarar_headers(self.headers),
+                self.timeout_seconds,
             )
             raise EscolhasServiceError(
                 f"Falha ao buscar escolhas no MS-Escolha: {str(exc)}"
