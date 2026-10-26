@@ -6,6 +6,7 @@ from datetime import date
 from typing import Any
 from uuid import UUID
 
+from django.core.exceptions import ValidationError
 from django.db.models import QuerySet
 from processos.models import ProcessoConvocacao
 from processos.serializers import (
@@ -65,25 +66,34 @@ class ProcessoConvocacaoRepository:
     @classmethod
     def listar_opcoes_concurso(cls) -> list[dict[str, Any]]:
         """Lista concursos distintos para opções de filtro."""
-        processos = list(ProcessoConvocacao.objects.all())
+        processos = list(
+            ProcessoConvocacao.objects.prefetch_related("cargos_processo")
+        )
         return ProcessoConvocacaoSerializer(processos, many=True).data
 
     @classmethod
-    def carregar_instancia_por_pk(
-        cls, pk: str | UUID
+    def carregar_instancia_por_uuid(
+        cls, uuid: str | UUID
     ) -> ProcessoConvocacao | None:
-        """Carrega instância do processo para operações de escrita."""
+        """Carrega instância do processo para operações de escrita.
+
+        Args:
+            uuid: Identificador público do processo.
+
+        Returns:
+            O processo, ou None se não existir ou se o valor não for UUID.
+        """
         try:
             return ProcessoConvocacao.objects.prefetch_related(
                 "cargos_processo"
-            ).get(pk=pk)
-        except ProcessoConvocacao.DoesNotExist:
+            ).get(uuid=uuid)
+        except (ProcessoConvocacao.DoesNotExist, ValidationError):
             return None
 
     @classmethod
-    def obter_por_pk(cls, pk: str | UUID) -> dict[str, Any] | None:
-        """Retorna o processo pela PK ou None."""
-        processo = cls.carregar_instancia_por_pk(pk)
+    def obter_por_uuid(cls, uuid: str | UUID) -> dict[str, Any] | None:
+        """Retorna o processo pelo uuid ou None."""
+        processo = cls.carregar_instancia_por_uuid(uuid)
         if processo is None:
             return None
         return cls.serializar(processo)

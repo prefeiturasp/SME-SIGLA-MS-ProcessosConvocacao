@@ -168,6 +168,7 @@ def iniciar_processamento_envio(
         quantidade_candidatos=quantidade,
     )
 
+    envio_email_id = EnvioEmailRepository.obter_id_por_uuid(envio["uuid"])
     ignorados_sem_email = 0
     for habilitado in habilitados:
         dados_candidato = habilitado.get("candidato") or {}
@@ -191,7 +192,7 @@ def iniciar_processamento_envio(
 
         conteudo_html = render_to_string(TEMPLATE_DINAMICO, contexto)
         registro = EnvioEmailCandidatoRepository.criar(
-            envio_email=envio["uuid"],
+            envio_email_id=envio_email_id,
             nome=nome,
             rf=rf,
             email=email,

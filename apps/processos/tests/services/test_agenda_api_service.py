@@ -42,7 +42,7 @@ def test_excluir_agendas_por_processo_sucesso_retorna_json():
     API_KEY_HEADER="X-API-Key",
 )
 def test_excluir_agendas_por_processo_envia_api_key():
-    """Verifica envio do header X-API-Key quando AGENDA_API_KEY está configurada."""
+    """Verifica envio do header X-API-Key quando AGENDA_API_KEY está configurada."""  # noqa: E501
     service = AgendaApiService()
     processo_uuid = "55555555-5555-5555-5555-555555555555"
 

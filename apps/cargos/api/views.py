@@ -30,22 +30,23 @@ STATUS_FINALIZADO = "FINALIZADO"
 class CargoProcessoViewSet(viewsets.ModelViewSet):
     """Lista, substitui e remove cargos de um processo de convocação."""
 
-    queryset = CargoProcesso.objects.all()
+    queryset = CargoProcesso.objects.select_related("processo")
     serializer_class = CargoProcessoSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ["cargo_uuid"]
     search_fields = ["cargo_nome"]
     ordering_fields = ["cargo_nome", "cargo_codigo", "vagas"]
+    lookup_field = "uuid"
     lookup_url_kwarg = "cargo_uuid"
     pagination_class = None
 
     def _get_processo(
-        self, pk: str | UUID | None
+        self, uuid: str | UUID | None
     ) -> ProcessoConvocacao | None:
-        """Retorna processo de convocação pela PK."""
-        if pk is None:
+        """Retorna processo de convocação pelo uuid."""
+        if uuid is None:
             return None
-        return ProcessoConvocacaoRepository.carregar_instancia_por_pk(pk)
+        return ProcessoConvocacaoRepository.carregar_instancia_por_uuid(uuid)
 
     def list(
         self,

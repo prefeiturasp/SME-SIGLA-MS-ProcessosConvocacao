@@ -30,7 +30,11 @@ class CargoProcessoRepository:
         cls, processo: ProcessoConvocacao
     ) -> list[dict[str, Any]]:
         """Lista os cargos filtrados por processo."""
-        cargos = list(CargoProcesso.objects.filter(processo=processo))
+        cargos = list(
+            CargoProcesso.objects.filter(processo=processo).select_related(
+                "processo"
+            )
+        )
         return cls._serializar_lista(cargos)
 
     @classmethod
@@ -54,9 +58,11 @@ class CargoProcessoRepository:
         cargo_uuid: str | UUID,
     ) -> CargoProcesso | None:
         """Carrega instância do cargo para operações de escrita."""
-        return CargoProcesso.objects.filter(
-            processo=processo, uuid=cargo_uuid
-        ).first()
+        return (
+            CargoProcesso.objects.select_related("processo")
+            .filter(processo=processo, uuid=cargo_uuid)
+            .first()
+        )
 
     @classmethod
     def listar_opcoes_filtro(cls) -> list[dict[str, Any]]:
