@@ -60,6 +60,23 @@ class EnvioEmailRepository:
             return None
         return cls.serializar_detalhe(envio)
 
+    @staticmethod
+    def obter_id_por_uuid(uuid: UUID) -> int:
+        """Retorne o ``id`` do envio pelo UUID.
+
+        Args:
+            uuid: Identificador público do envio.
+
+        Returns:
+            O ``id`` inteiro do envio.
+
+        Raises:
+            EnvioEmail.DoesNotExist: Se o envio não existir.
+        """
+        return int(
+            EnvioEmail.objects.values_list("id", flat=True).get(uuid=uuid)
+        )
+
     @classmethod
     def criar(cls, **dados: Any) -> dict[str, Any]:
         """Crie um registro de envio de e-mail."""
@@ -78,11 +95,18 @@ class EnvioEmailCandidatoRepository:
         return dados
 
     @classmethod
-    def criar(cls, **dados: Any) -> dict[str, Any]:
-        """Crie um candidato no envio de e-mail."""
-        envio_email_uuid = dados.pop("envio_email")
+    def criar(cls, envio_email_id: int, **dados: Any) -> dict[str, Any]:
+        """Crie um candidato no envio de e-mail.
+
+        Args:
+            envio_email_id: ``id`` do envio, resolvido uma vez pelo chamador.
+            **dados: Demais campos do candidato.
+
+        Returns:
+            O candidato criado, em dicionário.
+        """
         candidato = EnvioEmailCandidato.objects.create(
-            **dados, envio_email_id=UUID(envio_email_uuid)
+            **dados, envio_email_id=envio_email_id
         )
         return cls.serializar(candidato)
 

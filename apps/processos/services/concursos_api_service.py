@@ -27,6 +27,14 @@ class ConcursosApiService:
 
     def atualizar_situacao(self, concurso_uuid: str, situacao: str) -> dict:
         """PATCH /api/v1/concursos/<uuid>/atualizar-situacao/."""
+        if not self.base_url:
+            logger.warning(
+                "CONCURSOS_API_URL não configurado; "
+                "situação do concurso não foi atualizada | "
+                f"correlation_id={get_correlation_id()} "
+                f"concurso_uuid={concurso_uuid} situacao={situacao}"
+            )
+            return {}
         url = (
             f"{self.base_url}/api/v1/concursos/"
             f"{concurso_uuid}/atualizar-situacao/"

@@ -8,6 +8,20 @@ from processos.services.concursos_api_service import ConcursosApiService
 from processos.services.exceptions import ConcursoServiceError
 
 
+@override_settings(CONCURSOS_API_URL="")
+def test_atualizar_situacao_sem_url_nao_chama_o_client():
+    """Sem CONCURSOS_API_URL a atualização não dispara HTTP."""
+    service = ConcursosApiService()
+    with patch(
+        "processos.services.concursos_api_service.http_client.patch"
+    ) as mock_patch:
+        resultado = service.atualizar_situacao(
+            "11111111-1111-1111-1111-111111111111", "EM_ANDAMENTO"
+        )
+    assert resultado == {}
+    mock_patch.assert_not_called()
+
+
 @override_settings(CONCURSOS_API_URL="http://ms-concursos")
 def test_atualizar_situacao_sucesso_retorna_json():
     """Verifica atualizar situação sucesso retorna json."""

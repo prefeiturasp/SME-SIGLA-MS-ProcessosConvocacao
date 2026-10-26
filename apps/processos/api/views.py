@@ -71,6 +71,7 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
     search_fields = ["concurso_nome", "descricao"]
     ordering_fields = ["data_convocacao", "data_corte_vagas", "criado_em"]
     ordering = ["-criado_em"]
+    lookup_field = "uuid"
     pagination_class = CustomPagination
 
     def get_queryset(self) -> QuerySet[ProcessoConvocacao]:
@@ -233,7 +234,7 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
         return Response(resultado)
 
     @action(detail=True, methods=["post"], url_path="finalizar")
-    def finalizar(self, request: Request, pk: str | None = None) -> Response:
+    def finalizar(self, request: Request, **kwargs: Any) -> Response:
         """Finaliza processo após validar escolhas no MS-Escolhas."""
         processo = self.get_object()
         logger.info(
@@ -330,9 +331,7 @@ class ProcessoConvocacaoViewSet(viewsets.ModelViewSet):
         return super().partial_update(request, *args, **kwargs)
 
     @action(detail=True, methods=["patch"], url_path="passo")
-    def atualizar_passo(
-        self, request: Request, pk: str | None = None
-    ) -> Response:
+    def atualizar_passo(self, request: Request, **kwargs: Any) -> Response:
         """Executa a atualização do passo da convocação."""
         processo = self.get_object()
         serializer = ProcessoConvocacaoPassoSerializer(

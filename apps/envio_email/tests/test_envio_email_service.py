@@ -242,3 +242,58 @@ def test_resolver_assunto_envio_fallback_para_padrao_do_tipo(
         _resolver_assunto_envio(TIPO_CONVOCACAO, "")
         == ASSUNTO_POR_TIPO[TIPO_CONVOCACAO]
     )
+
+
+def _habilitado(numero):
+    """Monta um habilitado com e-mail para o teste de consultas."""
+    return {
+        "candidato": {
+            "nome": f"Fulano {numero}",
+            "registro_funcional": str(1000000 + numero),
+            "email": f"fulano{numero}@test.com",
+        },
+        "descricao_cargo": "Analista",
+        "classificacao": numero,
+        "categoria_efetiva": "",
+    }
+
+
+def _selects_executados(processo, quantidade):
+    """Conta os SELECTs do processamento com ``quantidade`` candidatos."""
+    from django.db import connection
+    from django.test.utils import CaptureQueriesContext
+
+    habilitados = [_habilitado(numero) for numero in range(quantidade)]
+    with (
+        patch(
+            "envio_email.services.CandidatosApiService"
+            ".buscar_habilitados_por_processo",
+            return_value=habilitados,
+        ),
+        patch("envio_email.services.render_to_string", return_value="<p/>"),
+        patch("config.celery.app"),
+        CaptureQueriesContext(connection) as consultas,
+    ):
+        iniciar_processamento_envio(
+            processo_uuid=processo.uuid,
+            processo_nome=processo.concurso_nome,
+            tipo=TIPO_CONVOCACAO,
+            conteudo="<p>Conteúdo</p>",
+        )
+    return len(
+        [
+            consulta
+            for consulta in consultas.captured_queries
+            if consulta["sql"].lstrip().upper().startswith("SELECT")
+        ]
+    )
+
+
+def test_iniciar_processamento_envio_nao_consulta_envio_por_candidato(
+    processo_convocacao,
+):
+    """O número de SELECTs não cresce com a quantidade de candidatos."""
+    com_um = _selects_executados(processo_convocacao, 1)
+    com_cinco = _selects_executados(processo_convocacao, 5)
+
+    assert com_cinco == com_um

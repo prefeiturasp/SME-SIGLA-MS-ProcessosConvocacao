@@ -8,7 +8,6 @@ from unittest.mock import Mock, patch
 
 import pytest
 from django.utils import timezone
-
 from processos.models import ProcessoConvocacao
 from processos.services.exceptions import ConcursoServiceError
 
