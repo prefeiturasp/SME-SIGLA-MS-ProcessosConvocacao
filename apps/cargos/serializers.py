@@ -1,6 +1,7 @@
 """Serializers do app cargos."""
 
 from cargos.models import CargoProcesso
+from processos.models import ProcessoConvocacao
 from rest_framework import serializers
 
 DESCRICOES_CAMPOS = {
@@ -52,6 +53,13 @@ DESCRICOES_CAMPOS = {
 
 class CargoProcessoSerializer(serializers.ModelSerializer):
     """Cargo vinculado a um processo de convocação."""
+
+    processo = serializers.SlugRelatedField(
+        slug_field="uuid",
+        queryset=ProcessoConvocacao.objects.all(),
+        label="Processo de Convocação",
+        help_text=DESCRICOES_CAMPOS["processo"]["help_text"],
+    )
 
     class Meta:
         model = CargoProcesso

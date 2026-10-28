@@ -9,8 +9,6 @@ from cargos.models import CargoProcesso
 from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils import timezone
-from rest_framework import status
-
 from processos.constants import (
     ERROR_CANDIDATOS_PENDENTES_ESCOLHA,
     ERROR_PROCESSO_JA_CANCELADO,
@@ -19,6 +17,7 @@ from processos.constants import (
     TIPO_ESCOLHA_CHOICES,
 )
 from processos.models import ProcessoConvocacao
+from rest_framework import status
 
 pytestmark = pytest.mark.django_db
 
@@ -1070,3 +1069,37 @@ def test_processo_convocacao_busca(authenticated_client, processo_convocacao):
     resposta = authenticated_client.get(url, {"search": "Descrição"})
     assert resposta.status_code == status.HTTP_200_OK
     assert len(resposta.data["results"]) == 1
+
+
+def test_detalhe_do_processo_por_id_inteiro_retorna_404(
+    authenticated_client, processo_convocacao
+):
+    """O id interno não identifica o processo na API."""
+    url = reverse("processoconvocacao-detail", args=[processo_convocacao.id])
+    resposta = authenticated_client.get(url)
+
+    assert resposta.status_code == status.HTTP_404_NOT_FOUND
+
+
+@patch("processos.api.views.EscolhasApiService.buscar_candidatos_com_escolha")
+def test_finalizar_e_passo_por_uuid(
+    mock_buscar, authenticated_client, processo_convocacao
+):
+    """As actions de detalhe resolvem o processo pelo uuid."""
+    mock_buscar.return_value = []
+    url_passo = reverse(
+        "processoconvocacao-atualizar-passo", args=[processo_convocacao.uuid]
+    )
+    resposta_passo = authenticated_client.patch(
+        url_passo, {"passo": 2}, format="json"
+    )
+    url_finalizar = reverse(
+        "processoconvocacao-finalizar", args=[processo_convocacao.uuid]
+    )
+    resposta_finalizar = authenticated_client.post(url_finalizar)
+
+    assert resposta_passo.status_code == status.HTTP_200_OK
+    assert resposta_finalizar.status_code == status.HTTP_200_OK
+    processo_convocacao.refresh_from_db()
+    assert processo_convocacao.passo == 2
+    assert processo_convocacao.status == "FINALIZADO"
